@@ -569,6 +569,98 @@ a{color:#1E56E8}.eyebrow{color:#1E56E8;letter-spacing:.12em;text-transform:upper
 .tt-btns{display:flex;justify-content:space-between;gap:8px;align-items:center}.tt-btns span{display:flex;gap:6px}
 .tourbtn{margin-top:12px!important;background:#EDF1FB!important;box-shadow:var(--inset)!important;color:#1E56E8!important;font-weight:700!important}
 @media (max-width:1200px){.ops-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media (max-width:700px){.ops-grid{grid-template-columns:1fr 1fr}}
+/* ===== 14단계: 집필 준비 ===== */
+.prep{margin:0 0 18px;padding:18px 20px;border-radius:24px;background:linear-gradient(145deg,#F8FAFF,#ECF0FB);border:1px solid rgba(255,255,255,.9);box-shadow:var(--raise)}
+.prep-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:12px}
+.prep-step{padding:14px 16px;border-radius:18px;background:#EDF1FB;box-shadow:var(--inset)}.prep-step.ok{background:#E8F7EF}
+.ps-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}.ps-head b{font-size:15px;flex:1}
+.ps-n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;color:#fff;font-weight:800;background:linear-gradient(180deg,#5B91FF,#2B5DF1)}.prep-step.ok .ps-n{background:linear-gradient(180deg,#34C27A,#1E9A5C)}
+.prep-step textarea{margin-bottom:8px}.lockmsg{font-size:13px;font-weight:700;color:var(--amber-ink);margin-right:4px}
+.draftorig pre{white-space:pre-wrap;max-height:220px;overflow:auto;background:#fff;border-radius:12px;padding:10px;font-size:13px}
+@media (max-width:1000px){.prep-grid{grid-template-columns:1fr}}
+/* ===== 15단계: 소프트 UI 대시보드 ===== */
+:root{--ink:#1E2A4A;--ink2:#56627F;--ink3:#8B95B0;--paper:#EAF0FA;--line:#E1E8F5;--line2:#E9EEF8;--jade:#2F6BFF;--jade2:#5B8DFF;--jade3:#B7CCFF;--jade4:#E4EDFF;
+ --soft:0 10px 30px rgba(103,128,186,.16),0 1px 0 rgba(255,255,255,.9) inset;--soft-sm:0 4px 14px rgba(103,128,186,.16);--pblue:linear-gradient(180deg,#5C93FF 0%,#2F6BFF 60%,#2A5BE8 100%);--navy:linear-gradient(180deg,#5C93FF,#2F6BFF)}
+body{background:radial-gradient(1200px 600px at 85% -10%,#DCE7FF 0,transparent 60%),linear-gradient(180deg,#EEF3FB,#E6EDF9)!important;color:var(--ink)}
+body::before,body::after{display:none}
+.app{grid-template-columns:272px 1fr}
+/* 왼쪽 메뉴: 떠 있는 카드 */
+nav{margin:16px 0 16px 16px;height:calc(100vh - 32px);position:sticky;top:16px;border-radius:26px;background:rgba(248,251,255,.85)!important;box-shadow:var(--soft);border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(10px)}
+.brand b{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.nmeta{color:var(--ink3)}.nname{color:var(--ink)}
+.menu button{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;color:var(--ink2);font-weight:600;background:transparent;box-shadow:none}
+.menu button .mi{display:inline-grid;place-items:center;color:#7C8AB0}
+.menu button:hover{background:#EEF3FF;color:var(--ink);transform:translateX(2px);box-shadow:none}
+.menu button[aria-current="true"]{background:#DCE7FF!important;color:#2F6BFF!important;box-shadow:inset 0 0 0 1px #CBDAFF!important}.menu button[aria-current="true"] .mi{color:#2F6BFF}
+.tourbtn{background:#F1F5FF!important;box-shadow:none!important}
+.navstat{background:#F1F5FF!important;box-shadow:none!important;border-radius:16px}
+/* 카드 */
+.panel,.card,.kres-box,.intake,.tlist,.reflist,.tablewrap,.u-card,.guide,.vrestore,.stores .card,.flow9 li,.typecards label,.prep,.op{background:rgba(255,255,255,.72)!important;border:1px solid rgba(255,255,255,.95)!important;box-shadow:var(--soft)!important;border-radius:22px}
+.prep-step{background:#F3F7FF;box-shadow:none;border:1px solid #E4ECFF}.prep-step.ok{background:#EEFBF3;border-color:#CDEFD9}
+/* 상단 알약 검색 */
+.topbar{display:flex;flex-wrap:nowrap;align-items:center;gap:14px;padding:16px 0 4px;margin:0 0 20px;background:transparent}
+.tb-search{flex:1;border-radius:999px!important;background:rgba(255,255,255,.85)!important;box-shadow:var(--soft-sm)!important;border:1px solid rgba(255,255,255,.95)!important;padding:4px 6px 4px 16px}
+.tb-ico{color:#8B95B0;display:inline-grid}.tb-lab{font-size:12px!important;font-weight:800!important;color:#2F6BFF!important;background:#E4EDFF;border-radius:999px;padding:2px 9px}
+.tb-search input{box-shadow:none!important;background:transparent!important;border:0!important}.tb-search .btn{border-radius:999px!important;height:40px}
+.tb-hint{display:none}.tb-actions{display:flex;gap:10px;align-items:center}
+.iconbtn{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:var(--soft-sm);color:#56627F;transition:transform .18s}.iconbtn:hover{transform:translateY(-2px) scale(1.06);color:#2F6BFF}
+#tb_add{height:44px;border-radius:14px;padding:0 18px}
+/* 버튼 */
+.btn{background:rgba(255,255,255,.9);border:1px solid #E1E8F5;box-shadow:var(--soft-sm);color:var(--ink);border-radius:12px}
+.btn.primary,.btn.on{background:var(--pblue)!important;color:#fff;border:0;box-shadow:0 10px 22px rgba(47,107,255,.32),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn.danger{background:#FFF1F2;color:#E11D48;border-color:#FFE0E5}
+/* 대시보드 인사 카드 */
+.hero{position:relative;overflow:hidden;border-radius:26px;padding:26px 28px 22px;margin:0 0 20px;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(238,244,255,.85));box-shadow:var(--soft);border:1px solid rgba(255,255,255,.95)}
+.hero-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.hero h1{font-size:28px;margin:0 0 4px}.hero .lead{margin:0 0 18px}
+.hero-art{flex:none;opacity:.95}
+.kpis{gap:16px;background:transparent!important;border:0!important;box-shadow:none!important}
+.kpis>div{background:rgba(255,255,255,.85)!important;border:1px solid #EEF3FF!important;box-shadow:var(--soft-sm)!important;border-radius:18px;padding:16px 18px!important}
+.kpis>div:first-child{background:rgba(255,255,255,.85)!important;box-shadow:var(--soft-sm)!important}
+.kpis>div:first-child span,.kpis>div:first-child small{color:var(--ink2)!important}.kpis>div:first-child b{color:var(--ink)!important}
+.kico{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#E4EDFF;color:#2F6BFF;margin-bottom:8px;box-shadow:inset 0 0 0 1px #D3E1FF}
+.kpis b{font-size:30px!important}.kpis small{color:#16A34A!important;font-weight:600}
+/* 상태 알약 */
+.dec{border-radius:999px;padding:2px 10px;font-weight:700}.dec-채택{background:#DCFCE7!important;color:#15803D!important}.dec-보류{background:#FEF3C7!important;color:#B45309!important}.dec-제외{background:#FFE4E6!important;color:#E11D48!important;text-decoration:none}.dec-미판단{background:#EEF2F8;color:#7B86A3}
+.st{border-radius:999px}.tag{border-radius:999px;background:#E4EDFF;color:#2F6BFF}.tag.red{background:#FFE4E6;color:#E11D48}.tag.warn{background:#FEF3C7;color:#B45309}
+.grade{border-radius:8px}
+/* 표 */
+th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){background:transparent}tbody tr{border-bottom:1px solid #EEF3FB}tbody tr:hover{background:#F4F8FF!important}
+/* 진한 블록 → 밝은 파란 강조 */
+.flow9 li.me{background:linear-gradient(180deg,#EAF1FF,#DCE7FF)!important;box-shadow:var(--soft)!important}.flow9 li.me b,.flow9 li.me span,.flow9 li.me small{color:var(--ink)!important}.flow9 li.me em{color:#2F6BFF!important}
+.pinned{background:rgba(255,255,255,.85)!important;color:var(--ink)!important;box-shadow:var(--soft-sm)!important;border-left:4px solid #2F6BFF!important}.pinned b{color:#2F6BFF!important}.pinned .hint{color:var(--ink3)!important}
+.vrestore.big{background:linear-gradient(135deg,#EAF1FF,#DCE7FF)!important}.vrestore.big b,.vrestore.big p{color:var(--ink)!important}.vrestore.big code{background:#fff;color:#2F6BFF}.vrestore.big .btn.primary{background:var(--pblue)!important;color:#fff}
+.typecards label.on{background:#DCE7FF!important;box-shadow:inset 0 0 0 2px #2F6BFF!important}.typecards label.on b,.typecards label.on small{color:var(--ink)!important}
+.srctabs.pills button{border-radius:999px;background:rgba(255,255,255,.85);box-shadow:var(--soft-sm)}.srctabs.pills button[aria-selected="true"]{background:#DCE7FF;color:#2F6BFF;box-shadow:inset 0 0 0 1px #CBDAFF}
+.u-n,.ps-n{background:var(--pblue)}
+.homebar{background:rgba(238,243,251,.85)}
+@media (max-width:880px){.app{grid-template-columns:1fr}nav{margin:0;height:auto;position:sticky;top:0;border-radius:0 0 20px 20px}.topbar{flex-wrap:wrap}.tb-actions{width:100%;justify-content:flex-end}.hero-art{display:none}}
+.stats{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;background:transparent!important;border:0!important;margin:0 0 18px!important}.stats .stat{background:rgba(255,255,255,.85);border-radius:18px;box-shadow:0 4px 14px rgba(103,128,186,.16);padding:14px 16px!important;border:1px solid #EEF3FF}
+/* ===== 16단계: 파스텔 파랑 버튼 · 대문 사용 설명서 ===== */
+:root{--pblue:linear-gradient(180deg,#E2ECFF 0%,#D3E2FF 100%);--pblue-ink:#2350C8}
+.btn.primary,.btn.on{background:var(--pblue)!important;color:var(--pblue-ink)!important;border:1px solid #C5D8FF!important;box-shadow:0 6px 16px rgba(90,130,220,.18),inset 0 1px 0 rgba(255,255,255,.8)!important;font-weight:700}
+.btn.primary:hover:not(:disabled),.btn.on:hover{background:linear-gradient(180deg,#D6E4FF,#C6D9FF)!important;filter:none;box-shadow:0 10px 22px rgba(90,130,220,.24),inset 0 1px 0 rgba(255,255,255,.8)!important}
+.btn.primary::after{background:linear-gradient(105deg,transparent,rgba(255,255,255,.9),transparent)}
+.u-n,.ps-n{background:linear-gradient(180deg,#E2ECFF,#CFDFFF)!important;color:var(--pblue-ink)!important;box-shadow:inset 0 0 0 1px #C5D8FF!important}.prep-step.ok .ps-n{background:linear-gradient(180deg,#DDF5E7,#C9EED9)!important;color:#167A45!important;box-shadow:inset 0 0 0 1px #B9E6CB!important}
+.flow9 li.me,.flow9.static li{background:rgba(255,255,255,.75)!important}.flow9 li.me b,.flow9 li.me span,.flow9 li.me small{color:var(--ink)!important}
+.flow9.static .fstep{display:flex;flex-direction:column;gap:6px;padding:20px 18px 18px;height:100%;box-sizing:border-box;cursor:default}
+.flow9.static .fstep small{font-size:12px;font-weight:700;color:#6B8BD6}.flow9.static .fstep b{font-size:16.5px;font-weight:800}.flow9.static .fstep span{font-size:13px;color:var(--ink2)}.flow9.static .fstep em{font-style:normal;font-size:12px;font-weight:600;color:#6B8BD6}
+.flow9.static li:hover{transform:none!important;box-shadow:var(--soft)!important}.flow9.static li::after{display:none!important}
+.vimport{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+/* ===== 17단계: 로그인 · 본 페이지 ===== */
+.login{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;margin:28px 0 10px;padding:26px 28px;border-radius:26px;background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(235,242,255,.9));box-shadow:var(--soft);border:1px solid rgba(255,255,255,.95)}
+.login h2{font-size:24px;font-weight:800;margin:2px 0 6px}.login-act{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:280px}.gsi{min-height:44px}
+.linklike2{all:unset;cursor:pointer;font-size:13px;color:#6B7A9E;text-decoration:underline}.linklike2:hover{color:#2350C8}
+.avatar{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;overflow:hidden;background:#E2ECFF;color:#2350C8;font-weight:800;box-shadow:0 4px 14px rgba(103,128,186,.22);transition:transform .18s}.avatar:hover{transform:scale(1.06)}.avatar img{width:100%;height:100%;object-fit:cover}
+.pmenu{position:absolute;z-index:950;min-width:250px;padding:10px;border-radius:18px;background:#fff;box-shadow:0 20px 50px rgba(30,42,74,.22);display:flex;flex-direction:column;gap:2px}
+.pm-head{display:flex;gap:10px;align-items:center;padding:6px 6px 10px;border-bottom:1px solid #EEF2FA;margin-bottom:4px}.pm-head b{display:block;font-size:14px}.pm-head span{display:block;font-size:12px;color:#7B86A3}.pm-head .avatar{width:38px;height:38px;box-shadow:none;cursor:default}
+.pmenu button,.pm-lab{all:unset;cursor:pointer;padding:9px 10px;border-radius:10px;font-size:14px;color:var(--ink)}.pmenu button:hover,.pm-lab:hover{background:#F1F5FF}.pm-out{color:#E11D48!important}
+.mysec{margin:0 0 30px}.newsec{margin:10px 0 20px;padding:26px 28px;border-radius:26px;background:rgba(255,255,255,.65);box-shadow:var(--soft);border:1px solid rgba(255,255,255,.95)}.newsec h2{font-size:24px;font-weight:800;margin:2px 0 6px}
+.docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:16px}
+.doccard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:22px 20px;border-radius:20px;background:#fff;box-shadow:0 6px 18px rgba(103,128,186,.16);border:1px solid #EEF3FF;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.doccard b{font-size:18px;font-weight:800}.doccard small{font-size:13px;color:var(--ink2);min-height:2.6em}.doccard em{font-style:normal;font-size:13px;font-weight:700;color:#2350C8}
+.doccard:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 14px 30px rgba(103,128,186,.26)}.doccard:focus-visible{outline:3px solid #9DBBFF;outline-offset:2px}
+.tb-actions .avatar{width:44px;height:44px}
+@media (max-width:1000px){.docgrid{grid-template-columns:1fr 1fr}}@media (max-width:600px){.docgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3145,6 +3237,184 @@ const _bhome13=BIND.home;BIND.home=()=>{_bhome13();const a=$("#ops_all");if(a)a.
 /* 프로젝트 안에서도 언제든: 왼쪽 메뉴 아래 '작동 방법' */
 const _rm13=renderMenu;renderMenu=function(){_rm13();if(S&&current!=="home"){const m=$("#menu");if(m&&!$("#menu_tour")){const b=document.createElement("button");b.id="menu_tour";b.className="tourbtn";b.textContent="❓ 작동 방법";b.onclick=()=>{closeNav();showTour(0);};m.appendChild(b);}}};
 const _gohome13=goHome;goHome=function(){endTour();return _gohome13();};
+
+
+
+/* =========================================================
+   14단계: 집필 준비 — 목차 확정 → 예측 결론 → 논문 초고 업로드 (초고 없으면 AI 집필 잠금)
+   ========================================================= */
+function pw(){if(!S.prework)S.prework={outline_ok:false,conclusion:"",conclusion_at:"",draft:null};return S.prework;}
+const HEAD_RE=/^\s*(제\s*\d+\s*장|[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\s*[.\s]|\d+\s*\.\s*(?!\d)|chapter\s+\d+)/i;
+function normTitle(t){return String(t||"").replace(HEAD_RE,"").replace(/[^0-9a-z가-힣]/gi,"").toLowerCase();}
+function sim(a,b){a=normTitle(a);b=normTitle(b);if(!a||!b)return 0;if(a===b)return 1;const bg=s=>{const o=new Set();for(let i=0;i<s.length-1;i++)o.add(s.slice(i,i+2));return o;};const A=bg(a),B=bg(b);let n=0;A.forEach(x=>{if(B.has(x))n++;});return n/Math.max(1,Math.min(A.size,B.size));}
+/* 초고 → 문단 목록 [{text, level}] (level 1=장, 2=절, 0=본문) */
+function parasDocx(xml){const out=[];for(const m of xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)){const p=m[0];const t=[...p.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(x=>x[1]).join("").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').trim();if(!t)continue;
+  const st=(p.match(/<w:pStyle w:val="([^"]+)"/)||[])[1]||"",ol=(p.match(/<w:outlineLvl w:val="(\d)"/)||[])[1];let lv=0;
+  if(/^(Title|제목)$/i.test(st))lv=0.5;else if(/heading\s*1|^1$|제목\s*1/i.test(st)||ol==="0")lv=1;else if(/heading\s*2|^2$|제목\s*2/i.test(st)||ol==="1")lv=2;out.push({text:t,level:lv});}return out;}
+function parasHwpx(files){const hd=files["Contents/header.xml"]?td.decode(files["Contents/header.xml"]):"";const names={};for(const m of hd.matchAll(/<hh:style\b([^>]*)>/g)){const id=(m[1].match(/\bid="([^"]*)"/)||[])[1],nm=(m[1].match(/\bname="([^"]*)"/)||[])[1]||"";names[id]=nm;}
+  const out=[];Object.keys(files).filter(n=>/^Contents\/section\d+\.xml$/.test(n)).sort().forEach(n=>{const x=td.decode(files[n]);for(const m of x.matchAll(/<hp:p\b([^>]*)>([\s\S]*?)<\/hp:p>/g)){const t=[...m[2].matchAll(/<hp:t>([^<]*)<\/hp:t>/g)].map(y=>y[1]).join("").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").trim();if(!t)continue;const nm=names[(m[1].match(/styleIDRef="([^"]*)"/)||[])[1]]||"";out.push({text:t,level:/개요\s*1|제목\s*1|outline\s*1/i.test(nm)?1:/개요\s*2|제목\s*2|outline\s*2/i.test(nm)?2:0});}});return out;}
+function parasText(s){const out=[];let buf=[];const fl=()=>{if(buf.length){out.push({text:buf.join(" ").trim(),level:0});buf=[];}};for(const ln of String(s).replace(/\r/g,"").split("\n")){const t=ln.trim();if(!t){fl();continue;}const m=t.match(/^(#{1,3})\s+(.*)/);if(m){fl();out.push({text:m[2],level:m[1].length===1?0.5:m[1].length-1});continue;}buf.push(t);}fl();return out;}
+/* 문단 → 장 묶음: 스타일 제목이 없으면 짧은 번호 줄("제1장", "1.", "Ⅰ.")을 장으로 본다 */
+function toChapters(paras){let hasStyle=paras.some(p=>p.level===1);const isHead=p=>hasStyle?p.level===1:(p.text.length<=60&&HEAD_RE.test(p.text)&&!/^\d+\.\d/.test(p.text));
+  const title=paras.find(p=>p.level===0.5);const chs=[];let cur=null;
+  for(const p of paras){if(p.level===0.5)continue;if(isHead(p)){cur={title:p.text.trim(),text:[]};chs.push(cur);}else{if(!cur){cur={title:"(장 제목 없음 — 앞부분)",text:[]};chs.push(cur);}cur.text.push(p.level===2?`### ${p.text}`:p.text);}}
+  return {docTitle:title?title.text:"",chapters:chs.map(c=>({title:c.title,text:c.text.join("\n\n"),chars:c.text.join("").replace(/\s/g,"").length}))};}
+async function readDraftFile(file){const ext=(file.name.split(".").pop()||"").toLowerCase();
+  if(ext==="docx"){const f=await unzip(await file.arrayBuffer());if(!f["word/document.xml"])throw new Error("Word 본문(document.xml)을 찾지 못했습니다.");return toChapters(parasDocx(td.decode(f["word/document.xml"])));}
+  if(ext==="hwpx"){const f=await unzip(await file.arrayBuffer());return toChapters(parasHwpx(f));}
+  if(ext==="hwp")throw new Error("HWP(구형)는 읽을 수 없습니다. 한글에서 HWPX 또는 DOCX로 저장해 올려 주세요.");
+  if(["md","txt","markdown"].includes(ext))return toChapters(parasText(await file.text()));
+  throw new Error("DOCX, HWPX, MD, TXT 파일만 올릴 수 있습니다.");}
+function prepState(){ensure6();const P=pw(),D=S.design;const o=D.chapters.length>=2&&P.outline_ok,c=P.conclusion.trim().length>=20,d=!!(P.draft&&P.draft.mapped);return {o,c,d,ready:o&&c&&d};}
+/* 프롬프트에 예측 결론·초고 기반 원칙 추가 */
+const _pc14=projectContext;projectContext=function(){const base=_pc14();if(!S||!S.prework)return base;const P=S.prework;return base+(P.conclusion?`\n저자의 예측 결론(이 결론에서 벗어나지 말 것): ${P.conclusion}`:"")+(P.draft&&P.draft.mapped?`\n작성 원칙: 반드시 저자가 올린 초고를 바탕으로 다듬고 보강한다. 초고의 주장·순서·핵심 문장을 유지하고, 새 주장을 지어내지 않는다.`:"");};
+/* 집필 화면: 준비 3단계 패널 + 잠금 */
+function prepPanel(){const P=pw(),st=prepState(),D=S.design;const dr=P.draft;
+  const step=(ok,n,t,body)=>`<div class="prep-step ${ok?"ok":""}"><div class="ps-head"><span class="ps-n">${ok?"✓":n}</span><b>${t}</b>${ok?'<span class="tag">완료</span>':'<span class="tag warn">필요</span>'}</div>${body}</div>`;
+  return `<section class="prep" aria-labelledby="prep_h"><div class="row" style="justify-content:space-between"><h2 id="prep_h" style="margin:0">집필 준비 <span class="hint">세 가지를 마쳐야 AI 집필이 열립니다 — AI는 저자의 초고 위에서만 씁니다</span></h2>${st.ready?'<span class="tag">AI 집필 가능</span>':'<span class="tag red">AI 집필 잠김</span>'}</div>
+   <div class="prep-grid">
+   ${step(st.o,1,"목차 확정",`<label for="pp_outline" class="sr">목차</label><textarea id="pp_outline" rows="5" placeholder="장 제목을 한 줄에 하나씩">${esc(D.chapters.map(c=>c.title).join("\n"))}</textarea><button class="btn sm ${st.o?"":"primary"}" id="pp_outline_ok">${st.o?"목차 다시 확정":"목차 확정"}</button>`)}
+   ${step(st.c,2,"예측 결론 먼저 쓰기",`<p class="hint" style="margin:0 0 6px">이 연구가 도달할 것으로 예상하는 결론을 저자의 말로 먼저 적습니다. AI는 이 결론에서 벗어나지 않게 씁니다. (20자 이상)</p><label for="pp_concl" class="sr">예측 결론</label><textarea id="pp_concl" rows="4" placeholder="예: 정상외교 계기 MOU는 교역 중심에서 투자·공급망·인력양성 협력으로 확장되었으며, 중소·중견기업 참여가 늘었다.">${esc(P.conclusion)}</textarea><button class="btn sm ${st.c?"":"primary"}" id="pp_concl_ok">결론 저장</button>${P.conclusion_at?`<span class="hint"> ${fmtTime(P.conclusion_at)}</span>`:""}`)}
+   ${step(st.d,3,"논문 초고 업로드",`<p class="hint" style="margin:0 0 6px">DOCX · HWPX · MD · TXT. 장 제목(스타일 또는 "제1장", "1.", "Ⅰ.")을 알아봐 장별로 나눕니다.</p><input type="file" id="pp_file" accept=".docx,.hwpx,.md,.txt,.markdown,.hwp">${dr?`<p style="margin:8px 0 0"><b>${esc(dr.name)}</b> <span class="hint">· ${dr.chapters.length}개 장 · ${dr.chapters.reduce((a,c)=>a+c.chars,0).toLocaleString()}자 · ${fmtTime(dr.at)}${dr.mapped?" · 장에 넣음":""}</span> <button class="btn sm" id="pp_map">${dr.mapped?"장 연결 다시 보기":"장에 연결하기"}</button></p>`:""}`)}
+   </div></section>`;}
+function draftMapDialog(){const P=pw(),dr=P.draft,D=S.design;const opts=D.chapters.map(c=>`<option value="${c.ch_id}">${esc(c.title)}</option>`).join("");
+  const guess=dr.chapters.map(dc=>{let best="",bs=0;D.chapters.forEach(c=>{const s=sim(dc.title,c.title);if(s>bs){bs=s;best=c.ch_id;}});return bs>=0.5?best:"";});
+  $("#dlgBody").innerHTML=`<h2>초고를 장에 연결</h2><p class="hint">초고에서 찾은 장과 현재 목차를 비슷한 제목끼리 미리 짝지었습니다. 확인하고 고치세요. 이미 본문이 있는 장은 초고를 본문 위에 붙이지 않고 <b>초고 원본</b>으로만 보관합니다.</p>
+   <div class="tablewrap" style="max-height:50vh"><table><thead><tr><th>초고의 장</th><th>분량</th><th>넣을 목차의 장</th></tr></thead><tbody>${dr.chapters.map((dc,i)=>`<tr><td><b>${esc(dc.title)}</b><div class="hint">${esc(dc.text.slice(0,80))}…</div></td><td>${dc.chars.toLocaleString()}자</td><td><select data-dm="${i}"><option value="">(넣지 않음)</option><option value="__new">+ 새 장으로 추가</option>${opts}</select></td></tr>`).join("")}</tbody></table></div>
+   <div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn" id="dm_outline">초고의 장 구성으로 목차 만들기</button><div class="row"><button class="btn" id="dm_close">닫기</button><button class="btn primary" id="dm_ok">연결하고 장에 넣기</button></div></div>`;
+  $("#dlg").showModal();document.querySelectorAll("[data-dm]").forEach(s=>{s.value=guess[+s.dataset.dm]||"__new";});
+  $("#dm_close").onclick=()=>$("#dlg").close();
+  $("#dm_outline").onclick=()=>{if(D.chapters.some(c=>(S.writing[c.ch_id]||{}).text)&&!confirm("이미 본문이 있는 장이 있습니다. 초고의 장 구성으로 목차를 바꿀까요? (기존 본문은 보관된 장으로 남습니다)"))return;
+    D.chapters.forEach(c=>{const w=S.writing[c.ch_id];if(w&&w.text){S.archivedChapters=S.archivedChapters||[];S.archivedChapters.push({title:c.title,text:w.text,t:now()});}});
+    D.chapters=dr.chapters.filter(c=>!c.title.startsWith("(장 제목 없음")||c.chars>0).map(c=>({ch_id:"C"+uid(),title:c.title.replace(/^\(장 제목 없음 — 앞부분\)$/,"서론 앞부분"),points:"",doc_ids:[],claim_ids:[],state:"confirmed"}));ensure6();P.outline_ok=true;S.settings.outline=D.chapters.map(c=>c.title).join(" / ");save();draftMapDialog();};
+  $("#dm_ok").onclick=()=>{let put=0,kept=0;document.querySelectorAll("[data-dm]").forEach(s=>{const dc=dr.chapters[+s.dataset.dm];let id=s.value;if(!id)return;
+      if(id==="__new"){const c={ch_id:"C"+uid(),title:dc.title,points:"",doc_ids:[],claim_ids:[],state:"confirmed"};D.chapters.push(c);ensure6();id=c.ch_id;}
+      const w=S.writing[id];w.draft_orig=(w.draft_orig?w.draft_orig+"\n\n":"")+dc.text;w.draft_from=dr.name;
+      if(!String(w.text||"").trim()){w.text=dc.text;w.src="draft";saveVersion(id,"초고 업로드");put++;}else kept++;});
+    dr.mapped=true;dr.mapped_at=now();P.outline_ok=P.outline_ok||D.chapters.length>=2;logSync("write","초고 업로드","ok",`${dr.name}: ${put}개 장에 넣음${kept?`, 본문이 있는 ${kept}개 장은 초고 원본으로 보관`:""}`);save();$("#dlg").close();toast("초고를 장에 연결했습니다.");render();};}
+const _write14=VIEWS.write;VIEWS.write=()=>{let h=_write14();ensure6();const st=prepState();
+  h=h.replace(/(<div class="savebar">)/,prepPanel()+"$1");if(!/class="prep"/.test(h))h=h.replace(/(<h1>집필<\/h1><p class="lead">[\s\S]*?<\/p>)/,"$1"+prepPanel());
+  const w=S.design.chapters.length&&DS.ch&&S.writing[DS.ch];if(w&&w.draft_orig)h=h.replace('<textarea id="w_text"',`<details class="sub draftorig"><summary>이 장의 초고 원본 (${esc(w.draft_from||"")}) 보기</summary><pre>${esc(w.draft_orig)}</pre></details><textarea id="w_text"`);
+  if(!st.ready)h=h.replace(/(<button class="btn" id="w_ai")/,'<span class="lockmsg">🔒 집필 준비를 마치면 열립니다</span>$1');return h;};
+const _bwrite14=BIND.write;BIND.write=()=>{_bwrite14();const P=pw(),st=prepState(),D=S.design;
+  const ai=$("#w_ai");if(ai&&!st.ready){ai.disabled=true;ai.title="목차 확정 · 예측 결론 · 초고 업로드를 먼저 하세요";}
+  const oo=$("#pp_outline_ok");if(oo)oo.onclick=()=>{const titles=$("#pp_outline").value.split("\n").map(s=>s.trim()).filter(Boolean);if(titles.length<2)return toast("장을 2개 이상 적으세요.");
+    const old=D.chapters;D.chapters=titles.map(t=>old.find(c=>c.title===t)||{ch_id:"C"+uid(),title:t,points:"",doc_ids:[],claim_ids:[],state:"confirmed"});
+    old.filter(c=>!D.chapters.includes(c)).forEach(c=>{const w=S.writing[c.ch_id];if(w&&w.text){S.archivedChapters=S.archivedChapters||[];S.archivedChapters.push({title:c.title,text:w.text,t:now()});}});
+    ensure6();P.outline_ok=true;S.settings.outline=titles.join(" / ");if(!D.chapters.find(c=>c.ch_id===DS.ch))DS.ch=D.chapters[0].ch_id;logSync("write","목차 확정","ok",`${titles.length}개 장`);save();toast("목차를 확정했습니다.");render();};
+  const co=$("#pp_concl_ok");if(co)co.onclick=()=>{const v=$("#pp_concl").value.trim();if(v.length<20)return toast("예측 결론을 20자 이상 적어 주세요.");P.conclusion=v;P.conclusion_at=now();logSync("write","예측 결론","ok",v.slice(0,40));save();toast("예측 결론을 저장했습니다.");render();};
+  const f=$("#pp_file");if(f)f.onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const r=await readDraftFile(file);if(!r.chapters.length||!r.chapters.some(c=>c.chars>0))throw new Error("초고에서 글을 찾지 못했습니다.");
+      P.draft={name:file.name,at:now(),docTitle:r.docTitle,chapters:r.chapters,mapped:false};logSync("write","초고 읽기","ok",`${file.name}: ${r.chapters.length}개 장`);save();draftMapDialog();}catch(err){logSync("write","초고 읽기","error",err.message);toast(err.message);}e.target.value="";};
+  const mp=$("#pp_map");if(mp)mp.onclick=()=>draftMapDialog();};
+/* 집필 상단 고정 띠에 예측 결론도 표시 */
+const _write14b=VIEWS.write;VIEWS.write=()=>{const h=_write14b();const P=S.prework;return P&&P.conclusion?h.replace(/(<div class="pinned"[^>]*>)/,`$1<b>예측 결론</b> ${esc(P.conclusion.slice(0,120))}${P.conclusion.length>120?"…":""}<br>`):h;};
+
+
+/* =========================================================
+   15단계: 소프트 UI 대시보드 디자인 — 메뉴 아이콘 · 상단 알약 검색 · 인사 카드
+   ========================================================= */
+const SVG=p=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICONS={dash:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+ setup:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+ collect:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
+ manage:'<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1.2 1.2L7.5 5M4 12l1.2 1.2L7.5 11M4 18l1.2 1.2L7.5 17"/>',
+ topics:'<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>',
+ refs:'<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4z"/><path d="M5 17a3 3 0 013-3h11"/>',
+ write:'<path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/><path d="M14 6l3 3"/>',
+ review:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+ export:'<path d="M14 3H6v18h12V7l-4-4z"/><path d="M14 3v4h4M12 11v6M9 14l3 3 3-3"/>',
+ sync:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+ box:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
+ star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3z"/>',
+ target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+ file:'<path d="M14 3H6v18h12V7l-4-4z"/><path d="M14 3v4h4M9 14l2 2 4-4"/>'};
+/* 메뉴에 아이콘 */
+const _rm15=renderMenu;renderMenu=function(){_rm15();document.querySelectorAll("#menu button[data-v]").forEach(b=>{if(b.querySelector(".mi"))return;const ic=ICONS[b.dataset.v];if(ic)b.insertAdjacentHTML("afterbegin",`<span class="mi">${SVG(ic)}</span>`);});const t=$("#menu_tour");if(t&&!t.querySelector(".mi")){t.innerHTML=`<span class="mi">${SVG(ICONS.help)}</span>작동 방법`;}};
+/* 상단: 알약 검색창 + 동그란 아이콘 버튼 + 파란 주요 버튼 */
+const _pb15=projBar;projBar=function(){let h=_pb15();h=h.replace('<label for="tb_q">KCI 논문 검색</label>',`<span class="tb-ico">${SVG(ICONS.search)}</span><label for="tb_q" class="tb-lab">KCI</label>`);
+  return h.replace(/<\/header>$/,`<div class="tb-actions"><button class="iconbtn" id="tb_help" title="작동 방법" aria-label="작동 방법">${SVG(ICONS.help)}</button><button class="btn primary" id="tb_add">＋ 자료 추가</button></div></header>`);};
+const _render15=render;render=function(){_render15();const hb=$("#tb_help");if(hb)hb.onclick=()=>showTour(0);const ad=$("#tb_add");if(ad)ad.onclick=()=>{CTAB="list";go("collect");};};
+/* 대시보드: 인사 카드 + 아이콘 지표 */
+const _dash15=VIEWS.dash;VIEWS.dash=()=>{let h=_dash15();const nm=(G.profile&&G.profile.name)||"";const hr=new Date().getHours();const hi=hr<12?"좋은 아침이에요":hr<18?"안녕하세요":"좋은 저녁이에요";
+  const ks=["box","star","target","file"];let k=0;
+  h=h.replace(/<div class="kpis">((?:<div>[\s\S]*?<\/div>){4})<\/div>/,(m,inner)=>`<div class="kpis">${inner.replace(/<div><span>/g,()=>`<div><i class="kico">${SVG(ICONS[ks[k++]])}</i><span>`)}</div>`);
+  h=h.replace('<h1>대시보드</h1><p class="lead">모든 자료의 현황을 한눈에 봅니다.</p>',`<section class="hero"><div class="hero-head"><div><h1>${hi}${nm?`, ${esc(nm)}님`:""} 👋</h1><p class="lead">오늘의 연구 현황입니다 — ${esc(S.settings.topic||S.settings.name)}</p></div><div class="hero-art" aria-hidden="true"><svg viewBox="0 0 160 110" width="160" height="110"><defs><linearGradient id="hg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#BFD3FF"/><stop offset="1" stop-color="#6E9BFF"/></linearGradient></defs><ellipse cx="96" cy="62" rx="62" ry="40" fill="#DCE7FF"/><rect x="58" y="20" width="62" height="78" rx="10" fill="#fff" stroke="#C9D8FF"/><rect x="70" y="14" width="62" height="78" rx="10" fill="url(#hg)"/><path d="M82 36h38M82 48h30M82 60h34" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg></div></div>`);
+  h=h.replace(/(<div class="kpis">(?:<div>[\s\S]*?<\/div>){4}<\/div>)/,"$1</section>");return h;};
+
+
+/* =========================================================
+   16단계: 대문 정리 — 사용 설명서만 · 불러오기는 연결 설정으로 · 파스텔 버튼
+   ========================================================= */
+const _homeHTML16=homeHTML;homeHTML=function(){let h=_homeHTML16();
+  h=h.replace(/<section class="vrestore[^"]*">[\s\S]*?<\/section>/,"");                 // 구글 드라이브에서 불러오기 카드 삭제
+  h=h.replace(/<section class="ops"[\s\S]*?<\/section>/,"");                            // 작동 방법(따라하기) 전부 삭제
+  h=h.replace(/<ol class="flow9">([\s\S]*?)<\/ol>/,(m,inner)=>`<ol class="flow9 static">`+inner.replace(/<li class="(?:me|auto)">/g,"<li>").replace(/<button data-flow="[^"]*">/g,'<div class="fstep">').replace(/<\/button>/g,"</div>")+`</ol>`); // 눌러도 이동하지 않게
+  h=h.replace(/<p class="hint">[^<]*블록 = 앱이 자동으로 처리[^<]*<\/p>/,"").replace(/<p class="hint">청록 = [^<]*<\/p>/,"");
+  h=h.replace("단계를 누르면 해당 화면으로 이동합니다.","");
+  return h;};
+/* 연결 설정 맨 위로 옮긴 '다른 곳에서 작업한 자료 불러오기' */
+const _sync16=VIEWS.sync;VIEWS.sync=()=>{const h=_sync16();const card=`<section class="card vimport"><div><b>다른 브라우저·컴퓨터에서 작업한 자료 불러오기</b><p class="hint" style="margin:4px 0 0">모든 프로젝트는 구글 드라이브 연구 폴더 안 <code>AI-WIKI/AI-WIKI-data.json</code>에 자동 저장됩니다. 버튼을 누르고 Google Drive → 내 드라이브 → 연구 폴더(예: 한베MOU연구)를 고르세요.</p></div><button class="btn primary" id="sv_vimport">구글 드라이브에서 불러오기</button></section>`;
+  return h.replace(/(<h1>[^<]*<\/h1>(?:<p class="lead">[\s\S]*?<\/p>)?)/,"$1"+card);};
+const _bsync16=BIND.sync;BIND.sync=()=>{_bsync16();const b=$("#sv_vimport");if(b)b.onclick=()=>importFromVault();};
+
+
+/* =========================================================
+   17단계: 구글 계정 로그인 → AI WIKI 본 페이지(내 프로젝트 · 새 글 시작하기) · 내 정보
+   ========================================================= */
+let CFG_CID=null;
+async function loginClientId(){if(G.driveClientId)return G.driveClientId;if(CFG_CID!==null)return CFG_CID;
+  CFG_CID="";if(ON_HTTP){try{const r=await fetch("config.json",{cache:"no-store"});if(r.ok){const c=await r.json();CFG_CID=String(c.googleClientId||"").trim();if(!/apps\.googleusercontent\.com$/.test(CFG_CID))CFG_CID="";}}catch(e){}}return CFG_CID;}
+function parseJwt(t){const p=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");return JSON.parse(decodeURIComponent(escape(atob(p+"===".slice((p.length+3)%4)))));}
+async function onGoogleCredential(resp){try{const c=parseJwt(resp.credential);const old=G.profile||{};
+    G.profile=Object.assign({},old,{name:c.name||c.email,email:c.email,picture:c.picture||"",sub:c.sub,login:"google",at:now()});await dbPut("data","global",G);toast(`${G.profile.name}님, 환영합니다.`);current="home";HOME_MODE="";render();}
+  catch(e){toast("로그인 정보를 읽지 못했습니다: "+e.message);}}
+async function mountGoogleButton(){const box=$("#gsi_btn");if(!box)return;const msg=$("#gsi_msg");
+  if(!ON_HTTP){box.innerHTML="";if(msg)msg.innerHTML=`구글 로그인은 <b>배포 주소(https)</b>나 <b>localhost</b>에서 됩니다. 지금처럼 파일로 열었다면 아래 "로그인 없이 이 브라우저에서 쓰기"를 쓰세요.`;return;}
+  const cid=await loginClientId();
+  if(!cid){if(msg)msg.innerHTML=`구글 로그인 설정이 아직 없습니다. 저장소의 <code>config.json</code>에 구글 OAuth 클라이언트 ID를 넣거나, 아래에 한 번 입력하세요.<div class="row" style="margin-top:8px;flex-wrap:nowrap"><input type="text" id="gsi_cid" placeholder="1234…-abc.apps.googleusercontent.com"><button class="btn sm" id="gsi_cid_ok">저장</button></div>`;
+    const ok=$("#gsi_cid_ok");if(ok)ok.onclick=async()=>{const v=$("#gsi_cid").value.trim();if(!/apps\.googleusercontent\.com$/.test(v))return toast("클라이언트 ID 형식이 아닙니다(…apps.googleusercontent.com).");G.driveClientId=v;await dbPut("data","global",G);render();};return;}
+  try{await loadGIS();google.accounts.id.initialize({client_id:cid,callback:onGoogleCredential,auto_select:false,ux_mode:"popup"});box.innerHTML="";
+    google.accounts.id.renderButton(box,{theme:"outline",size:"large",shape:"pill",text:"signin_with",locale:"ko",width:280});if(msg)msg.textContent="";}
+  catch(e){if(msg)msg.innerHTML=`구글 로그인 버튼을 불러오지 못했습니다(${esc(e.message)}). 인터넷 연결과 OAuth의 "승인된 JavaScript 원본"에 이 주소(<code>${esc(location.origin)}</code>)가 있는지 확인하세요.`;}}
+function avatarHTML(id){const p=G.profile||{};const ini=esc((p.name||"나").trim().slice(0,1));return `<button class="avatar" id="${id}" title="내 정보" aria-label="내 정보">${p.picture?`<img src="${esc(p.picture)}" alt="" referrerpolicy="no-referrer">`:`<span>${ini}</span>`}</button>`;}
+function profileMenu(anchor){document.querySelectorAll(".pmenu").forEach(e=>e.remove());const p=G.profile||{};const m=document.createElement("div");m.className="pmenu";m.setAttribute("role","menu");
+  m.innerHTML=`<div class="pm-head">${avatarHTML("pm_av")}<div><b>${esc(p.name||"로그인 없이 사용 중")}</b><span>${esc(p.email||"이 브라우저에만 저장")}</span>${p.affil?`<span>${esc(p.affil)}</span>`:""}</div></div>
+   <button role="menuitem" data-pm="profile">내 정보 (소속·목표 학회지)</button><button role="menuitem" data-pm="backup">전체 백업 받기</button><label role="menuitem" class="pm-lab" for="pm_restore">백업 복원</label><input type="file" id="pm_restore" accept=".json" hidden><button role="menuitem" data-pm="logout" class="pm-out">로그아웃</button>`;
+  document.body.appendChild(m);const r=anchor.getBoundingClientRect();m.style.top=(r.bottom+8+window.scrollY)+"px";m.style.left=Math.max(12,r.right-m.offsetWidth+window.scrollX)+"px";
+  const close=e=>{if(!m.contains(e.target)&&e.target!==anchor){m.remove();document.removeEventListener("mousedown",close);}};setTimeout(()=>document.addEventListener("mousedown",close),0);
+  m.querySelector('[data-pm="profile"]').onclick=()=>{m.remove();profileDialog();};
+  m.querySelector('[data-pm="backup"]').onclick=async()=>{m.remove();const all=[];for(const x of INDEX){const d=await dbGet("data","prj:"+x.id);if(d)all.push(d);}download(`AI-WIKI_전체백업_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({app:"AI WIKI",version:17,exported:now(),global:{model:G.model,seq:G.seq,driveClientId:G.driveClientId,driveBrowse:G.driveBrowse},projects:all},null,1),"application/json");};
+  m.querySelector("#pm_restore").onchange=async e=>{const f=e.target.files[0];m.remove();if(!f)return;try{const d=JSON.parse(await f.text());const list=Array.isArray(d.projects)?d.projects:Array.isArray(d.items)?[{legacy:true,d}]:null;if(!list)throw new Error("AI WIKI 백업 파일이 아닙니다.");if(!confirm(`프로젝트 ${list.length}개를 불러올까요?`))return;for(const x of list){if(x.legacy){await migrateLegacy(JSON.stringify(x.d));continue;}await dbPut("data","prj:"+x.id,x);upsertIndex(x);}await dbPut("data","index",INDEX);toast("백업을 불러왔습니다.");goHome();}catch(err){toast("불러오지 못했습니다: "+err.message);}};
+  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
+function profileDialog(){const p=G.profile||{};$("#dlgBody").innerHTML=`<h2>내 정보</h2><p class="hint">새 프로젝트를 만들 때 표지의 저자·소속과 목표 학회지에 자동으로 들어갑니다.</p>
+  <label for="pf2_name">이름</label><input type="text" id="pf2_name" value="${esc(p.name||"")}"><label>이메일</label><input type="text" value="${esc(p.email||"(로그인 없이 사용 중)")}" disabled>
+  <label for="pf2_affil">소속</label><input type="text" id="pf2_affil" value="${esc(p.affil||"")}" placeholder="예: 한국외국어대학교 대학원 ○○학과"><label for="pf2_journal">목표 학회지·학교</label><input type="text" id="pf2_journal" value="${esc(p.journal||"")}" placeholder="예: 한국동남아학회 『동남아시아연구』">
+  <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="pf2_x">닫기</button><button class="btn primary" id="pf2_ok">저장</button></div>`;$("#dlg").showModal();
+  $("#pf2_x").onclick=()=>$("#dlg").close();$("#pf2_ok").onclick=async()=>{G.profile=Object.assign({},G.profile||{login:"local"},{name:$("#pf2_name").value.trim(),affil:$("#pf2_affil").value.trim(),journal:$("#pf2_journal").value.trim()});await dbPut("data","global",G);$("#dlg").close();toast("내 정보를 저장했습니다.");render();};}
+/* 새 프로젝트에 내 정보 반영 */
+const _cp17=createProject;createProject=async function(f){if(G.profile&&G.profile.journal&&!f.target)f=Object.assign({},f,{target:G.profile.journal});await _cp17(f);
+  if(G.profile&&S){initProject7(S);S.front.author=S.front.author||G.profile.name||"";S.front.affiliation=S.front.affiliation||G.profile.affil||"";save();}};
+/* 대문(로그인 전) · 본 페이지(로그인 후) */
+const DOC_CARDS=[["학위논문","석·박사 학위논문. 7장 목차, 각주, 학교 스타일 서식"],["학술지 논문","학회지 투고 논문. 5장 목차, 투고 규정 스타일"],["연구보고서","기관·정책 보고서. 요약·정책 자료 중심"],["일반 연구자료","강의노트·정리 자료"]];
+const _homeHTML17=homeHTML;homeHTML=function(){const base=_homeHTML17();const sec=re=>(base.match(re)||[""])[0];const guide=sec(/<section class="guide">[\s\S]*?<\/section>/),stores=sec(/<section class="stores">[\s\S]*?<\/section>/);
+  if(!G.profile){return `<div class="homebar"><div class="hb-l"><span class="logo">AI WIKI</span><span>연구 자료 수집 · AI 분석 · 논문 집필</span></div><div class="row"><a href="#login" class="btn primary" id="hb_login">Google 계정으로 로그인</a></div></div>
+    <div class="homewrap">${guide}${stores}<section class="login" id="login"><div><p class="eyebrow">시작하기</p><h2>Google 계정으로 로그인하고 시작하세요</h2><p class="hint">로그인하면 내 프로젝트와 새 글 시작하기 화면으로 넘어갑니다. 연구 자료는 이 브라우저와 내 구글 드라이브 연구 폴더에 저장됩니다.</p><p class="hint" id="gsi_msg"></p></div><div class="login-act"><div id="gsi_btn" class="gsi"></div><button class="linklike2" id="local_login">로그인 없이 이 브라우저에서 쓰기</button></div></section></div>`;}
+  const p=G.profile,hr=new Date().getHours(),hi=hr<12?"좋은 아침이에요":hr<18?"안녕하세요":"좋은 저녁이에요";
+  return `<div class="homebar"><div class="hb-l"><span class="logo">AI WIKI</span><span>연구 자료 수집 · AI 분석 · 논문 집필</span></div><div class="row"><button class="btn primary" id="h_new">＋ 새 글 시작</button><button class="btn" id="h_backup" hidden>전체 백업</button><label for="h_restore" hidden></label><input type="file" id="h_restore" hidden>${avatarHTML("hb_me")}</div></div>
+   <div class="homewrap"><section class="hero"><div class="hero-head"><div><h1>${hi}${p.name?`, ${esc(p.name)}님`:""} 👋</h1><p class="lead">${p.affil?esc(p.affil)+" · ":""}${INDEX.length?`진행 중인 프로젝트 ${INDEX.length}개`:"아직 프로젝트가 없습니다. 아래에서 새 글을 시작하세요."}</p></div></div></section>
+   <section class="mysec"><div class="row" style="justify-content:space-between"><h2 style="margin:0">내 프로젝트</h2><span class="hint">열기를 누르면 그 프로젝트의 대시보드로 들어갑니다</span></div><div style="margin-top:12px">${historyTable()}</div></section>
+   <section class="newsec" id="newsec"><p class="eyebrow">새 글 시작하기</p><h2>어떤 글을 쓰나요?</h2><p class="hint">형태를 고르면 목차·인용 방식·출력 서식의 기본값이 정해지고, 프로젝트 만들기가 이어집니다.</p>
+    <div class="docgrid">${DOC_CARDS.map(([t,d])=>`<button class="doccard" data-doctype="${t}"><b>${t}</b><small>${d}</small><em>이 형태로 시작 →</em></button>`).join("")}</div></section></div>`;};
+const _bhome17=BIND.home;BIND.home=()=>{if(HOME_MODE==="wizard")return _bhome17();
+  if(!G.profile){mountGoogleButton();const l=$("#local_login");if(l)l.onclick=async()=>{G.profile={name:"",email:"",login:"local",at:now()};await dbPut("data","global",G);render();};const hb=$("#hb_login");if(hb)hb.onclick=e=>{e.preventDefault();$("#login").scrollIntoView({behavior:"smooth"});};return;}
+  _bhome17();$("#h_new").onclick=()=>$("#newsec").scrollIntoView({behavior:"smooth"});
+  const me=$("#hb_me");if(me)me.onclick=()=>profileMenu(me);
+  document.querySelectorAll("[data-doctype]").forEach(b=>b.onclick=async()=>{await openWizard();WZ.type=b.dataset.doctype;render();});};
+/* 프로젝트 화면 오른쪽 위에도 내 정보 */
+const _pb17=projBar;projBar=function(){return _pb17().replace('<div class="tb-actions">','<div class="tb-actions">'+(G.profile?avatarHTML("tb_me"):""));};
+const _render17=render;render=function(){_render17();const t=$("#tb_me");if(t)t.onclick=()=>profileMenu(t);};
 
 /* ---------- 시작 ---------- */
 (async()=>{
