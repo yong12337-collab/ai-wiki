@@ -735,6 +735,7 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .origbox.none{display:flex;flex-direction:column;gap:4px;background:#F7F8FB;border-color:#E6EAF2}.origbox.none span{font-size:13.5px;color:var(--ink2)}
 .fopen{all:unset;cursor:pointer;margin-left:6px;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:700;color:#2350C8;background:#E4EDFF;box-shadow:inset 0 0 0 1px #CFDDFF;vertical-align:middle}.fopen:hover{background:#D3E1FF}
 .notepre{white-space:pre-wrap;max-height:300px;overflow:auto;background:#fff;border-radius:12px;padding:12px;font-size:13px}
+.kcihow{margin:8px 0 12px;padding:14px 16px;border-radius:16px;background:#F3F7FF;border:1px solid #DCE7FF}.kcihow b{color:#2350C8}.kcihow ol{margin:8px 0 6px 18px;padding:0;font-size:14px;line-height:1.8}
 </style>
 </head>
 <body>
@@ -3760,6 +3761,27 @@ function decorateOriginals(){document.querySelectorAll('#view tr[data-id] b.t').
   const btn=document.createElement("button");btn.className="fopen";btn.dataset.fopen=id;btn.title="원문 열기";btn.textContent="원문";btn.onclick=e=>{e.stopPropagation();openFirstOriginal(id);};t.insertAdjacentElement("afterend",btn);});}
 let ORIG_MO=null;
 const _bmanage26=BIND.manage;BIND.manage=()=>{_bmanage26();decorateOriginals();if(ORIG_MO)ORIG_MO.disconnect();ORIG_MO=new MutationObserver(()=>{if(current==="manage")decorateOriginals();});ORIG_MO.observe($("#view"),{childList:true,subtree:true});};
+
+
+/* =========================================================
+   27단계: 배포 앱에서 KCI — Vercel 서버 함수(api/kci.js) + 구글 로그인 증명
+   ========================================================= */
+const IS_DEPLOY=ON_HTTP&&!/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const _api27=api;api=async function(path,opt={}){
+  if(IS_DEPLOY&&/^\/api\/kci\/(test|search|detail)/.test(path)){
+    if(!driveOn()&&G.profile&&G.profile.login==="google"){try{await driveConnect();}catch(e){}}
+    if(!DRIVE.token)throw Object.assign(new Error("KCI 검색은 구글 로그인 후 쓸 수 있습니다. 로그아웃했다가 다시 로그인해 주세요(드라이브 권한 허용)."),{kind:"auth"});
+    opt=Object.assign({},opt,{headers:Object.assign({"X-AIWIKI":"1","Content-Type":"application/json"},opt.headers||{},{Authorization:"Bearer "+DRIVE.token})});}
+  try{return await _api27(path,opt);}
+  catch(e){if(IS_DEPLOY&&e.kind==="noserver")e.message="배포 앱의 KCI 서버 기능에 연결하지 못했습니다. 깃허브에 api 폴더와 vercel.json이 올라갔는지 확인하세요.";throw e;}};
+const _cs27=checkServer;checkServer=async function(){const r=await _cs27();if(IS_DEPLOY&&r.ok)r.deploy=true;return r;};
+const DEPLOY_KCI_HOWTO=`<div class="kcihow"><b>배포 앱의 KCI 인증키는 Vercel에 등록합니다</b><ol><li>vercel.com → <b>ai-wiki</b> 프로젝트 → <b>Settings → Environment Variables</b></li><li>Key에 <code>KCI_KEY</code>, Value에 발급받은 인증키를 넣고 <b>Save</b></li><li>같은 곳에 <code>GOOGLE_CLIENT_ID</code>(config.json의 클라이언트 ID)도 넣기 — 이 앱으로 로그인한 사람만 쓰게 합니다</li><li><b>Deployments</b>에서 맨 위 배포의 <b>⋯ → Redeploy</b></li></ol><p class="hint">인증키는 Vercel 서버에만 보관되고 웹페이지에는 나타나지 않습니다. 특정 계정만 쓰게 하려면 <code>ALLOWED_EMAILS</code>에 이메일을 쉼표로 넣으세요.</p></div>`;
+const _kb27=PANES.kci.bind;PANES.kci.bind=async()=>{await _kb27();if(!IS_DEPLOY||!SERVER.ok)return;const st=$("#kci_status");if(!st)return;
+  if(!SERVER.kci){st.innerHTML=`<i class="dot warn"></i>배포 앱에 KCI 인증키가 아직 등록되지 않았습니다. 오른쪽 위 🔌 연결 설정에서 등록 방법을 확인하세요.`;st.classList.add("warnline");}
+  else{const g=$("#kq_go");if(g){g.disabled=false;g.title="";}const lk=(S.log||[]).find(l=>l.target==="kci"&&["검색","연결 테스트","가져오기"].includes(l.action));
+    st.classList.remove("warnline");st.innerHTML=lk&&lk.result==="error"?`<i class="dot off"></i>마지막 KCI 요청 실패: ${esc(lk.msg)}`:`<i class="dot ${lk?"ok":"warn"}"></i>배포 앱 KCI 연결${lk?` · 최근 응답 확인 (${fmtTime(lk.t)})`:" 준비됨 — 검색해 보세요"} · 제목 검색어는 필수입니다`;}};
+const _bsync27=BIND.sync;BIND.sync=()=>{_bsync27();if(!IS_DEPLOY)return;const fix=()=>{const k=$("#k_key");if(!k||k.dataset.dep)return;k.dataset.dep=1;const box=k.closest(".row")||k.parentElement;box.insertAdjacentHTML("beforebegin",DEPLOY_KCI_HOWTO);[k,$("#k_save"),$("#k_del")].forEach(e=>{if(e)e.style.display="none";});const lab=document.querySelector('label[for="k_key"]');if(lab)lab.style.display="none";};
+  fix();setTimeout(fix,500);setTimeout(fix,1500);};
 
 /* ---------- 시작 ---------- */
 (async()=>{

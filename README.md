@@ -24,6 +24,12 @@
 
 Obsidian 볼트 연결(폴더 읽기·쓰기)은 Chrome·Edge에서만 됩니다. Safari는 지원하지 않습니다.
 
+## 배포 앱(Vercel)에서 KCI 검색
+- `api/kci.js`(Vercel 서버 함수)가 KCI Open API를 대신 호출합니다. `vercel.json`이 `/api/health`, `/api/kci/*` 주소를 이 함수로 연결합니다.
+- Vercel → 프로젝트 Settings → Environment Variables에 `KCI_KEY`(인증키), `GOOGLE_CLIENT_ID`(로그인 클라이언트 ID)를 넣고 Redeploy 합니다. 특정 계정만 쓰게 하려면 `ALLOWED_EMAILS`(쉼표 구분).
+- 인증키는 Vercel 서버에만 있고 웹페이지에 나타나지 않습니다. 구글 로그인한 사용자만 호출할 수 있습니다.
+- KCI는 등록한 IP에서 온 요청만 받을 수 있습니다. Vercel의 요청 IP는 고정되지 않아 거절될 수 있으며, 이때 화면에 원인이 표시됩니다.
+
 ## 데이터와 보안
 - 연구 자료는 브라우저(IndexedDB)와, 볼트를 연결하면 Drive 연구 폴더의 `AI-WIKI/AI-WIKI-data.json`에 자동 저장됩니다. 다른 브라우저·컴퓨터에서는 대문의 **구글 드라이브에서 불러오기**로 복원합니다.
 - KCI 인증키는 로컬 서버가 `~/.aiwiki/config.json`(본인만 읽기)에만 저장합니다. Claude API 키는 브라우저에만 저장되며 자동 저장 파일에 들어가지 않습니다.
