@@ -714,6 +714,8 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .topbar.tb-min{justify-content:flex-end;padding:16px 0 4px;margin:0 0 14px}
 .topbar.tb-min .tb-actions{gap:12px}
 .iconbtn[aria-current="true"]{background:linear-gradient(180deg,#E6EEFF,#D3E1FF);color:#2350C8;box-shadow:0 8px 18px rgba(120,150,225,.3),inset 0 1px 0 #fff}
+/* ===== 24단계 ===== */
+.tp-go{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:6px 0 10px;padding:18px 20px;border-radius:20px;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.95);box-shadow:0 6px 18px rgba(103,128,186,.14)}
 </style>
 </head>
 <body>
@@ -3568,6 +3570,21 @@ const _render23=render;render=function(){_render23();const s=$("#tb_sync");if(s)
 /* 작동 방법 안내를 새 위치에 맞춤 */
 TOUR[1]={v:"collect",sel:"#kq_title",t:"KCI 논문 검색",d:"자료 수집 및 분석 → 자료 모으기의 KCI 검색에서 논문 제목으로 검색하고 받으면 바로 관련도가 매겨집니다. (KCI 인증키 승인 후 사용)"};
 TOUR[TOUR.length-1]=Object.assign({},TOUR[TOUR.length-1],{d:"안내는 화면만 비추고 자료는 바꾸지 않습니다. 오른쪽 위 ? 버튼으로 언제든 다시 볼 수 있습니다. 옵시디언·구글 드라이브·KCI·Claude 연결은 오른쪽 위 🔌 버튼에서 합니다."});
+
+
+/* =========================================================
+   24단계: 검토·수정 삭제 · 판단은 '판단하기'에서만 · 토픽·방향의 나의 관점 입력 삭제
+   ========================================================= */
+{const i=MENU9.findIndex(m=>m[0]==="review");if(i>=0)MENU9.splice(i,1);}
+/* 자료 모으기: 받은 즉시 분석 결과만 보여 주고 판단은 2번 탭에서 */
+intakePanel=function(){const L=S.lastIntake;if(!L||!L.ids.length)return "";const items=L.ids.map(litById).filter(Boolean);if(!items.length)return "";
+  return `<section class="intake" aria-labelledby="ik"><div class="row" style="justify-content:space-between"><h2 id="ik" style="margin:0">받은 즉시 AI 분석 <span class="hint">${items.length}편 · ${fmtTime(L.at)} · ${esc(L.by)} · 제목·초록·키워드 기준(원문 미분석)</span></h2><div class="row"><button class="btn primary sm" data-hub="manage">판단하러 가기 →</button><button class="btn sm" id="ik_close">닫기</button></div></div>
+   <ul class="iklist">${items.slice(0,30).map(it=>`<li><div class="ik-main">${gradeBadge(it.relevance)}<div><b>${esc(it.title)}</b><div class="hint">${esc(it.authors||"저자 미확인")} · ${esc(it.year||"연도 미확인")} · ${esc(SOURCE_L[it.source]||it.source)}${it.topic_ai&&it.topic_ai.topic?` · 토픽: ${esc(it.topic_ai.topic)}`:""}</div><div class="hint">근거: ${esc(it.relevance_reason||"-")}</div></div></div><div class="ik-dec"><button class="btn sm" data-ikopen="${it.id}">자세히</button></div></li>`).join("")}</ul>${items.length>30?`<p class="hint">나머지 ${items.length-30}편은 판단하기에서 확인하세요.</p>`:""}</section>`;};
+/* 토픽·방향: 나의 관점 입력칸 대신 연구 설정의 관점을 사용 */
+const _topics24=VIEWS.topics;VIEWS.topics=()=>{const h=_topics24();const v=(S.settings.view||"").trim();
+  return h.replace(/<section class="card view">[\s\S]*?<\/section>/,`<div class="tp-go"><div><p class="hint" style="margin:0">방향을 고르고 버튼을 누르면 <b>연구 설정의 '나의 관점'</b>을 기준으로 목차가 만들어집니다.${v?"":` <span class="tag warn">연구 설정에 나의 관점이 비어 있습니다</span>`}</p><p class="hint" style="margin:6px 0 0"><a href="#" data-go="classify">상세 분석(문헌 비교·동향·관점 대조) 보기</a> · <a href="#" data-go="design">연구 설계 상세</a></p></div><textarea id="tp_view" hidden>${esc(v)}</textarea><button class="btn primary big" id="tp_go">이 방향으로 목차 만들고 집필 시작</button></div>`);};
+const _btopics24=BIND.topics;BIND.topics=()=>{_btopics24();const g=$("#tp_go");if(g&&!(S.settings.view||"").trim())g.onclick=()=>{toast("연구 설정에서 '나의 관점'을 먼저 적어 주세요. 글의 방향을 잡는 기준입니다.");go("setup");};};
+TOUR.forEach(t=>{if(t.sel==="#tp_go")t.d="방향 후보 하나를 고르고 이 버튼을 누르면 연구 설정의 '나의 관점'을 기준으로 목차가 만들어집니다.";});
 
 /* ---------- 시작 ---------- */
 (async()=>{
