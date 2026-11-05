@@ -699,6 +699,17 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 /* ===== 21단계: 연구 설정 안내 ===== */
 .setupnote{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:0 0 18px;padding:16px 20px;border-radius:20px;background:linear-gradient(135deg,#FFF8EC,#FFF1DA);border:1px solid #F7E2BD;box-shadow:0 6px 18px rgba(200,160,90,.15)}
 .setupnote b{font-size:16px;color:#7A4B0E}.setupnote p{margin:4px 0 0;font-size:14px;color:#8A6230}
+/* ===== 22단계: 자료 수집 및 분석 단계 탭 ===== */
+.hubtabs{display:flex;align-items:stretch;gap:8px;margin:4px 0 14px;flex-wrap:wrap}
+.hubtabs button{all:unset;box-sizing:border-box;cursor:pointer;flex:1 1 220px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(103,128,186,.14);transition:transform .18s,box-shadow .18s}
+.hubtabs button:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(103,128,186,.22)}
+.hubtabs button[aria-selected="true"]{background:linear-gradient(180deg,#E6EEFF,#D3E1FF);box-shadow:0 10px 24px rgba(120,150,225,.28),inset 0 1px 0 #fff;border-color:#C9DAFF}
+.hn{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:10px;background:#E4EDFF;color:#2350C8;font-weight:800}.hubtabs button[aria-selected="true"] .hn{background:#fff}
+.ht{display:flex;flex-direction:column;flex:1;min-width:0}.ht b{font-size:15.5px;color:var(--ink)}.ht small{font-size:12.5px;color:var(--ink3)}
+.hubtabs em{font-style:normal;font-size:12px;font-weight:700;color:#2350C8;background:#fff;border-radius:999px;padding:2px 9px;box-shadow:inset 0 0 0 1px #D3E1FF;white-space:nowrap}
+.harrow{align-self:center;color:#A8B6D6;font-size:22px}
+.sublead{margin:0 0 16px}
+@media (max-width:880px){.harrow{display:none}.hubtabs button{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -3522,6 +3533,24 @@ const _dash21=VIEWS.dash;VIEWS.dash=()=>{const h=_dash21();const miss=setupMissi
   const note=`<div class="setupnote"><div><b>먼저 연구 설정을 채워 주세요</b><p>${esc(miss.join(" · "))}이(가) 비어 있어요. 이 값들이 자료 분류·토픽 분석·집필의 기준이 됩니다.</p></div><button class="btn primary" id="go_setup">연구 설정으로 →</button></div>`;
   return h.replace('<section class="hero">',note+'<section class="hero">');};
 const _bdash21=BIND.dash;BIND.dash=()=>{_bdash21();const b=$("#go_setup");if(b)b.onclick=()=>go("setup");};
+
+
+/* =========================================================
+   22단계: 자료 수집 · 자료 관리·판단 · 토픽 분류·방향 → "자료 수집 및 분석" 하나로
+   ========================================================= */
+{const i=MENU9.findIndex(m=>m[0]==="collect");MENU9.splice(i,3,["collect","자료 수집 및 분석"]);}
+Object.assign(SUBVIEW,{manage:"collect",topics:"collect",classify:"collect",design:"collect"});
+Object.assign(VIEW_L,{collect:"자료 수집 및 분석",manage:"자료 수집 및 분석",topics:"자료 수집 및 분석",classify:"자료 수집 및 분석",design:"자료 수집 및 분석"});
+const HUB=[["collect","자료 모으기","KCI·옵시디언·드라이브·파일"],["manage","판단하기","채택·보류·제외"],["topics","토픽·방향","토픽 분류·집필 방향"]];
+function hubHeader(v,lead){const P=papers(),und=P.filter(p=>(p.decision||"미판단")==="미판단").length,an=(S.analyses||[]).length;
+  const badge={collect:P.length?`${P.length}편`:"",manage:P.length?(und?`미판단 ${und}`:"판단 완료"):"",topics:an?`분류 ${an}회`:""};
+  return `<h1>자료 수집 및 분석</h1><p class="lead">모으기 → 판단하기 → 토픽·방향 순서로 진행합니다. 들어온 자료는 즉시 관련도가 매겨집니다.</p>
+   <div class="hubtabs" role="tablist" aria-label="자료 수집 및 분석 단계">${HUB.map(([k,t,d],i)=>`<button role="tab" data-hub="${k}" aria-selected="${k===v}"><span class="hn">${i+1}</span><span class="ht"><b>${t}</b><small>${d}</small></span>${badge[k]?`<em>${badge[k]}</em>`:""}</button>`).join('<span class="harrow" aria-hidden="true">›</span>')}</div>
+   ${lead?`<p class="hint sublead">${lead}</p>`:""}`;}
+function hubWrap(name){const v0=VIEWS[name],b0=BIND[name];
+  VIEWS[name]=()=>{const h=v0();const m=h.match(/<h1>[^<]*<\/h1>(\s*<p class="lead">([\s\S]*?)<\/p>)?/);if(!m)return hubHeader(name,"")+h;return h.replace(m[0],hubHeader(name,m[2]||""));};
+  BIND[name]=()=>{b0();document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>{if(b.dataset.hub!==current)go(b.dataset.hub);});};}
+["collect","manage","topics"].forEach(hubWrap);
 
 /* ---------- 시작 ---------- */
 (async()=>{
