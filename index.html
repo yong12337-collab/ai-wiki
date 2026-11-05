@@ -710,6 +710,10 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .harrow{align-self:center;color:#A8B6D6;font-size:22px}
 .sublead{margin:0 0 16px}
 @media (max-width:880px){.harrow{display:none}.hubtabs button{flex-basis:100%}}
+/* ===== 23단계: 상단 최소화 ===== */
+.topbar.tb-min{justify-content:flex-end;padding:16px 0 4px;margin:0 0 14px}
+.topbar.tb-min .tb-actions{gap:12px}
+.iconbtn[aria-current="true"]{background:linear-gradient(180deg,#E6EEFF,#D3E1FF);color:#2350C8;box-shadow:0 8px 18px rgba(120,150,225,.3),inset 0 1px 0 #fff}
 </style>
 </head>
 <body>
@@ -3551,6 +3555,19 @@ function hubWrap(name){const v0=VIEWS[name],b0=BIND[name];
   VIEWS[name]=()=>{const h=v0();const m=h.match(/<h1>[^<]*<\/h1>(\s*<p class="lead">([\s\S]*?)<\/p>)?/);if(!m)return hubHeader(name,"")+h;return h.replace(m[0],hubHeader(name,m[2]||""));};
   BIND[name]=()=>{b0();document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>{if(b.dataset.hub!==current)go(b.dataset.hub);});};}
 ["collect","manage","topics"].forEach(hubWrap);
+
+
+/* =========================================================
+   23단계: 상단 = 프로필 · ?(작동 방법) · 🔌(연결 설정) / 메뉴에서 작동 방법·연결 설정 제거
+   ========================================================= */
+{const i=MENU9.findIndex(m=>m[0]==="sync");if(i>=0)MENU9.splice(i,1);}
+ICONS.plug='<path d="M9 3v5M15 3v5"/><path d="M6 8h12v3a6 6 0 01-12 0V8z"/><path d="M12 17v4"/>';
+projBar=function(){return `<header class="topbar tb-min"><div class="tb-actions">${G.profile?avatarHTML("tb_me"):""}<button class="iconbtn" id="tb_help" title="작동 방법" aria-label="작동 방법">${SVG(ICONS.help)}</button><button class="iconbtn" id="tb_sync" title="연결 설정" aria-label="연결 설정" aria-current="${current==="sync"}">${SVG(ICONS.plug)}</button></div></header>`;};
+const _rm23=renderMenu;renderMenu=function(){_rm23();const t=$("#menu_tour");if(t)t.remove();};
+const _render23=render;render=function(){_render23();const s=$("#tb_sync");if(s)s.onclick=()=>go("sync");};
+/* 작동 방법 안내를 새 위치에 맞춤 */
+TOUR[1]={v:"collect",sel:"#kq_title",t:"KCI 논문 검색",d:"자료 수집 및 분석 → 자료 모으기의 KCI 검색에서 논문 제목으로 검색하고 받으면 바로 관련도가 매겨집니다. (KCI 인증키 승인 후 사용)"};
+TOUR[TOUR.length-1]=Object.assign({},TOUR[TOUR.length-1],{d:"안내는 화면만 비추고 자료는 바꾸지 않습니다. 오른쪽 위 ? 버튼으로 언제든 다시 볼 수 있습니다. 옵시디언·구글 드라이브·KCI·Claude 연결은 오른쪽 위 🔌 버튼에서 합니다."});
 
 /* ---------- 시작 ---------- */
 (async()=>{
