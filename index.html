@@ -727,6 +727,14 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .fxtpl{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:18px;background:#F3F7FF;border:1px solid #E4ECFF}.fxtpl.on{background:#EEFBF3;border-color:#CDEFD9}.fxtpl b{font-size:15px}.fxtpl span{font-size:13px;color:var(--ink2)}.fxtpl .btn{align-self:flex-start}
 .fxdl{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 10px}.fxissues li{margin-bottom:4px}
 @media (max-width:900px){.absgrid,.fxgrid{grid-template-columns:1fr}}
+/* ===== 26단계: 원문 ===== */
+.origbox{margin:10px 0 14px;padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,#F3F7FF,#E9F0FF);border:1px solid #DCE7FF}
+.origbox>b{display:block;font-size:15px;margin-bottom:8px;color:#2350C8}.origbox ul{list-style:none;margin:0;padding:0}
+.origbox li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #E1E9FB}.origbox li:first-child{border-top:0}
+.og-n{display:flex;flex-direction:column;min-width:0;font-weight:600}.og-n small{font-weight:400;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px}.og-b{display:flex;gap:6px;flex:none}
+.origbox.none{display:flex;flex-direction:column;gap:4px;background:#F7F8FB;border-color:#E6EAF2}.origbox.none span{font-size:13.5px;color:var(--ink2)}
+.fopen{all:unset;cursor:pointer;margin-left:6px;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:700;color:#2350C8;background:#E4EDFF;box-shadow:inset 0 0 0 1px #CFDDFF;vertical-align:middle}.fopen:hover{background:#D3E1FF}
+.notepre{white-space:pre-wrap;max-height:300px;overflow:auto;background:#fff;border-radius:12px;padding:12px;font-size:13px}
 </style>
 </head>
 <body>
@@ -1284,7 +1292,7 @@ let gisPromise=null;
 function loadGIS(){if(window.google&&google.accounts&&google.accounts.oauth2)return Promise.resolve();return gisPromise||(gisPromise=new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.onload=()=>res();s.onerror=()=>{gisPromise=null;rej(new Error("구글 로그인 스크립트를 불러오지 못했습니다(인터넷 연결 확인)."));};document.head.appendChild(s);}));}
 const driveOn=()=>!!(DRIVE.token&&Date.now()<DRIVE.exp);
 async function driveConnect(){
-  if(!ON_HTTP)throw new Error("구글 로그인은 http://localhost:8765 주소에서만 됩니다. 로컬 연동 서버로 앱을 여세요.");
+  if(!ON_HTTP)throw new Error("구글 드라이브 연결은 배포 주소(https)나 localhost에서 됩니다.");
   if(!G.driveClientId)throw new Error("먼저 OAuth 클라이언트 ID를 입력하세요.");
   await loadGIS();
   const scope=SCOPE_FILE+(G.driveBrowse?" "+SCOPE_READ:"");
@@ -3453,7 +3461,7 @@ function profileMenu(anchor){document.querySelectorAll(".pmenu").forEach(e=>e.re
   m.querySelector('[data-pm="profile"]').onclick=()=>{m.remove();profileDialog();};
   m.querySelector('[data-pm="backup"]').onclick=async()=>{m.remove();const all=[];for(const x of INDEX){const d=await dbGet("data","prj:"+x.id);if(d)all.push(d);}download(`AI-WIKI_전체백업_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({app:"AI WIKI",version:17,exported:now(),global:{model:G.model,seq:G.seq,driveClientId:G.driveClientId,driveBrowse:G.driveBrowse},projects:all},null,1),"application/json");};
   m.querySelector("#pm_restore").onchange=async e=>{const f=e.target.files[0];m.remove();if(!f)return;try{const d=JSON.parse(await f.text());const list=Array.isArray(d.projects)?d.projects:Array.isArray(d.items)?[{legacy:true,d}]:null;if(!list)throw new Error("AI WIKI 백업 파일이 아닙니다.");if(!confirm(`프로젝트 ${list.length}개를 불러올까요?`))return;for(const x of list){if(x.legacy){await migrateLegacy(JSON.stringify(x.d));continue;}await dbPut("data","prj:"+x.id,x);upsertIndex(x);}await dbPut("data","index",INDEX);toast("백업을 불러왔습니다.");goHome();}catch(err){toast("불러오지 못했습니다: "+err.message);}};
-  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
+  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}DRIVE.token=null;DRIVE.exp=0;DRIVE.user=null;try{localStorage.removeItem("aiwiki_dtok")}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
 function profileDialog(){const p=G.profile||{};$("#dlgBody").innerHTML=`<h2>내 정보</h2><p class="hint">새 프로젝트를 만들 때 표지의 저자·소속과 목표 학회지에 자동으로 들어갑니다.</p>
   <label for="pf2_name">이름</label><input type="text" id="pf2_name" value="${esc(p.name||"")}"><label>이메일</label><input type="text" value="${esc(p.email||"(로그인 없이 사용 중)")}" disabled>
   <label for="pf2_affil">소속</label><input type="text" id="pf2_affil" value="${esc(p.affil||"")}" placeholder="예: 한국외국어대학교 대학원 ○○학과"><label for="pf2_journal">목표 학회지·학교</label><input type="text" id="pf2_journal" value="${esc(p.journal||"")}" placeholder="예: 한국동남아학회 『동남아시아연구』">
@@ -3694,6 +3702,64 @@ BIND.export=()=>{const f=S.format;
     catch(e){logSync("export","내려받기","error",e.message);toast(e.message);}});};
 /* 작동 방법 안내 위치 갱신 */
 TOUR.forEach(t=>{if(t.v==="refs"){t.v="write";t.sel=".wstabs";t.t="AI 집필 단계";t.d="준비 → 초록 → 본문 → 참고문헌 순서로 진행합니다. 참고문헌은 본문에 인용한 문헌으로 자동으로 만들어집니다.";}if(t.v==="export"){t.sel="#fx_file";t.t="양식 적용";t.d="학교·학술지 양식(한글·워드)을 올리면 그 양식에 맞춰 한글·워드·PDF·HTML로 내려받습니다.";}});
+
+
+/* =========================================================
+   26단계: 구글 로그인 = 드라이브 연결 유지 · 원문 열기/내려받기
+   ========================================================= */
+const DTK="aiwiki_dtok";
+function saveDriveTok(){try{if(DRIVE.token&&DRIVE.exp>Date.now())localStorage.setItem(DTK,JSON.stringify({t:DRIVE.token,exp:DRIVE.exp,user:DRIVE.user,scope:DRIVE.scope}));else localStorage.removeItem(DTK);}catch(e){}}
+(function(){try{const d=JSON.parse(localStorage.getItem(DTK)||"null");if(d&&d.exp>Date.now()+30000){DRIVE.token=d.t;DRIVE.exp=d.exp;DRIVE.user=d.user;DRIVE.scope=d.scope||SCOPE_FILE;}}catch(e){}})();
+const _dc26=driveConnect;driveConnect=async function(){if(!G.driveClientId){const c=await loginClientId();if(c)G.driveClientId=c;}await _dc26();saveDriveTok();};
+const _dd26=driveDisconnect;driveDisconnect=function(){_dd26();saveDriveTok();};
+let DRV_TRY=false;
+const _df26=dfetch;dfetch=async function(url,opt={}){
+  if(!driveOn()&&!DRV_TRY&&G.profile&&G.profile.login==="google"){DRV_TRY=true;try{await driveConnect();}catch(e){}finally{DRV_TRY=false;}}   // 만료되면 조용히 다시 받기
+  try{return await _df26(url,opt);}catch(e){saveDriveTok();throw e;}};
+/* 구글 로그인 때 드라이브 권한(앱이 만든 파일만)도 함께 */
+googleLogin=async function(btn){
+  if(!ON_HTTP){toast("구글 로그인은 배포 주소(https)나 localhost에서 됩니다.");return;}
+  const cid=await loginClientId();if(!cid){toast("구글 로그인 설정(config.json의 클라이언트 ID)이 없습니다.");const s=$("#land_setup");if(s)s.hidden=false;return;}
+  if(btn){btn.disabled=true;btn.classList.add("busy");}
+  try{await loadGIS();G.driveClientId=G.driveClientId||cid;
+    const r=await new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:"openid email profile "+SCOPE_FILE,callback:x=>x&&x.error?rej(new Error(x.error)):res(x),error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"로그인 창을 닫았습니다.":"로그인 오류: "+((e&&(e.message||e.type))||"알 수 없음")))});tc.requestAccessToken({prompt:"select_account"});});
+    const u=await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+r.access_token}})).json();
+    if(!u||!u.email)throw new Error("구글 계정 정보를 받지 못했습니다.");
+    G.profile=Object.assign({},G.profile||{},{name:u.name||u.email,email:u.email,picture:u.picture||"",sub:u.sub,login:"google",at:now()});
+    const granted=!window.google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(r,SCOPE_FILE);
+    if(granted){DRIVE.token=r.access_token;DRIVE.exp=Date.now()+((parseInt(r.expires_in)||3600)-60)*1000;DRIVE.scope=r.scope||SCOPE_FILE;DRIVE.user={displayName:u.name||"",emailAddress:u.email};DRIVE.err="";saveDriveTok();}
+    await dbPut("data","global",G);toast(`${G.profile.name}님, 환영합니다.${granted?" 구글 드라이브도 연결했습니다.":""}`);current="home";HOME_MODE="";render();}
+  catch(e){toast(e.message);}finally{if(btn){btn.disabled=false;btn.classList.remove("busy");}}};
+/* ---------- 원문 열기 · 내려받기 ---------- */
+function originals(it){const out=[];(S.files||[]).filter(f=>f.lit_id===it.id).forEach(f=>out.push({kind:f.location==="drive"?"drive":"vault",label:f.name,sub:f.location==="drive"?"구글 드라이브":"연구 폴더(볼트) "+(f.path||""),rec:f}));
+  if(it.origin==="vault"&&it.path)out.push({kind:"note",label:it.path.split("/").pop(),sub:"옵시디언 노트",path:it.path});
+  if(it.url&&/^https?:/.test(it.url))out.push({kind:"link",label:it.kci_id?"KCI 논문 페이지":"원문 링크",sub:it.url,url:it.url});
+  if(it.doi)out.push({kind:"link",label:"DOI "+it.doi,sub:"doi.org",url:"https://doi.org/"+String(it.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//,"")});return out;}
+async function vaultFile(path){if(!VAULT)throw new Error("연구 폴더(볼트)가 연결돼 있지 않습니다. 오른쪽 위 🔌 연결 설정에서 연결하세요.");
+  let p=await VAULT.queryPermission({mode:"read"});if(p!=="granted")p=await VAULT.requestPermission({mode:"readwrite"});if(p!=="granted")throw new Error("연구 폴더 읽기 권한이 없습니다.");
+  const parts=path.split("/");const name=parts.pop();const d=await getDir(VAULT,parts,false);return await (await d.getFileHandle(name)).getFile();}
+async function driveFile(rec){if(/^application\/vnd\.google-apps/.test(rec.mime||""))return null;
+  const r=await dfetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(rec.drive_id)}?alt=media`,{raw:true});return new File([await r.blob()],rec.name,{type:rec.mime||"application/octet-stream"});}
+function giveFile(file,mode){const url=URL.createObjectURL(file);if(mode==="open"){const w=window.open(url,"_blank");if(w){setTimeout(()=>URL.revokeObjectURL(url),60000);return;}}
+  const a=document.createElement("a");a.href=url;a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);}
+async function useOriginal(it,o,mode){try{
+    if(o.kind==="link"){window.open(o.url,"_blank","noopener");return;}
+    if(o.kind==="note"){const f=await vaultFile(o.path);if(mode==="open"){const t=await f.text();$("#dlgBody").insertAdjacentHTML("beforeend",`<details class="sub" open><summary>노트 원문 — ${esc(o.label)}</summary><pre class="notepre">${esc(t)}</pre></details>`);return;}giveFile(new File([await f.text()],o.label,{type:"text/markdown"}),"download");return;}
+    if(o.kind==="vault"){giveFile(await vaultFile(o.rec.path),mode);return;}
+    if(o.kind==="drive"){const f=await driveFile(o.rec);if(!f||mode==="open"&&!/pdf|image|text|html/.test(o.rec.mime||"")){if(o.rec.link){window.open(o.rec.link,"_blank","noopener");return;}if(!f)throw new Error("구글 문서 형식이라 드라이브에서 열어야 합니다.");}giveFile(f,mode);}
+  }catch(e){toast(e.message);logSync("drive","원문 열기","error",e.message);}}
+function origBox(it){const os=originals(it);
+  if(!os.length)return `<div class="origbox none"><b>원문</b><span>연결된 원문이 없습니다. 자료 수집 및 분석 → 자료 모으기 → <b>파일 올리기</b>나 <b>Google Drive</b>에서 이 문헌에 원문을 연결하세요.</span></div>`;
+  return `<div class="origbox"><b>원문</b><ul>${os.map((o,i)=>`<li><span class="og-n">${esc(o.label)}<small>${esc(o.sub)}</small></span><span class="og-b"><button class="btn sm primary" data-og="${i}|open">${o.kind==="link"?"열기 ↗":"열기"}</button>${o.kind==="link"?"":`<button class="btn sm" data-og="${i}|download">내려받기</button>`}</span></li>`).join("")}</ul></div>`;}
+const _oi26=openItem;openItem=function(id){_oi26(id);const it=S.items.find(i=>i.id===id);if(!it)return;const body=$("#dlgBody");if(!body||body.querySelector(".origbox"))return;
+  const anchor=body.querySelector("h2 + .hint")||body.querySelector("h2");anchor.insertAdjacentHTML("afterend",origBox(it));const os=originals(it);
+  body.querySelectorAll("[data-og]").forEach(b=>b.onclick=e=>{e.preventDefault();const [i,mode]=b.dataset.og.split("|");useOriginal(it,os[+i],mode);});};
+async function openFirstOriginal(id){const it=S.items.find(i=>i.id===id);if(!it)return;const os=originals(it);const o=os.find(x=>x.kind==="vault"||x.kind==="drive")||os[0];if(!o)return openItem(id);useOriginal(it,o,"open");}
+/* 판단하기 목록: 원문 있는 문헌 제목 옆에 '원문' 버튼 (표가 다시 그려져도 유지) */
+function decorateOriginals(){document.querySelectorAll('#view tr[data-id] b.t').forEach(t=>{if(t.parentElement.querySelector(".fopen"))return;const id=t.closest("tr").dataset.id;const it=S.items.find(i=>i.id===id);if(!it||!originals(it).length)return;
+  const btn=document.createElement("button");btn.className="fopen";btn.dataset.fopen=id;btn.title="원문 열기";btn.textContent="원문";btn.onclick=e=>{e.stopPropagation();openFirstOriginal(id);};t.insertAdjacentElement("afterend",btn);});}
+let ORIG_MO=null;
+const _bmanage26=BIND.manage;BIND.manage=()=>{_bmanage26();decorateOriginals();if(ORIG_MO)ORIG_MO.disconnect();ORIG_MO=new MutationObserver(()=>{if(current==="manage")decorateOriginals();});ORIG_MO.observe($("#view"),{childList:true,subtree:true});};
 
 /* ---------- 시작 ---------- */
 (async()=>{
