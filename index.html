@@ -696,6 +696,9 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .startsec{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;margin:0 0 28px;padding:24px 28px;border-radius:26px;background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(235,242,255,.88));border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 30px rgba(103,128,186,.16)}
 .startsec h2{font-size:22px;font-weight:800;margin:0 0 4px}.startsec .hint{margin:0;max-width:620px}
 .startsec .cta{min-width:min(380px,86vw)}.startsec .cta-g{font-size:22px;font-weight:800;color:#4A6CC4}
+/* ===== 21단계: 연구 설정 안내 ===== */
+.setupnote{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:0 0 18px;padding:16px 20px;border-radius:20px;background:linear-gradient(135deg,#FFF8EC,#FFF1DA);border:1px solid #F7E2BD;box-shadow:0 6px 18px rgba(200,160,90,.15)}
+.setupnote b{font-size:16px;color:#7A4B0E}.setupnote p{margin:4px 0 0;font-size:14px;color:#8A6230}
 </style>
 </head>
 <body>
@@ -3504,6 +3507,21 @@ const _homeHTML20=homeHTML;homeHTML=function(){let h=_homeHTML20();if(!G.profile
   h=h.replace('아직 프로젝트가 없습니다. 아래에서 새 글을 시작하세요.','아직 프로젝트가 없습니다. 새 프로젝트 작성하기로 시작하세요.');
   return h.replace('<section class="mysec">',start+'<section class="mysec">');};
 const _bhome20=BIND.home;BIND.home=()=>{_bhome20();if(!G.profile||HOME_MODE==="wizard")return;const n=$("#h_new");if(n)n.onclick=()=>openWizard();};
+
+
+/* =========================================================
+   21단계: 새 프로젝트 → 입력 화면 없이 바로 본화면
+   ========================================================= */
+async function quickNewProject(){let n=INDEX.length+1;while(INDEX.some(p=>p.name===`새 프로젝트 ${n}`))n++;
+  HOME_MODE="";WZ=null;
+  await createProject({name:`새 프로젝트 ${n}`,topic:"",docType:"학술지 논문",keywords:[],purpose:"",view:"",lang:"한국어"});
+  logSync("project","새 프로젝트","ok",`새 프로젝트 ${n} — 연구 설정에서 주제·키워드·나의 관점을 입력하세요`);current="dash";await flush();render();window.scrollTo(0,0);}
+openWizard=quickNewProject;
+function setupMissing(){const s=S&&S.settings;if(!s)return [];return [["연구 주제",(s.topic||"").trim()],["핵심 키워드",(s.keywords||[]).length],["나의 관점",(s.view||"").trim()]].filter(x=>!x[1]).map(x=>x[0]);}
+const _dash21=VIEWS.dash;VIEWS.dash=()=>{const h=_dash21();const miss=setupMissing();if(!miss.length)return h;
+  const note=`<div class="setupnote"><div><b>먼저 연구 설정을 채워 주세요</b><p>${esc(miss.join(" · "))}이(가) 비어 있어요. 이 값들이 자료 분류·토픽 분석·집필의 기준이 됩니다.</p></div><button class="btn primary" id="go_setup">연구 설정으로 →</button></div>`;
+  return h.replace('<section class="hero">',note+'<section class="hero">');};
+const _bdash21=BIND.dash;BIND.dash=()=>{_bdash21();const b=$("#go_setup");if(b)b.onclick=()=>go("setup");};
 
 /* ---------- 시작 ---------- */
 (async()=>{
