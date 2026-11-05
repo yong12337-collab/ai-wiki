@@ -716,6 +716,17 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .iconbtn[aria-current="true"]{background:linear-gradient(180deg,#E6EEFF,#D3E1FF);color:#2350C8;box-shadow:0 8px 18px rgba(120,150,225,.3),inset 0 1px 0 #fff}
 /* ===== 24단계 ===== */
 .tp-go{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:6px 0 10px;padding:18px 20px;border-radius:20px;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.95);box-shadow:0 6px 18px rgba(103,128,186,.14)}
+/* ===== 25단계: AI 집필 단계 · 양식 적용 ===== */
+.wstage.st-prep .wgrid,.wstage.st-prep .savebar,.wstage.st-prep .ws-abs,.wstage.st-prep .ws-refs,.wstage.st-prep #view-nochap{display:none}
+.wstage.st-abs .prep,.wstage.st-abs .wgrid,.wstage.st-abs .savebar,.wstage.st-abs .ws-type,.wstage.st-abs .ws-refs{display:none}
+.wstage.st-body .prep,.wstage.st-body .ws-type,.wstage.st-body .ws-abs,.wstage.st-body .ws-refs{display:none}
+.wstage.st-refs .prep,.wstage.st-refs .wgrid,.wstage.st-refs .savebar,.wstage.st-refs .ws-type,.wstage.st-refs .ws-abs{display:none}
+.wstage:not(.st-body) > .notice{display:none}
+.absgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}.absgrid textarea{margin-top:6px}
+.fxgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.fxtpl{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:18px;background:#F3F7FF;border:1px solid #E4ECFF}.fxtpl.on{background:#EEFBF3;border-color:#CDEFD9}.fxtpl b{font-size:15px}.fxtpl span{font-size:13px;color:var(--ink2)}.fxtpl .btn{align-self:flex-start}
+.fxdl{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 10px}.fxissues li{margin-bottom:4px}
+@media (max-width:900px){.absgrid,.fxgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3585,6 +3596,104 @@ const _topics24=VIEWS.topics;VIEWS.topics=()=>{const h=_topics24();const v=(S.se
   return h.replace(/<section class="card view">[\s\S]*?<\/section>/,`<div class="tp-go"><div><p class="hint" style="margin:0">방향을 고르고 버튼을 누르면 <b>연구 설정의 '나의 관점'</b>을 기준으로 목차가 만들어집니다.${v?"":` <span class="tag warn">연구 설정에 나의 관점이 비어 있습니다</span>`}</p><p class="hint" style="margin:6px 0 0"><a href="#" data-go="classify">상세 분석(문헌 비교·동향·관점 대조) 보기</a> · <a href="#" data-go="design">연구 설계 상세</a></p></div><textarea id="tp_view" hidden>${esc(v)}</textarea><button class="btn primary big" id="tp_go">이 방향으로 목차 만들고 집필 시작</button></div>`);};
 const _btopics24=BIND.topics;BIND.topics=()=>{_btopics24();const g=$("#tp_go");if(g&&!(S.settings.view||"").trim())g.onclick=()=>{toast("연구 설정에서 '나의 관점'을 먼저 적어 주세요. 글의 방향을 잡는 기준입니다.");go("setup");};};
 TOUR.forEach(t=>{if(t.sel==="#tp_go")t.d="방향 후보 하나를 고르고 이 버튼을 누르면 연구 설정의 '나의 관점'을 기준으로 목차가 만들어집니다.";});
+
+
+/* =========================================================
+   25단계: AI 집필 = 준비(글 형태) → 초록 → 본문 → 참고문헌 / 양식 적용
+   ========================================================= */
+/* 메뉴: 참고문헌·출력·서식 → AI 집필 안으로, '양식 적용' 추가 */
+{["refs","review"].forEach(k=>{const i=MENU9.findIndex(m=>m[0]===k);if(i>=0)MENU9.splice(i,1);});const e=MENU9.find(m=>m[0]==="export");if(e)e[1]="양식 적용";}
+Object.assign(VIEW_L,{export:"양식 적용",refs:"AI 집필"});Object.assign(SUBVIEW,{refs:"write",review:"write"});
+/* 연구 설정: 글 형태 카드 숨김(값은 유지 — AI 집필에서 선택) */
+const _setup25=VIEWS.setup;VIEWS.setup=()=>_setup25().replace(/<section class="card"><h2>글 형태<\/h2>[\s\S]*?<\/section>/,`<input type="radio" name="st_type" value="${esc(S.settings.docType)}" checked hidden>`).replace("여기 적은 글 형태·주제·키워드·나의 관점이","여기 적은 주제·키워드·나의 관점이").replace(", 출력 서식의 기준이",", 집필의 기준이");
+/* ---------- AI 집필 단계 ---------- */
+let WST="prep";
+const WSTAGES=[["prep","준비","글 형태·목차·예측 결론·초고"],["abs","초록","국문·영문 초록"],["body","본문","장별 집필"],["refs","참고문헌","인용 문헌 정리"]];
+function wsBadges(){const st=prepState(),F=S.front||{},D=S.design;const chars=D.chapters.reduce((a,c)=>a+String((S.writing[c.ch_id]||{}).text||"").replace(/\s/g,"").length,0);const n=citedDocs().length;
+  return {prep:st.ready?"완료":"",abs:F.abstract_ko&&F.abstract_en?"국문·영문":F.abstract_ko?"국문":"",body:chars?`${chars.toLocaleString()}자`:"",refs:n?`${n}편`:""};}
+function wsTabs(){const b=wsBadges();return `<div class="hubtabs wstabs" role="tablist" aria-label="AI 집필 단계">${WSTAGES.map(([k,t,d],i)=>`<button role="tab" data-wst="${k}" aria-selected="${k===WST}"><span class="hn">${i+1}</span><span class="ht"><b>${t}</b><small>${d}</small></span>${b[k]?`<em>${b[k]}</em>`:""}</button>`).join('<span class="harrow" aria-hidden="true">›</span>')}</div>`;}
+function typeSection(){const s=S.settings;return `<section class="card ws-type"><h2>글 형태</h2><p class="hint">글 형태에 따라 기본 목차, 인용 방식(각주·본문 괄호), 필요한 항목(초록·목차 등)이 정해집니다.</p><div class="typecards">${DOC_TYPE_LIST.map(t=>`<label class="${t===s.docType?"on":""}"><input type="radio" name="wr_type" value="${t}" ${t===s.docType?"checked":""}><b>${t}</b><small>${esc(DOC_TYPES[t].outline.split("/").length)}장 목차 · ${DOC_TYPES[t].cite==="apa"?"본문 괄호 인용":"각주·국문식"}</small></label>`).join("")}</div></section>`;}
+function absSection(){const F=S.front||{},has=!!G.apiKey;return `<section class="card ws-abs"><div class="row" style="justify-content:space-between"><h2 style="margin:0">초록</h2><span class="hint">목차·초고·예측 결론·나의 관점을 바탕으로 AI가 쓰고, 저자가 고칩니다. 본문에 없는 수치·주장은 쓰지 않습니다.</span></div>
+   <div class="absgrid"><div><div class="row" style="justify-content:space-between"><label for="ab_ko" style="margin:0">국문초록</label><button class="btn sm primary" id="ab_ai_ko">${has?"AI로 국문초록 쓰기":"초안 만들기(규칙 기반)"}</button></div><textarea id="ab_ko" rows="10" placeholder="연구 목적 → 방법 → 결과 → 결론 순서로 씁니다.">${esc(F.abstract_ko||"")}</textarea><label for="ab_kw">주제어 (쉼표로 구분)</label><input type="text" id="ab_kw" value="${esc(F.keywords_ko||"")}"></div>
+   <div><div class="row" style="justify-content:space-between"><label for="ab_en" style="margin:0">영문초록 (Abstract)</label><button class="btn sm primary" id="ab_ai_en" ${has?"":"disabled title=\"Claude API 키가 필요합니다\""}>AI로 영문초록 쓰기</button></div><textarea id="ab_en" rows="10" placeholder="국문초록을 바탕으로 학술 영어로 작성합니다.">${esc(F.abstract_en||"")}</textarea><label for="ab_kwen">Keywords</label><input type="text" id="ab_kwen" value="${esc(F.keywords_en||"")}"><label for="ab_ten">영문 제목</label><input type="text" id="ab_ten" value="${esc(F.title_en||"")}"></div></div>
+   <div class="row" style="justify-content:space-between;margin-top:12px"><span class="hint" id="ab_prog">${F.abstract_by?`마지막 작성: ${esc(F.abstract_by)}`:""}</span><button class="btn primary" id="ab_save">초록 저장</button></div></section>`;}
+let RFX={style:"",scope:"cited"};
+function refsList(){const st=RFX.style||(S.format&&S.format.refStyle)||dt().cite;const cited=citedDocs();const pool=RFX.scope==="cited"?cited:[...new Map([...cited,...papers().filter(p=>p.decision==="채택")].map(p=>[p.id,p])).values()];
+  const ai=S.refsAI&&S.refsAI.style===st&&S.refsAI.scope===RFX.scope&&S.refsAI.ids.join()===pool.map(p=>p.id).sort().join()?S.refsAI:null;
+  const fmt=p=>ai&&ai.map[p.id]?ai.map[p.id]:st==="custom"?fmtRef(p):cite(p,st);
+  return {st,pool:pool.sort((a,b)=>String(a.authors||"").localeCompare(String(b.authors||""),"ko")),fmt,ai,cited};}
+function refsSection(){const r=refsList();return `<section class="card ws-refs"><div class="row" style="justify-content:space-between"><h2 style="margin:0">참고문헌</h2><span class="hint">본문의 [@문헌] 인용에서 자동으로 모아 선택한 양식으로 정리합니다.</span></div>
+   <div class="row" style="margin:12px 0"><label for="rx_scope" style="margin:0">범위</label><select id="rx_scope" style="width:auto"><option value="cited" ${RFX.scope==="cited"?"selected":""}>본문에 인용한 문헌 (${r.cited.length})</option><option value="adopted" ${RFX.scope==="adopted"?"selected":""}>인용 + 채택한 문헌</option></select>
+    <label for="rx_style" style="margin:0 0 0 8px">양식</label><select id="rx_style" style="width:auto"><option value="kr" ${r.st==="kr"?"selected":""}>국문 학위논문식</option><option value="apa" ${r.st==="apa"?"selected":""}>APA</option>${S.format&&S.format.refPattern?`<option value="custom" ${r.st==="custom"?"selected":""}>학술지 규칙(직접 입력)</option>`:""}</select>
+    <button class="btn primary" id="rx_ai" ${G.apiKey?"":"disabled title=\"Claude API 키가 필요합니다\""}>AI로 양식 다듬기</button><button class="btn" id="rx_copy">목록 복사</button>${r.ai?`<span class="tag">AI 정리 · ${fmtTime(r.ai.at)}</span>`:""}</div>
+   ${r.pool.length?`<ol class="reflist">${r.pool.map(p=>`<li>${esc(r.fmt(p))}${!p.authors||!p.year?' <span class="tag red">서지 정보 보완 필요</span>':""}${r.cited.includes(p)?"":' <span class="tag warn">본문 미인용</span>'}</li>`).join("")}</ol>`:`<p class="hint">아직 본문에 인용한 문헌이 없습니다. 본문에서 [@문헌] 인용을 넣으면 여기에 나타납니다.</p>`}
+   <p class="hint" style="margin-top:10px">학술지·학교 규정과 정확히 같은지는 양식 적용 단계에서 올린 양식과 함께 확인하세요.</p></section>`;}
+const _write25=VIEWS.write;VIEWS.write=()=>{let h=_write25();
+  h=h.replace(/<h1>집필<\/h1><p class="lead">[\s\S]*?<\/p>/,`<h1>AI 집필</h1><p class="lead">자료 수집 및 분석에서 모은 자료와 분류, 연구 설정의 나의 관점으로 씁니다. 준비 → 초록 → 본문 → 참고문헌 순서로 진행하세요.</p>`+wsTabs()+typeSection());
+  if(!/wstabs/.test(h))h=wsTabs()+typeSection()+h;
+  return `<div class="wstage st-${WST}">${h}${absSection()}${refsSection()}</div>`;};
+const _bwrite25=BIND.write;BIND.write=()=>{_bwrite25();
+  document.querySelectorAll("[data-wst]").forEach(b=>b.onclick=()=>{WST=b.dataset.wst;render();window.scrollTo(0,0);});
+  document.querySelectorAll('input[name="wr_type"]').forEach(r=>r.onchange=async()=>{const nt=r.value,s=S.settings;if(nt===s.docType)return;s.docType=nt;
+    S.format=Object.assign({},FMT_PRESETS[nt],{required:undefined,template:S.format&&S.format.template,hwpx:S.format&&S.format.hwpx});
+    const D=S.design,P=pw();const noText=D.chapters.every(c=>!String((S.writing[c.ch_id]||{}).text||"").trim());
+    if(!P.outline_ok&&noText){s.outline=DOC_TYPES[nt].outline;D.chapters=outlineParts().map(t=>({ch_id:"C"+uid(),title:t,points:"",doc_ids:[],claim_ids:[],state:"draft"}));ensure6();}
+    logSync("write","글 형태","ok",nt);await flush();toast(`글 형태를 "${nt}"(으)로 정했습니다.${!P.outline_ok&&noText?" 기본 목차도 바꿨습니다.":""}`);render();});
+  const getF=()=>{S.front=S.front||{};const F=S.front;F.abstract_ko=$("#ab_ko").value;F.keywords_ko=$("#ab_kw").value;F.abstract_en=$("#ab_en").value;F.keywords_en=$("#ab_kwen").value;F.title_en=$("#ab_ten").value;return F;};
+  const sv=$("#ab_save");if(sv)sv.onclick=async()=>{getF();await flush();toast("초록을 저장했습니다.");render();};
+  const material=()=>{const D=S.design;return D.chapters.map((c,i)=>{const w=S.writing[c.ch_id]||{};const t=String(w.text||w.draft_orig||"").replace(CITE_RE,"").replace(/\s+/g," ").trim();return `${i+1}. ${c.title}: ${t.slice(0,600)}`;}).join("\n");};
+  const ko=$("#ab_ai_ko");if(ko)ko.onclick=async()=>{const F=getF();const P=pw(),s=S.settings,p=$("#ab_prog");
+    if(!G.apiKey){const qs=String(s.questions||"").split("\n").filter(Boolean);F.abstract_ko=[`본 연구는 ${s.topic||"[연구 주제]"}을(를) 다룬다.`,s.purpose?`연구 목적은 ${s.purpose}`:"",qs.length?`연구 질문은 ${qs.join(", ")}이다.`:"",P.conclusion?`분석 결과, ${P.conclusion}`:"[결론: 저자 작성]","[규칙 기반 초안 — 연구 방법과 결과를 저자가 채워 주세요]"].filter(Boolean).join(" ");F.keywords_ko=F.keywords_ko||(s.keywords||[]).join(", ");F.abstract_by="규칙 기반 초안";await flush();render();return;}
+    ko.disabled=true;p.textContent="국문초록 작성 중…";
+    try{const r=parseJSON(await callClaude(`${projectContext()}\n글 형태: ${s.docType}\n예측 결론: ${P.conclusion||"(없음)"}\n\n장별 내용(초고·본문 요약):\n${material()}\n\n위 내용만 근거로 ${s.docType} 국문초록을 600~900자로 쓰세요. 연구 목적 → 연구 방법 → 주요 결과 → 결론·시사점 순서. 문헌 인용 표시는 쓰지 말고, 위에 없는 수치나 주장은 지어내지 마세요. 확인되지 않은 결과는 [저자 확인 필요]로 남기세요. 주제어 5개도 정하세요.\n반드시 JSON만: {"abstract":"","keywords":["",""]}`,3000));
+      F.abstract_ko=r.abstract||F.abstract_ko;if(r.keywords&&r.keywords.length)F.keywords_ko=r.keywords.join(", ");F.abstract_by=`Claude(${G.model}) 국문`;logSync("write","국문초록","ok",F.abstract_ko.length+"자");await flush();render();}
+    catch(e){p.textContent="오류: "+e.message;ko.disabled=false;}};
+  const en=$("#ab_ai_en");if(en)en.onclick=async()=>{const F=getF(),p=$("#ab_prog");if(!F.abstract_ko.trim())return toast("국문초록을 먼저 쓰거나 만들어 주세요.");en.disabled=true;p.textContent="영문초록 작성 중…";
+    try{const r=parseJSON(await callClaude(`다음 국문초록과 제목을 학술 영어로 옮기세요. 의미를 더하거나 빼지 말고, [저자 확인 필요] 표시는 [Author to confirm]으로 남기세요.\n제목: ${S.design.fields.title.value||S.settings.topic}\n국문초록: ${F.abstract_ko}\n주제어: ${F.keywords_ko}\n반드시 JSON만: {"title_en":"","abstract":"","keywords":["",""]}`,3000));
+      F.abstract_en=r.abstract||F.abstract_en;F.title_en=F.title_en||r.title_en||"";if(r.keywords&&r.keywords.length)F.keywords_en=r.keywords.join(", ");F.abstract_by=`Claude(${G.model}) 국문·영문`;logSync("write","영문초록","ok",F.abstract_en.length+"자");await flush();render();}
+    catch(e){p.textContent="오류: "+e.message;en.disabled=false;}};
+  const sc=$("#rx_scope");if(sc)sc.onchange=e=>{RFX.scope=e.target.value;render();};const sy=$("#rx_style");if(sy)sy.onchange=e=>{RFX.style=e.target.value;if(S.format)S.format.refStyle=e.target.value==="custom"?"custom":e.target.value;save();render();};
+  const cp=$("#rx_copy");if(cp)cp.onclick=async()=>{const r=refsList();try{await navigator.clipboard.writeText(r.pool.map(r.fmt).join("\n"));toast("참고문헌을 복사했습니다.");}catch(e){toast("복사하지 못했습니다.");}};
+  const ra=$("#rx_ai");if(ra)ra.onclick=async()=>{const r=refsList();if(!r.pool.length)return toast("정리할 문헌이 없습니다.");ra.disabled=true;ra.textContent="정리 중…";
+    try{const name=r.st==="apa"?"APA 7판":r.st==="custom"?`연구자 입력 규칙: ${S.format.refPattern}`:"국문 학위논문식(저자, 「논문 제목」, 『학술지』 권(호), 쪽, 연도.)";
+      const items=r.pool.map(p=>({id:p.id,authors:p.authors||"",year:p.year||"",title:p.title||"",journal:p.journal||"",volume:p.volume||"",publisher:p.publisher||"",doi:p.doi||""}));
+      const out=parseJSON(await callClaude(`다음 서지 정보를 ${name} 양식의 참고문헌 항목으로 정리하세요. 없는 정보는 지어내지 말고 비워 두세요(예: 쪽수가 없으면 쓰지 않음). id는 그대로 돌려주세요.\n${JSON.stringify(items)}\n반드시 JSON만: {"refs":[{"id":"","text":""}]}`,4000));
+      const map={};(out.refs||[]).forEach(x=>{if(x&&x.id&&x.text&&items.some(i=>i.id===x.id))map[x.id]=String(x.text);});
+      S.refsAI={style:r.st,scope:RFX.scope,ids:r.pool.map(p=>p.id).sort(),map,at:now()};logSync("write","참고문헌 정리","ok",`${Object.keys(map).length}/${items.length}편`);await flush();render();}
+    catch(e){toast("오류: "+e.message);ra.disabled=false;ra.textContent="AI로 양식 다듬기";}};};
+/* ---------- 양식 적용 (출력·서식 대신) ---------- */
+VIEWS.export=()=>{ensure6();const f=S.format,m=buildDoc(),errs=m.issues.filter(i=>i.level==="오류"),warns=m.issues.filter(i=>i.level==="경고");const tp=f.template,hw=f.hwpx;
+  const card=(ok,t,d,extra)=>`<div class="fxtpl ${ok?"on":""}"><b>${t}</b><span>${d}</span>${extra||""}</div>`;
+  return `<h1>양식 적용</h1><p class="lead">학교·학술지의 양식 파일을 올리면 그 양식의 용지·여백·문단 스타일을 알아보고, AI 집필에서 쓴 초록·본문·참고문헌을 양식에 맞춰 만듭니다.</p>
+  <section class="card"><h2>1. 양식 파일 올리기</h2><p class="hint">한글(HWPX)·워드(DOCX·DOTX) 양식을 올리세요. 구형 HWP는 한글에서 HWPX로 저장해 올려 주세요. PDF는 스타일을 읽을 수 없어 양식으로 쓸 수 없습니다.</p>
+   <div class="row"><input type="file" id="fx_file" accept=".hwpx,.docx,.dotx,.hwp,.pdf" style="width:auto"></div>
+   <div class="fxgrid">${card(!!hw,"한글 양식",hw?`${esc(hw.name)} · 스타일 ${hw.info.styles}개 · 본문 ${hw.info.body?esc(hw.info.body.name):"못 찾음"} · 장 제목 ${hw.info.h1?esc(hw.info.h1.name):"본문 스타일 사용"}`:"아직 없음",hw?'<button class="btn sm danger" data-fxdel="hwpx">지우기</button>':"")}
+    ${card(!!tp,"워드 양식",tp?`${esc(tp.name)} · ${tp.info.page?tp.info.page.join("×")+"mm":""} · 스타일 ${Object.values(tp.info.map).filter(Boolean).length}개 인식`:"아직 없음 — 없으면 글 형태 기본 서식으로 만듭니다",tp?'<button class="btn sm danger" data-fxdel="docx">지우기</button>':"")}</div></section>
+  <section class="card"><h2>2. 원고 점검</h2><p>${errs.length?`<span class="tag red">확인 필요 ${errs.length}</span>`:'<span class="tag">문제 없음</span>'} <span class="tag warn">참고 ${warns.length}</span> <span class="hint">· 초록 ${S.front&&S.front.abstract_ko?"있음":"없음"} · 본문 ${S.design.chapters.length}장 · 참고문헌 ${m.refs.length}편</span></p>
+   ${errs.length||warns.length?`<ul class="plist fxissues">${[...errs,...warns].slice(0,12).map(i=>`<li><span class="tag ${i.level==="오류"?"red":"warn"}">${esc(i.check)}</span> ${esc(i.detail)}</li>`).join("")}</ul><p class="hint">점검 항목이 있어도 내려받을 수 있습니다. 고칠 곳은 AI 집필에서 고치세요.</p>`:""}</section>
+  <section class="card"><h2>3. 내려받기</h2><div class="fxdl">
+   <button class="btn primary big" data-fx="hwpx" ${hw?"":"disabled"}>한글 (HWPX)</button><button class="btn primary big" data-fx="docx">워드 (DOCX)</button><button class="btn big" data-fx="pdf">PDF</button><button class="btn big" data-fx="html">HTML</button></div>
+   <p class="hint">${hw?"한글 파일은 올린 한글 양식에 내용을 채워 만듭니다(시험 기능 — 한글에서 열어 확인하세요).":"한글(HWPX)로 받으려면 한글 양식을 먼저 올리세요."} PDF는 인쇄 창에서 "PDF로 저장"을 고르세요.</p>
+   ${S.exportLog&&S.exportLog.length?`<h3>내려받은 기록</h3><table><tbody>${S.exportLog.slice(0,8).map(l=>`<tr><td class="hint">${fmtTime(l.t)}</td><td>${esc(l.format)}</td><td>${esc(l.name)}</td><td class="hint">${l.template?"양식: "+esc(l.template):"기본 서식"}</td></tr>`).join("")}</tbody></table>`:""}</section>`;};
+BIND.export=()=>{const f=S.format;
+  $("#fx_file").onchange=async e=>{const file=e.target.files[0];if(!file)return;const n=file.name.toLowerCase();
+    try{if(/\.hwp$/.test(n))throw new Error("구형 HWP는 읽을 수 없습니다. 한글에서 '다른 이름으로 저장 → HWPX'로 저장해 올려 주세요.");
+      if(/\.pdf$/.test(n))throw new Error("PDF는 스타일을 읽을 수 없어 양식으로 쓸 수 없습니다. 같은 양식의 한글(HWPX)이나 워드(DOCX) 파일을 올려 주세요.");
+      const buf=await file.arrayBuffer();
+      if(/\.hwpx$/.test(n)){const info=await analyzeHwpx(buf);await dbPut("data","hwpx:"+S.id,buf);f.hwpx={name:file.name,size:file.size,info,at:now()};logSync("export","한글 양식","ok",`${file.name}: 스타일 ${info.styles}개`);}
+      else if(/\.(docx|dotx)$/.test(n)){const info=analyzeTemplate(await unzip(buf));await dbPut("data","tpl:"+S.id,buf);f.template={name:file.name,size:file.size,use:true,info,map:info.map,at:now()};if(info.numbered.length)f.numbering="none";logSync("export","워드 양식","ok",`${file.name}: 스타일 ${info.styleCount}개`);}
+      else throw new Error("HWPX, DOCX, DOTX 파일만 양식으로 쓸 수 있습니다.");
+      await flush();toast("양식을 인식했습니다.");}catch(err){logSync("export","양식","error",err.message);toast(err.message);}render();};
+  document.querySelectorAll("[data-fxdel]").forEach(b=>b.onclick=async()=>{if(b.dataset.fxdel==="hwpx"){await dbDel("data","hwpx:"+S.id);f.hwpx=null;}else{await dbDel("data","tpl:"+S.id);f.template=null;}await flush();render();});
+  document.querySelectorAll("[data-fx]").forEach(b=>b.onclick=async()=>{const kind=b.dataset.fx,m=buildDoc(),name=safeName(S.design.fields.title.value||S.settings.topic||S.settings.name);
+    const dl=(blob,ext)=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name+"."+ext;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);};
+    try{if(kind==="hwpx")dl(await buildHwpx(m),"hwpx");else if(kind==="docx")dl(await buildDocx(m),"docx");
+      else if(kind==="pdf"){const w=window.open("","_blank");if(!w)throw new Error("팝업이 막혀 인쇄 창을 열지 못했습니다. 팝업을 허용하세요.");w.document.write(printHtml(m));w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(e){}},600);}
+      else download(name+".html",printHtml(m),"text/html");
+      S.exportLog.unshift({t:now(),format:{hwpx:"한글(HWPX)",docx:"워드(DOCX)",pdf:"PDF",html:"HTML"}[kind],name,errors:m.issues.filter(i=>i.level==="오류").length,warns:m.issues.filter(i=>i.level==="경고").length,template:kind==="hwpx"?(f.hwpx||{}).name:kind==="docx"&&f.template?f.template.name:""});S.exportLog=S.exportLog.slice(0,50);logSync("export","내려받기","ok",kind);await flush();render();}
+    catch(e){logSync("export","내려받기","error",e.message);toast(e.message);}});};
+/* 작동 방법 안내 위치 갱신 */
+TOUR.forEach(t=>{if(t.v==="refs"){t.v="write";t.sel=".wstabs";t.t="AI 집필 단계";t.d="준비 → 초록 → 본문 → 참고문헌 순서로 진행합니다. 참고문헌은 본문에 인용한 문헌으로 자동으로 만들어집니다.";}if(t.v==="export"){t.sel="#fx_file";t.t="양식 적용";t.d="학교·학술지 양식(한글·워드)을 올리면 그 양식에 맞춰 한글·워드·PDF·HTML로 내려받습니다.";}});
 
 /* ---------- 시작 ---------- */
 (async()=>{
