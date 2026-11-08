@@ -742,6 +742,15 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .fchips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.fchip{padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;background:#F1F3F8;color:#7B86A3}.fchip.ok{background:#E6F7EE;color:#167A45}
 .finalprev{display:block;width:100%;height:78vh;margin-top:14px;border:0;border-radius:18px;background:#fff;box-shadow:inset 0 0 0 1px #E1E8F5}
 .wstabs{flex-wrap:nowrap}.wstabs button{flex:1 1 0;min-width:0;padding:12px}.wstabs .ht small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wstabs .harrow{font-size:18px}@media (max-width:1100px){.wstabs{flex-wrap:wrap}.wstabs button{flex:1 1 200px}}
+/* ===== 30단계 ===== */
+body:not(.homemode) .app{zoom:.9}
+.appfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;margin:40px 0 10px;padding:18px 4px 6px;border-top:1px solid #DDE5F4;font-size:13px;color:#6B7A9E}
+.af-l{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}.af-l b{color:#2C3A60}.appfoot a{color:#2350C8}
+.landing .appfoot{position:relative;z-index:2;margin:0 clamp(20px,4vw,64px);padding-bottom:18px}
+.snapbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin:14px 0 4px;padding:14px 16px;border-radius:18px;background:#F3F7FF;border:1px solid #DCE7FF}.snapbar input{min-width:260px}
+.hbar{gap:14px;margin-bottom:10px}.chk{display:inline-flex;align-items:center;gap:6px;font-weight:600;margin:0}
+.htable2 tbody tr{cursor:pointer}.htable2 tr.sel{background:#EEF4FF!important}
+.snapprev{height:62vh}
 </style>
 </head>
 <body>
@@ -3829,6 +3838,51 @@ const _write29=VIEWS.write;VIEWS.write=()=>{let h=_write29();h=h.replace('<secti
 const _bwrite29=BIND.write;BIND.write=()=>{_bwrite29();
   const s=$("#wt_save");if(s)s.onclick=async()=>{const t=$("#wt_title").value.trim();if(!t)return toast("논문 제목을 입력하세요.");S.settings.topic=t;S.settings.subtitle=$("#wt_sub").value.trim();ensure6();setField("title",t,"연구자");recordView&&0;await flush();toast("논문 제목을 저장했습니다.");render();};
   document.querySelectorAll("[data-fd]").forEach(b=>b.onclick=()=>finalDownload(b.dataset.fd));};
+
+
+/* =========================================================
+   30단계: 푸터 · 본화면 글자 축소 · 임시저장/히스토리
+   ========================================================= */
+/* ---------- 푸터 ---------- */
+const FOOTER_HTML=`<footer class="appfoot"><div class="af-l"><b>AI WIKI 논문 집필</b><span>관리자 장용철</span><span>문의 <a href="mailto:long98@hufs.ac.kr">long98@hufs.ac.kr</a></span></div><div class="af-r">© ${new Date().getFullYear()} AI WIKI</div></footer>`;
+const _render30=render;render=function(){_render30();const v=$("#view");if(!v||v.querySelector(".appfoot"))return;const land=v.querySelector(".landing");(land||v).insertAdjacentHTML("beforeend",FOOTER_HTML);};
+/* ---------- 히스토리 메뉴 ---------- */
+{const i=MENU9.findIndex(m=>m[0]==="write");if(i>=0&&!MENU9.some(m=>m[0]==="history"))MENU9.splice(i+1,0,["history","히스토리"]);}
+ICONS.history='<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>';VIEW_L.history="히스토리";
+const SNAP_KEYS=["design","writing","front","prework","refsAI"];
+const clone=o=>o==null?o:JSON.parse(JSON.stringify(o));
+function fmtKDate(t){const d=new Date(t);return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${d.toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"})}`;}
+function snapStats(sn){const D=sn.design||{chapters:[]},W=sn.writing||{};const chars=(D.chapters||[]).reduce((a,c)=>a+String((W[c.ch_id]||{}).text||"").replace(/\s/g,"").length,0);
+  const cites=new Set();(D.chapters||[]).forEach(c=>String((W[c.ch_id]||{}).text||"").replace(CITE_RE,(m,id)=>{cites.add(id);return m;}));
+  return {chars,chapters:(D.chapters||[]).length,refs:cites.size,abs:sn.front&&sn.front.abstract_ko?(sn.front.abstract_en?"국문·영문":"국문"):"없음"};}
+function takeSnapshot(note,auto){ensure6();S.drafts=S.drafts||[];const sn={id:"SN"+uid(),t:now(),note:String(note||"").trim(),auto:!!auto,title:S.design.fields.title.value||S.settings.topic||S.settings.name,subtitle:S.settings.subtitle||"",docType:S.settings.docType,view:S.settings.view||""};
+  SNAP_KEYS.forEach(k=>{sn[k]=clone(S[k]);});S.drafts.unshift(sn);if(S.drafts.length>100)S.drafts=S.drafts.slice(0,100);logSync("write","임시저장","ok",`${fmtKDate(sn.t)}${sn.note?" · "+sn.note:""}`);return sn;}
+function withSnapshot(sn,fn){const keep={};SNAP_KEYS.forEach(k=>{keep[k]=S[k];S[k]=clone(sn[k]);});const ks={topic:S.settings.topic,subtitle:S.settings.subtitle,docType:S.settings.docType};
+  S.settings.topic=sn.title;S.settings.subtitle=sn.subtitle;S.settings.docType=sn.docType;try{ensure6();return fn();}finally{SNAP_KEYS.forEach(k=>{S[k]=keep[k];});Object.assign(S.settings,ks);}}
+async function restoreSnapshot(sn){if(!confirm(`${fmtKDate(sn.t)}에 저장한 원고를 AI 집필에 불러올까요?\n지금 작업 중인 내용은 '불러오기 전 자동 저장'으로 히스토리에 먼저 보관됩니다.`))return;
+  takeSnapshot("불러오기 전 자동 저장",true);SNAP_KEYS.forEach(k=>{S[k]=clone(sn[k]);});S.settings.topic=sn.title;S.settings.subtitle=sn.subtitle;S.settings.docType=sn.docType;ensure6();
+  logSync("write","히스토리 불러오기","ok",fmtKDate(sn.t));await flush();toast("저장한 원고를 불러왔습니다. 고친 뒤 다시 출력하세요.");WST="final";go("write");}
+function snapDetail(sn){const st=snapStats(sn);const html=withSnapshot(sn,()=>printHtml(finalModel()));
+  $("#dlgBody").innerHTML=`<h2>${esc(sn.title||"(제목 없음)")}</h2><p class="hint">${fmtKDate(sn.t)} 저장${sn.note?` · ${esc(sn.note)}`:""} · ${esc(sn.docType)} · 목차 ${st.chapters}장 · 본문 ${st.chars.toLocaleString()}자 · 참고문헌 ${st.refs}편 · 초록 ${st.abs}</p>
+   <iframe class="finalprev snapprev" title="저장한 원고 미리보기" srcdoc="${esc(html)}"></iframe>
+   <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="sd_x">닫기</button><button class="btn primary" id="sd_load">이 원고 불러와서 고치기</button></div>`;
+  $("#dlg").showModal();$("#sd_x").onclick=()=>$("#dlg").close();$("#sd_load").onclick=()=>{$("#dlg").close();restoreSnapshot(sn);};}
+let HSEL=new Set();
+VIEWS.history=()=>{const L=S.drafts||[];HSEL=new Set([...HSEL].filter(id=>L.some(x=>x.id===id)));return `<h1>히스토리</h1><p class="lead">AI 집필 → 논문 확인에서 임시저장한 원고가 쌓입니다. 누르면 상세보기, <b>불러오기</b>를 누르면 그때의 원고가 AI 집필에 다시 깔립니다.</p>
+  ${L.length?`<section class="card"><div class="row hbar"><label class="chk"><input type="checkbox" id="hs_all" ${HSEL.size&&HSEL.size===L.length?"checked":""}> 전체 선택</label><span class="hint">${HSEL.size}개 선택됨 · 전체 ${L.length}개</span><button class="btn sm danger" id="hs_del" ${HSEL.size?"":"disabled"}>선택 삭제</button></div>
+   <div class="tablewrap"><table class="htable2"><thead><tr><th></th><th>저장 시각</th><th>제목 · 메모</th><th>글 형태</th><th>진행</th><th></th></tr></thead><tbody>${L.map(sn=>{const st=snapStats(sn);return `<tr data-sn="${sn.id}" class="${HSEL.has(sn.id)?"sel":""}"><td><input type="checkbox" class="hs_ck" data-id="${sn.id}" ${HSEL.has(sn.id)?"checked":""} aria-label="선택"></td><td class="nowrap"><b>${fmtKDate(sn.t)}</b>${sn.auto?'<div><span class="tag warn">자동 저장</span></div>':""}</td><td><b>${esc(sn.title||"(제목 없음)")}</b>${sn.note?`<div class="hint">${esc(sn.note)}</div>`:""}</td><td>${esc(sn.docType)}</td><td class="hint">목차 ${st.chapters}장 · 본문 ${st.chars.toLocaleString()}자<br>참고문헌 ${st.refs}편 · 초록 ${st.abs}</td><td class="nowrap"><button class="btn sm" data-hv="${sn.id}">상세보기</button><button class="btn sm primary" data-hl="${sn.id}">불러오기</button></td></tr>`;}).join("")}</tbody></table></div></section>`
+  :`<section class="card"><p class="hint" style="margin:0">아직 임시저장한 원고가 없습니다. <b>AI 집필 → 5 논문 확인</b>에서 <b>임시저장</b>을 누르면 여기에 쌓입니다.</p><button class="btn primary" style="margin-top:12px" id="hs_go">AI 집필로 가기 →</button></section>`}`;};
+BIND.history=()=>{const L=S.drafts||[],find=id=>L.find(x=>x.id===id);const g=$("#hs_go");if(g)g.onclick=()=>{WST="final";go("write");};
+  const all=$("#hs_all");if(all)all.onchange=()=>{HSEL=all.checked?new Set(L.map(x=>x.id)):new Set();render();};
+  document.querySelectorAll(".hs_ck").forEach(c=>{c.onclick=e=>e.stopPropagation();c.onchange=()=>{c.checked?HSEL.add(c.dataset.id):HSEL.delete(c.dataset.id);render();};});
+  const del=$("#hs_del");if(del)del.onclick=async()=>{if(!confirm(`선택한 ${HSEL.size}개 임시저장을 지울까요? 되돌릴 수 없습니다.`))return;S.drafts=L.filter(x=>!HSEL.has(x.id));logSync("write","히스토리 삭제","ok",`${HSEL.size}개`);HSEL=new Set();await flush();render();};
+  document.querySelectorAll("[data-hv]").forEach(b=>b.onclick=e=>{e.stopPropagation();snapDetail(find(b.dataset.hv));});
+  document.querySelectorAll("[data-hl]").forEach(b=>b.onclick=e=>{e.stopPropagation();restoreSnapshot(find(b.dataset.hl));});
+  document.querySelectorAll("tr[data-sn]").forEach(r=>r.onclick=()=>snapDetail(find(r.dataset.sn)));};
+const _go30=go;go=function(v){if(v==="history"&&current!=="history")HSEL=new Set();return _go30(v);};
+/* 논문 확인에 임시저장 */
+const _final30=finalSection;finalSection=function(){const n=(S.drafts||[]).length,last=(S.drafts||[]).find(x=>!x.auto);return _final30().replace('<div class="fxdl">',`<div class="snapbar"><div><b>임시저장</b><span class="hint"> 지금 원고를 통째로 보관합니다 · 히스토리 ${n}개${last?` · 마지막 ${fmtKDate(last.t)}`:""}</span></div><div class="row" style="flex-wrap:nowrap"><input type="text" id="sn_note" placeholder="메모(선택) 예: 지도교수 1차 검토 전"><button class="btn primary" id="sn_save">임시저장</button><button class="btn" id="sn_hist">히스토리 보기</button></div></div><div class="fxdl">`);};
+const _bwrite30=BIND.write;BIND.write=()=>{_bwrite30();const s=$("#sn_save");if(s)s.onclick=async()=>{const sn=takeSnapshot($("#sn_note").value,false);await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다.`);render();};const h=$("#sn_hist");if(h)h.onclick=()=>go("history");};
 
 /* ---------- 시작 ---------- */
 (async()=>{
