@@ -787,6 +787,26 @@ body:not(.homemode) .app{zoom:.9}
 .stg{display:flex;flex-wrap:wrap;align-items:center;gap:4px}.stg-i{font-size:12px;padding:1px 8px;border-radius:999px;background:#F1F3F8;color:#9AA5C0}.stg-i.half{background:#FEF3C7;color:#B45309}.stg-i.ok{background:#DCFCE7;color:#15803D}.stg-i.here{box-shadow:inset 0 0 0 1.5px #2350C8;font-weight:700}.stg-a{color:#C3CBDD;font-size:12px}
 .tpgate{margin:10px 0 0;padding:10px 14px;border-radius:14px;background:#FFF8EC;border:1px solid #F7E2BD;font-size:13.5px;color:#7A4B0E}.tpgate.ok{background:#EEFBF3;border-color:#CDEFD9;color:#167A45}
 @media (max-width:1000px){.tpcols{grid-template-columns:1fr}}
+/* ===== 35단계 ===== */
+.kwsearch{position:relative;margin:4px 0 10px}.kws-box{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;border-radius:14px;background:#EDF1FB;box-shadow:var(--inset)}.kws-box input{flex:1;border:0!important;box-shadow:none!important;background:transparent!important}.kws-ico{color:#8B95B0;display:inline-grid}
+.kws-list{position:absolute;z-index:40;left:0;right:0;top:calc(100% - 40px);margin:4px 0 0;padding:6px;list-style:none;border-radius:14px;background:#fff;box-shadow:0 16px 40px rgba(30,42,74,.18);max-height:300px;overflow:auto}
+.kws-list li{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer}.kws-list li span{font-size:12px;color:var(--ink3)}.kws-list li:hover,.kws-list li.on{background:#EEF4FF}.kws-new{color:#2350C8;font-weight:600}
+.kws-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.kchip{display:inline-flex;align-items:center;gap:4px;padding:3px 6px 3px 11px;border-radius:999px;background:#E4EDFF;color:#2350C8;font-size:13px;font-weight:600}.kchip button{all:unset;cursor:pointer;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;color:#2350C8}.kchip button:hover{background:#CFDDFF}
+.appfoot .af-l{gap:0}.af-l>*{display:inline-flex;align-items:center}.af-l>*+*::before{content:"·";margin:0 10px;color:#B8C2DA}
+.appr{all:unset;cursor:pointer;padding:2px 11px;border-radius:999px;font-size:12px;font-weight:700}.a-승인{background:#DCFCE7;color:#15803D}.a-미승인{background:#F1F3F8;color:#6B7A9E;box-shadow:inset 0 0 0 1px #DDE3EF}.a-제외{background:#FFE4E6;color:#E11D48}.appr:hover{filter:brightness(.96);text-decoration:underline}
+.apbox dl{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;margin:10px 0}.apbox dt{color:var(--ink3);font-size:13px}.apbox dd{margin:0}.apbox dd.red{color:#E11D48}
+/* ===== 36단계: AI 집필 8단계 ===== */
+.wstage .prep,.wstage .wgrid,.wstage .savebar,.wstage .ws-type,.wstage .ws-abs,.wstage .ws-refs,.wstage .ws-title,.wstage .ws-final,.wstage .ws-form,.wstage .ws-out,.wstage>.notice{display:none!important}
+.wstage.st-prep .prep,.wstage.st-prep .ws-title,.wstage.st-abs .ws-abs,.wstage.st-refs .ws-refs,.wstage.st-type .ws-type,.wstage.st-form .ws-form,.wstage.st-final .ws-final,.wstage.st-out .ws-out,.wstage.st-body>.notice{display:block!important}
+.wstage.st-body .wgrid{display:grid!important}.wstage.st-body .savebar{display:flex!important}
+.wstabs{flex-wrap:wrap!important}.wstabs button{flex:1 1 calc(25% - 12px)!important}.wstabs .harrow{display:none}
+.wsbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin:16px 0 4px;padding:14px 18px;border-radius:18px;background:#F3F7FF;border:1px solid #DCE7FF}.wsbar.saved{background:#EEFBF3;border-color:#CDEFD9}
+.wstage.ws-locked :is(.prep,.wgrid,.ws-type,.ws-abs,.ws-refs,.ws-title,.ws-form) :is(input,textarea,select,button,label){pointer-events:none!important}
+.wstage.ws-locked :is(.prep,.wgrid,.ws-type,.ws-abs,.ws-refs,.ws-title,.ws-form){opacity:.72;filter:grayscale(.15)}
+.formgrid{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;margin-top:12px}.fxbox{padding:16px 18px;border-radius:18px;background:#F7F9FD;border:1px solid #E6ECF8}.fxbox h3{margin:0 0 4px;font-size:15.5px}
+.fxgrid1{display:flex;flex-direction:column;gap:10px;margin-top:10px}.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 12px}.mgrid label{margin-top:4px}
+.unit{display:flex;align-items:center;gap:4px}.unit span{font-size:12px;color:var(--ink3)}
+@media (max-width:1100px){.formgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.wstabs button{flex-basis:calc(50% - 12px)!important}}
 </style>
 </head>
 <body>
@@ -4121,6 +4141,182 @@ const _ps34=prepState;prepState=function(){const r=_ps34();const t=TS().state===
 const _pp34=prepPanel;prepPanel=function(){const h=_pp34();const t=TS().state==="saved";return h.replace('<div class="prep-grid two">',`<div class="tpgate ${t?"ok":""}">${t?`✓ 토픽·방향 저장됨 (${fmtTime(TS().at)}) · 토픽 자료 ${TS().topic||0}편 · 참고문헌 자료 ${TS().ref||0}편`:`토픽·방향을 아직 저장하지 않았습니다. <a href="#" id="pp_gotp">토픽·방향에서 저장</a>해야 AI 집필이 열립니다.`}</div><div class="prep-grid two">`);};
 const _bwrite34=BIND.write;BIND.write=()=>{_bwrite34();const a=$("#pp_gotp");if(a)a.onclick=e=>{e.preventDefault();go("topics");};};
 const _hub34=hubHeader;hubHeader=function(v,lead){return _hub34(v,lead).replace(/(<button role="tab" data-hub="topics"[\s\S]*?)(<em>[^<]*<\/em>)?(<\/button>)/,(m,a,em,c)=>{const n=papers().filter(isApproved).length,st=TS().state;return a+(n?`<em>${st==="saved"?"저장됨":`승인 ${n}`}</em>`:"")+c;});};
+
+
+/* =========================================================
+   35단계: 키워드 검색 · 푸터 띄어쓰기 · 부제 삭제 · 판단하기 표(AI 토픽·비고·승인 여부+사유) · 집필자 분류
+   ========================================================= */
+/* ---------- 연구 설정: 부제 삭제 · 키워드 검색 ---------- */
+const _setup35=VIEWS.setup;VIEWS.setup=()=>{let h=_setup35();
+  h=h.replace(/<label for="st_sub">부제<\/label><input type="text" id="st_sub" value="[^"]*">/,'<input type="hidden" id="st_sub" value="">');
+  h=h.replace(/<p class="hint">키워드 사전\(동의어·상위 개념·제외어\)은 <button class="btn sm" id="st_kwd">키워드 사전 관리<\/button><\/p>/,
+   `<button id="st_kwd" hidden></button><div class="kwsearch"><label for="kws_q">키워드 검색 <span class="hint">— 검색해서 고르면 핵심 키워드에 바로 들어갑니다</span></label><div class="kws-box"><span class="kws-ico">${SVG(ICONS.search)}</span><input type="text" id="kws_q" autocomplete="off" placeholder="예: 공급망, 직접투자, 인력양성" role="combobox" aria-expanded="false" aria-controls="kws_list"><button class="btn sm primary" id="kws_add">추가</button></div><ul id="kws_list" class="kws-list" role="listbox" hidden></ul>
+    <div class="kws-chips" id="kws_chips">${(S.settings.keywords||[]).map(k=>`<span class="kchip">${esc(k)}<button data-kwdel="${esc(k)}" aria-label="${esc(k)} 빼기">×</button></span>`).join("")}</div></div>`);
+  return h.replace('<label for="st_topic">연구 주제(논문 제목)</label>','<label for="st_topic">연구 주제(논문 제목) <span class="hint">— 부제가 있으면 함께 적으세요</span></label>');};
+function kwCandidates(){const m=new Map();const add=(t,src)=>{t=String(t||"").trim();if(!t||t.length>40)return;const k=t.toLowerCase();if(!m.has(k))m.set(k,{term:t,src:new Set(),n:0});m.get(k).src.add(src);};
+  (S.keywords||[]).forEach(k=>{if(k.type==="excluded")return;add(k.term,k.type==="ai"?"AI 추천":"사전");(k.synonyms||[]).forEach(s=>add(s,"사전"));});
+  papers().forEach(p=>{(p.keywords||[]).forEach(k=>add(k,"자료"));(p.kw_ai||[]).forEach(k=>add(k,"AI 추천"));if(p.topic_ai){(p.topic_ai.keywords||[]).forEach(k=>add(k,"AI 추천"));}});
+  const P=papers();m.forEach(v=>{const t=v.term.toLowerCase().replace(/\s+/g,"");v.n=P.filter(p=>`${p.title} ${(p.keywords||[]).join(" ")} ${p.abstract||""}`.toLowerCase().replace(/\s+/g,"").includes(t)).length;});return [...m.values()];}
+function kwAddCore(term){term=String(term||"").trim();if(!term)return false;const s=S.settings;s.keywords=s.keywords||[];if(s.keywords.some(k=>k.toLowerCase()===term.toLowerCase())){toast(`"${term}"은(는) 이미 핵심 키워드입니다.`);return false;}
+  s.keywords.push(term);syncCoreFromSettings();logSync("project","핵심 키워드 추가","ok",term);save();return true;}
+let KWS_I=-1;
+const _bsetup35=BIND.setup;BIND.setup=()=>{_bsetup35();const q=$("#kws_q");if(!q)return;const list=$("#kws_list");let cands=kwCandidates();
+  const show=()=>{const v=q.value.trim().toLowerCase().replace(/\s+/g,"");const core=new Set((S.settings.keywords||[]).map(k=>k.toLowerCase()));
+    let hits=v?cands.filter(c=>c.term.toLowerCase().replace(/\s+/g,"").includes(v)&&!core.has(c.term.toLowerCase())).sort((a,b)=>b.n-a.n||a.term.length-b.term.length).slice(0,8):[];
+    const exact=hits.some(c=>c.term.toLowerCase().replace(/\s+/g,"")===v);
+    list.innerHTML=hits.map((c,i)=>`<li role="option" data-kwi="${i}" data-term="${esc(c.term)}" class="${i===KWS_I?"on":""}"><b>${esc(c.term)}</b><span>자료 ${c.n}편 · ${[...c.src].join("·")}</span></li>`).join("")+(v&&!exact?`<li role="option" class="kws-new" data-term="${esc(q.value.trim())}">＋ "${esc(q.value.trim())}" 새 키워드로 추가</li>`:"");
+    list.hidden=!v;q.setAttribute("aria-expanded",String(!!v));
+    list.querySelectorAll("li").forEach(li=>li.onmousedown=e=>{e.preventDefault();pick(li.dataset.term);});};
+  const pick=t=>{if(kwAddCore(t)){q.value="";KWS_I=-1;const kw=$("#st_kw");if(kw)kw.value=(S.settings.keywords||[]).join(", ");toast(`"${t}"을(를) 핵심 키워드에 추가했습니다.`);const y=window.scrollY;render();window.scrollTo(0,y);const nq=$("#kws_q");if(nq)nq.focus();}};
+  q.oninput=()=>{KWS_I=-1;show();};q.onblur=()=>setTimeout(()=>{list.hidden=true;},150);q.onfocus=()=>{if(q.value.trim())show();};
+  q.onkeydown=e=>{const items=[...list.querySelectorAll("li")];if(e.key==="ArrowDown"){e.preventDefault();KWS_I=Math.min(items.length-1,KWS_I+1);show();}else if(e.key==="ArrowUp"){e.preventDefault();KWS_I=Math.max(-1,KWS_I-1);show();}
+    else if(e.key==="Enter"){e.preventDefault();const li=items[KWS_I]||items.find(x=>x.dataset.term.toLowerCase()===q.value.trim().toLowerCase())||items.find(x=>x.classList.contains("kws-new"))||items[0];if(li)pick(li.dataset.term);}else if(e.key==="Escape"){list.hidden=true;}};
+  $("#kws_add").onclick=()=>{const v=q.value.trim();if(!v)return toast("추가할 키워드를 입력하세요.");pick(v);};
+  document.querySelectorAll("[data-kwdel]").forEach(b=>b.onclick=()=>{const t=b.dataset.kwdel;S.settings.keywords=(S.settings.keywords||[]).filter(k=>k!==t);const k=S.keywords.find(x=>x.term===t&&x.type==="core");if(k)k.type="related";logSync("project","핵심 키워드 빼기","ok",t);save();const y=window.scrollY;render();window.scrollTo(0,y);});};
+/* ---------- AI 집필: 부제 칸 삭제 ---------- */
+const _title35=titleSection;titleSection=function(){return _title35().replace(/<div><label for="wt_sub">부제<\/label><input type="text" id="wt_sub" value="[^"]*" placeholder="[^"]*"><\/div>/,'<input type="hidden" id="wt_sub" value="">').replace('<div class="f2">','<div>');};
+/* ---------- 판단하기 표 다시 만들기 ---------- */
+MG.band="all";MG.appr="all";
+const aiKw=p=>{const k=(p.topic_ai&&p.topic_ai.keywords&&p.topic_ai.keywords.length?p.topic_ai.keywords:p.kw_ai)||[];return [...new Set(k)].slice(0,4).join(", ");};
+const apprLabel=p=>p.decision==="제외"?"제외":isApproved(p)?"승인":"미승인";
+mgList=function(){const all=papers(),idx=new Map(S.items.map((x,i)=>[x.id,i]));let L=all;const q=MG.q.trim().toLowerCase();
+  if(q)L=L.filter(p=>`${p.title} ${p.authors||""} ${p.journal||""}`.toLowerCase().includes(q));
+  if(MG.band!=="all")L=L.filter(p=>BAND(p.relevance)===MG.band);if(MG.appr!=="all")L=L.filter(p=>apprLabel(p)===MG.appr);
+  const yr=p=>parseInt(String(p.year||"").slice(0,4))||0;const sorts={added_desc:(a,b)=>idx.get(b.id)-idx.get(a.id),added_asc:(a,b)=>idx.get(a.id)-idx.get(b.id),year_desc:(a,b)=>yr(b)-yr(a)||idx.get(b.id)-idx.get(a.id),year_asc:(a,b)=>yr(a)-yr(b)||idx.get(a.id)-idx.get(b.id),rel_desc:(a,b)=>(b.relevance||0)-(a.relevance||0),title:(a,b)=>String(a.title).localeCompare(String(b.title),"ko")};
+  return L.slice().sort(sorts[MG.sort]||sorts.added_desc);};
+VIEWS.manage=()=>{const all=papers(),L=mgList();MG.sel=new Set([...MG.sel].filter(id=>all.some(p=>p.id===id)));const ap=all.filter(isApproved).length;const opt=(arr,v)=>arr.map(([k,t])=>`<option value="${k}" ${v===k?"selected":""}>${t}</option>`).join("");
+  return hubHeader("manage","AI가 관련도(높음·중간·낮음)와 토픽을 분류하고, 승인한 자료만 토픽·방향으로 넘어갑니다. 승인 여부를 누르면 사유를 볼 수 있습니다.")+`
+  <div class="mg-grid">
+   <section class="card mg-box"><h3>1. AI 분류</h3><p class="hint">선택한 자료(없으면 미분류 전체)를 AI가 관련도와 토픽으로 분류합니다. 결과를 보고 승인하세요. 처음부터 다시 하려면 초기화하세요.</p>
+    <div class="row"><button class="btn primary" id="mg_cls">AI 분류하기</button><button class="btn primary" id="mg_ok">AI 승인하기</button><button class="btn danger" id="mg_reset">분류·승인 초기화</button><span class="hint" id="mg_prog">${MG.busy?"분류 중…":`승인 ${ap}/${all.length}편`}</span></div></section>
+   <section class="card mg-box"><h3>2. 집필자 분류 및 토픽 지정</h3><p class="hint">선택한 자료의 관련도를 집필자가 직접 정하거나, 토픽 이름을 붙입니다. 승인 여부는 표의 <b>승인 / 미승인</b>을 눌러 사유와 함께 바꿀 수 있습니다.</p>
+    <div class="row"><label for="mg_setband" class="sr">관련도 지정</label><select id="mg_setband" style="width:auto"><option value="">관련도 지정…</option><option value="5">높음</option><option value="3">중간</option><option value="1">낮음</option></select><button class="btn" id="mg_band_ok">관련도 적용</button><span class="sep-v"></span><button class="btn" id="mg_topic">토픽 지정</button></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px"><span class="hint">승인 ${ap}편이 토픽·방향으로 넘어갑니다</span><button class="btn primary" id="mg_next" ${ap?"":"disabled"}>토픽·방향으로 →</button></div></section></div>
+  <section class="card"><div class="row mg-tools"><span class="mg-selinfo"><b>${MG.sel.size}</b>편 선택 · 보이는 자료 ${L.length}편</span><button class="btn sm" id="mg_all">전체 선택</button><button class="btn sm" id="mg_none">선택 해제</button>
+    <span class="mg-right"><label for="mg_q" class="sr">검색</label><input type="search" id="mg_q" placeholder="제목·저자·학술지 검색" value="${esc(MG.q)}">
+    <label for="mg_band" class="sr">관련도</label><select id="mg_band">${opt([["all","관련도 전체"],["높음","높음"],["중간","중간"],["낮음","낮음"]],MG.band)}</select>
+    <label for="mg_appr" class="sr">승인 여부</label><select id="mg_appr">${opt([["all","승인 여부 전체"],["승인","승인"],["미승인","미승인"]],MG.appr)}</select>
+    <label for="mg_sort" class="sr">정렬</label><select id="mg_sort">${opt([["added_desc","최신 수집순"],["added_asc","오래된 수집순"],["year_desc","발행연도 최신순"],["year_asc","발행연도 오래된순"],["rel_desc","관련도 높은순"],["title","제목순(가나다)"]],MG.sort)}</select></span></div>
+   ${L.length?`<div class="tablewrap"><table class="mgt"><thead><tr><th></th><th>제목 · 저자</th><th>발행연도</th><th>관련도</th><th>AI 토픽</th><th>비고</th><th>승인 여부</th></tr></thead><tbody>${L.map(p=>{const a=apprLabel(p);return `<tr data-mg="${p.id}" class="${MG.sel.has(p.id)?"sel":""} ${p.decision==="제외"?"dim":""}"><td><input type="checkbox" class="mg_ck" data-id="${p.id}" ${MG.sel.has(p.id)?"checked":""} aria-label="선택"></td>
+     <td><b class="t">${esc(p.title)}</b>${originals(p).length?` <button class="fopen" data-fopen="${p.id}">원문</button>`:""}<div class="hint">${esc(p.authors||"저자 미확인")}${p.journal?` · ${esc(p.journal)}`:""}</div></td><td>${esc(String(p.year||"-"))}</td>
+     <td class="nowrap">${p.relevance?`${gradeBadge(p.relevance)} ${bandChip(p.relevance)}`:'<span class="hint">미분류</span>'}</td><td>${aiKw(p)?esc(aiKw(p)):'<span class="hint">-</span>'}</td><td>${esc(tpName(p))||'<span class="hint">-</span>'}</td>
+     <td><button class="appr a-${a}" data-appr="${p.id}" title="눌러서 사유 보기">${a}</button></td></tr>`;}).join("")}</tbody></table></div>`:`<p class="hint">${all.length?"조건에 맞는 자료가 없습니다.":"아직 자료가 없습니다. 자료 모으기에서 가져오세요."}</p>`}
+   <p class="hint" style="margin-top:8px">자료를 누르면 상세 창에서 원문을 보고 <b>채택하기 / 제외하기</b>를 정할 수 있습니다.</p></section>`;};
+function apprDialog(p){const a=apprLabel(p);const hs=(p.history||[]).filter(h=>["상태","최종 토픽","관련도"].includes(h.field)).slice(0,8);
+  const reason=p.topic_ai&&p.topic_ai.reason||p.relevance_reason||"";
+  $("#dlgBody").innerHTML=`<h2>승인 여부 · ${esc(a)}</h2><p class="hint">${esc(p.title)}</p>
+   <div class="apbox"><dl><dt>관련도</dt><dd>${p.relevance?`${p.relevance} ${BAND(p.relevance)}`:"미분류"}${p.cls_by?` <span class="hint">(${esc(p.cls_by)} 분류)</span>`:""}</dd><dt>AI 토픽</dt><dd>${esc(aiKw(p)||"-")}</dd><dt>비고(토픽)</dt><dd>${esc(tpName(p)||"-")}</dd>
+    <dt>${a==="승인"?"승인 근거":"AI 판단 근거"}</dt><dd>${esc(reason||"(근거 없음 — AI 분류하기를 먼저 하세요)")}${p.relevance_reason&&reason!==p.relevance_reason?`<div class="hint">관련도 근거: ${esc(p.relevance_reason)}</div>`:""}</dd>
+    ${p.unapprove_reason?`<dt>미승인 사유</dt><dd class="red">${esc(p.unapprove_reason)}</dd>`:""}${a==="제외"?`<dt>판단</dt><dd>상세 창에서 제외한 자료입니다.</dd>`:""}</dl></div>
+   ${hs.length?`<details class="sub"><summary>변경 기록 ${hs.length}건</summary><ul class="plist">${hs.map(h=>`<li><span class="hint">${fmtTime(h.t)}</span> ${esc(h.field)}: ${esc(h.from||"-")} → <b>${esc(h.to||"-")}</b> <span class="hint">(${esc(h.by||"")}${h.note?` · ${esc(h.note)}`:""})</span></li>`).join("")}</ul></details>`:""}
+   ${a==="제외"?"":a==="승인"?`<label for="ap_r">미승인으로 바꾸는 사유 *</label><textarea id="ap_r" rows="2" placeholder="예: 연구 범위(2024~2026)와 맞지 않음"></textarea>`:`<label for="ap_r">승인 사유 (선택)</label><textarea id="ap_r" rows="2" placeholder="예: 정상외교 계기 MOU를 직접 다룸"></textarea>`}
+   <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="ap_x">닫기</button>${a==="제외"?"":a==="승인"?'<button class="btn danger" id="ap_go">미승인으로 바꾸기</button>':`<button class="btn primary" id="ap_go" ${p.relevance?"":"disabled title=\"먼저 분류하세요\""}>승인하기</button>`}</div>`;
+  $("#dlg").showModal();$("#ap_x").onclick=()=>$("#dlg").close();const go2=$("#ap_go");if(go2)go2.onclick=async()=>{const r=$("#ap_r").value.trim();
+    if(a==="승인"){if(!r)return toast("미승인으로 바꾸는 사유를 적어 주세요.");addHistory(p,"상태",p.cls_state,"미승인","연구자",r);p.cls_state="승인 해제";p.unapprove_reason=r;p.in_topic=false;logSync("classify","미승인","ok",`${p.title.slice(0,20)} · ${r}`);}
+    else{addHistory(p,"상태",p.cls_state,"승인","연구자",r||"집필자 승인");if(p.topic_ai&&p.topic_ai.topic&&!p.topic_final)p.topic_final=p.topic_ai.topic;p.cls_state="승인";p.review_status="검토완료";p.unapprove_reason="";if(r)p.approve_reason=r;logSync("classify","승인","ok",p.title.slice(0,20));}
+    $("#dlg").close();await flush();const y=window.scrollY;render();window.scrollTo(0,y);};}
+BIND.manage=()=>{document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>{if(b.dataset.hub!==current)go(b.dataset.hub);});const rerender=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  ["sort","band","appr"].forEach(k=>{$("#mg_"+k).onchange=e=>{MG[k]=e.target.value;rerender();};});
+  let qt;$("#mg_q").oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{MG.q=e.target.value;rerender();const q=$("#mg_q");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length);}},300);};
+  $("#mg_all").onclick=()=>{mgList().forEach(p=>MG.sel.add(p.id));rerender();};$("#mg_none").onclick=()=>{MG.sel.clear();rerender();};
+  document.querySelectorAll(".mg_ck").forEach(c=>{c.onclick=e=>e.stopPropagation();c.onchange=()=>{c.checked?MG.sel.add(c.dataset.id):MG.sel.delete(c.dataset.id);rerender();};});
+  document.querySelectorAll("tr[data-mg]").forEach(r=>r.onclick=()=>openItem(r.dataset.mg));
+  document.querySelectorAll("[data-fopen]").forEach(b=>b.onclick=e=>{e.stopPropagation();openFirstOriginal(b.dataset.fopen);});
+  document.querySelectorAll("[data-appr]").forEach(b=>b.onclick=e=>{e.stopPropagation();apprDialog(S.items.find(i=>i.id===b.dataset.appr));});
+  $("#mg_cls").onclick=async()=>{let list=mgTargets();if(!list.length){list=papers().filter(p=>!p.relevance);if(!list.length)return toast("분류할 자료를 선택하세요. (미분류 자료가 없습니다 — 다시 하려면 초기화하세요)");if(!confirm(`선택한 자료가 없어 미분류 ${list.length}편을 분류할까요?`))return;}
+    MG.busy=true;const pr=$("#mg_prog");try{await runClassification(list,(d,t)=>{if(pr)pr.textContent=`분류 중… ${d}/${t}`;});list.forEach(p=>{if(!isApproved(p)&&p.cls_state!=="승인 해제")p.cls_state=p.cls_state||"미승인";});toast(`${list.length}편을 분류했습니다. 결과를 보고 AI 승인하기를 누르세요.`);}catch(e){toast("분류 오류: "+e.message);}finally{MG.busy=false;await flush();rerender();}};
+  $("#mg_ok").onclick=async()=>{let list=mgTargets();if(!list.length)list=papers().filter(p=>p.relevance&&!isApproved(p)&&p.cls_state!=="승인 해제"&&p.decision!=="제외");
+    let n=0;for(const p of list){if(!p.relevance||isApproved(p)||p.decision==="제외")continue;addHistory(p,"상태",p.cls_state,"승인","연구자","AI 승인");if(p.topic_ai&&p.topic_ai.topic&&!p.topic_final)p.topic_final=p.topic_ai.topic;p.cls_state="승인";p.review_status="검토완료";p.unapprove_reason="";n++;}
+    logSync("classify","AI 승인","ok",`${n}편`);await flush();toast(n?`${n}편을 승인했습니다.`:"승인할 분류 결과가 없습니다. 먼저 AI 분류하기를 누르세요.");rerender();};
+  $("#mg_reset").onclick=async()=>{let list=mgTargets();const allx=!list.length;if(allx)list=papers();if(!list.length)return;
+    if(!confirm(`${allx?"전체":"선택한"} ${list.length}편의 AI 분류·승인·토픽 지정을 초기화할까요?\n관련도·AI 토픽·승인·토픽 자료 지정이 지워집니다. (제외한 자료의 '제외'는 유지)`))return;
+    for(const p of list){addHistory(p,"상태",p.cls_state,"미분류","연구자","분류·승인 초기화");Object.assign(p,{relevance:0,relevance_reason:"",topic_ai:null,kw_ai:[],topic_final:"",cls_state:"미분류",cls_by:"",review_status:"미검토",in_topic:false,unapprove_reason:""});if(p.decision==="채택")p.decision="미판단";}
+    if(TS().state==="saved")TS().state="editing";MG.sel.clear();logSync("classify","분류·승인 초기화","ok",`${list.length}편`);await flush();toast(`${list.length}편을 초기화했습니다.`);rerender();};
+  $("#mg_band_ok").onclick=async()=>{const v=+$("#mg_setband").value;const list=mgTargets();if(!list.length)return toast("관련도를 정할 자료를 선택하세요.");if(!v)return toast("관련도(높음·중간·낮음)를 고르세요.");
+    list.forEach(p=>{addHistory(p,"관련도",String(p.relevance||""),String(v),"연구자","집필자 분류");p.relevance=v;p.cls_by="연구자";p.relevance_reason=p.relevance_reason||"집필자가 직접 분류";});logSync("classify","집필자 분류","ok",`${list.length}편 → ${BAND(v)}`);await flush();toast(`${list.length}편을 '${BAND(v)}'(으)로 분류했습니다.`);rerender();};
+  $("#mg_topic").onclick=()=>{const list=mgTargets();if(!list.length)return toast("토픽을 지정할 자료를 선택하세요.");topicPicker(`${list.length}편 토픽 지정`,async name=>{list.forEach(p=>{if(p.topic_final!==name)addHistory(p,"최종 토픽",p.topic_final,name,"연구자","토픽 지정");p.topic_final=name;});logSync("classify","토픽 지정","ok",`${list.length}편 → ${name}`);await flush();toast(`${list.length}편에 "${name}" 토픽을 붙였습니다.`);rerender();});};
+  $("#mg_next").onclick=()=>{if(!papers().some(isApproved))return toast("먼저 승인하세요.");go("topics");};};
+
+
+/* =========================================================
+   36단계: AI 집필 8단계(…글 형태 → 양식 적용 → 논문 확인 → 출력) · 단계별 임시저장/저장/수정 · 판단하기 삭제
+   ========================================================= */
+WSTAGES.length=0;[["prep","준비","목차별 관점·예측 결론"],["abs","초록","국문·영문 초록"],["body","본문","장별 집필"],["refs","참고문헌","인용 문헌 정리"],["type","글 형태","학위·학술지·보고서"],["form","양식 적용","파일·직접 입력"],["final","논문 확인","전체 미리보기"],["out","출력","PDF·한글·워드"]].forEach(s=>WSTAGES.push(s));
+{const i=MENU9.findIndex(m=>m[0]==="export");if(i>=0)MENU9.splice(i,1);}Object.assign(SUBVIEW,{export:"write"});VIEW_L.export="AI 집필";
+const _go36=go;go=function(v){if(v==="export"){WST="form";v="write";}return _go36(v);};
+if(!SNAP_KEYS.includes("wsSaved"))SNAP_KEYS.push("wsSaved","format");
+const wsSt=k=>(S.wsSaved||{})[k];const wsLocked=k=>{const s=wsSt(k);return !!(s&&s.state==="saved");};
+/* ---------- 양식 적용 단계 ---------- */
+async function handleTemplateFile(file){const f=S.format,n=file.name.toLowerCase();
+  if(/\.hwp$/.test(n))throw new Error("구형 HWP는 읽을 수 없습니다. 한글에서 '다른 이름으로 저장 → HWPX'로 저장해 올려 주세요.");
+  if(/\.pdf$/.test(n))throw new Error("PDF는 스타일을 읽을 수 없어 양식으로 쓸 수 없습니다. 한글(HWPX)이나 워드(DOCX) 양식을 올리거나, 아래에 양식 정보를 직접 입력하세요.");
+  const buf=await file.arrayBuffer();
+  if(/\.hwpx$/.test(n)){const info=await analyzeHwpx(buf);await dbPut("data","hwpx:"+S.id,buf);f.hwpx={name:file.name,size:file.size,info,at:now()};logSync("export","한글 양식","ok",`${file.name}: 스타일 ${info.styles}개`);}
+  else if(/\.(docx|dotx)$/.test(n)){const info=analyzeTemplate(await unzip(buf));await dbPut("data","tpl:"+S.id,buf);f.template={name:file.name,size:file.size,use:true,info,map:info.map,at:now()};if(info.numbered.length)f.numbering="none";logSync("export","워드 양식","ok",`${file.name}: 스타일 ${info.styleCount}개`);}
+  else throw new Error("HWPX, DOCX, DOTX 파일만 양식으로 쓸 수 있습니다.");}
+function formSection(){const f=S.format,tp=f.template,hw=f.hwpx;const opt=(arr,v)=>arr.map(([k,t])=>`<option value="${esc(k)}" ${String(v)===String(k)?"selected":""}>${esc(t)}</option>`).join("");
+  const num=(id,lab,v,unit)=>`<div><label for="${id}">${lab}</label><div class="unit"><input type="number" id="${id}" value="${esc(String(v??""))}" step="0.5"><span>${unit}</span></div></div>`;
+  return `<section class="card ws-form"><div class="row" style="justify-content:space-between"><h2 style="margin:0">양식 적용</h2><span class="hint">파일이 있으면 파일의 스타일을 따르고, 직접 입력한 값은 파일이 없을 때와 파일에 없는 항목에 쓰입니다.</span></div>
+   <div class="formgrid">
+    <div class="fxbox"><h3>① 양식 파일 올리기</h3><p class="hint">학교·학술지의 한글(HWPX)·워드(DOCX·DOTX) 양식. 구형 HWP는 HWPX로 저장해 올리세요. PDF는 스타일을 읽을 수 없습니다.</p>
+     <input type="file" id="wf_file" accept=".hwpx,.docx,.dotx,.hwp,.pdf">
+     <div class="fxgrid1"><div class="fxtpl ${hw?"on":""}"><b>한글 양식</b><span>${hw?`${esc(hw.name)} · 스타일 ${hw.info.styles}개 · 본문 ${hw.info.body?esc(hw.info.body.name):"못 찾음"}`:"아직 없음"}</span>${hw?'<button class="btn sm danger" data-wfdel="hwpx">지우기</button>':""}</div>
+      <div class="fxtpl ${tp?"on":""}"><b>워드 양식</b><span>${tp?`${esc(tp.name)} · ${tp.info.page?tp.info.page.join("×")+"mm":""} · 스타일 ${Object.values(tp.info.map).filter(Boolean).length}개 인식`:"아직 없음"}</span>${tp?'<button class="btn sm danger" data-wfdel="docx">지우기</button>':""}</div></div></div>
+    <div class="fxbox"><h3>② 양식 정보 직접 입력</h3><p class="hint">학술지 투고 규정이나 학교 작성 지침에 적힌 값을 넣으세요.${f.manual?` <span class="tag">적용됨 · ${fmtTime(f.manual.at)}</span>`:""}</p>
+     <div class="mgrid"><div><label for="wm_paper">용지</label><select id="wm_paper">${opt(Object.keys(PAPERS).map(k=>[k,k]),f.paper)}</select></div>
+      <div><label for="wm_font">본문 글꼴</label><select id="wm_font">${opt(Object.keys(FONTS).map(k=>[k,k]),f.font)}</select></div>
+      ${num("wm_mt","위 여백",f.mt,"mm")}${num("wm_mb","아래 여백",f.mb,"mm")}${num("wm_ml","왼쪽 여백",f.ml,"mm")}${num("wm_mr","오른쪽 여백",f.mr,"mm")}
+      ${num("wm_size","글자 크기",f.size,"pt")}${num("wm_line","줄 간격",f.line,"%")}
+      <div><label for="wm_cite">인용 방식</label><select id="wm_cite">${opt([["footnote","각주"],["inline","본문 괄호 (저자, 연도)"]],f.citeMode)}</select></div>
+      <div><label for="wm_ref">참고문헌 양식</label><select id="wm_ref">${opt([["kr","국문 학위논문식"],["apa","APA"],["custom","규칙 직접 입력"]],f.refStyle)}</select></div></div>
+     <label for="wm_pat">참고문헌 규칙 (규칙 직접 입력일 때)</label><input type="text" id="wm_pat" value="${esc(f.refPattern||"")}" placeholder="예: {저자}({연도}). {제목}. {학술지}, {권호}.">
+     <label for="wm_note">기타 요구사항</label><textarea id="wm_note" rows="3" placeholder="예: 국문초록 600자 이내, 주제어 5개, 각주는 9pt">${esc(f.notes||"")}</textarea>
+     <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn primary" id="wf_apply">직접 입력 적용</button></div></div></div></section>`;}
+function applyManual(silent){const f=S.format,v=id=>$("#"+id);if(!v("wm_paper"))return false;const n=id=>{const x=parseFloat(v(id).value);return isFinite(x)&&x>0?x:null;};
+  f.paper=v("wm_paper").value;f.font=v("wm_font").value;["mt","mb","ml","mr"].forEach(k=>{const x=n("wm_"+k);if(x!=null)f[k]=x;});const sz=n("wm_size");if(sz)f.size=sz;const ln=n("wm_line");if(ln)f.line=ln;
+  f.citeMode=v("wm_cite").value;f.refStyle=v("wm_ref").value;f.refPattern=v("wm_pat").value.trim();f.notes=v("wm_note").value.trim();if(f.refStyle==="custom"&&!f.refPattern){if(!silent)toast("규칙 직접 입력을 고르셨다면 참고문헌 규칙을 적어 주세요.");f.refStyle="kr";}
+  f.manual={at:now()};logSync("export","양식 직접 입력","ok",`${f.paper} · ${f.font} ${f.size}pt · 줄 간격 ${f.line}%`);return true;}
+/* ---------- 논문 확인(미리보기만) · 출력(따로) ---------- */
+const _final36=finalSection;finalSection=function(){return _final36().replace(/<div class="snapbar">[\s\S]*?<\/div><\/div>/,"").replace(/<div class="fxdl">[\s\S]*?<\/div>\s*<p class="hint">[\s\S]*?<\/p>/,`<p class="hint">내용을 확인한 뒤 <b>출력</b> 단계에서 내려받으세요.</p>`);};
+function outSection(){const m=finalModel(),f=S.format,hw=f.hwpx,errs=m.issues.filter(i=>i.level==="오류").length;const L=S.exportLog||[];
+  return `<section class="card ws-out"><h2>출력</h2><p class="hint">${errs?`<span class="tag red">확인할 곳 ${errs}</span> 논문 확인 단계에서 볼 수 있습니다. 그래도 내려받을 수 있습니다.`:'<span class="tag">문제 없음</span>'} · 양식: ${hw||f.template?esc([hw&&("한글 "+hw.name),f.template&&("워드 "+f.template.name)].filter(Boolean).join(", ")):f.manual?"직접 입력한 양식":"글 형태 기본 서식"}</p>
+   <div class="fxdl"><button class="btn primary big" data-fd="pdf">PDF</button><button class="btn primary big" data-fd="hwpx" ${hw?"":"disabled title=\"양식 적용 단계에서 한글(HWPX) 양식을 올리면 만들 수 있어요\""}>한글 (HWPX)</button><button class="btn primary big" data-fd="docx">워드 (DOCX)</button><button class="btn big" data-fd="html">HTML</button><button class="btn big" data-fd="md">Markdown</button></div>
+   <p class="hint">${hw?"한글 파일은 올린 한글 양식에 채워 만듭니다.":"한글(HWPX)로 받으려면 <b>양식 적용</b> 단계에서 한글 양식을 올리세요."} PDF는 인쇄 창에서 "PDF로 저장"을 고르세요.</p>
+   ${L.length?`<h3>내려받은 기록</h3><table><tbody>${L.slice(0,8).map(l=>`<tr><td class="hint">${fmtTime(l.t)}</td><td>${esc(l.format)}</td><td>${esc(l.name)}</td><td class="hint">${l.template?"양식: "+esc(l.template):"기본·직접 입력 서식"}</td></tr>`).join("")}</tbody></table>`:""}</section>`;}
+/* ---------- 단계 표시줄: 임시저장 · 저장 · 수정하기 · 다음 ---------- */
+function wsBar(){const k=WST,st=wsSt(k),saved=wsLocked(k);const i=WSTAGES.findIndex(s=>s[0]===k),nx=WSTAGES[i+1];
+  return `<div class="wsbar ${saved?"saved":""}"><span class="hint">${saved?`✓ <b>${esc(WSTAGES[i][1])} 저장됨</b> · ${fmtTime(st.at)} — 고치려면 <b>수정하기</b>`:st&&st.state==="editing"?`<b>수정 중</b> · 다 고친 뒤 저장하세요.`:"이 단계를 마치면 <b>저장</b>하세요. <b>임시저장</b>은 히스토리에 남아 나중에 이어서 할 수 있습니다."}</span>
+   <span class="row"><button class="btn" id="wsb_temp">임시저장</button><button class="btn" id="wsb_edit" ${saved?"":"disabled"}>수정하기</button><button class="btn primary" id="wsb_save" ${saved?"disabled":""}>저장</button>${nx?`<button class="btn primary" id="wsb_next">다음: ${esc(nx[1])} →</button>`:""}</span></div>`;}
+const _wsb36=wsBadges;wsBadges=function(){const b=_wsb36();const f=S.format||{};b.type=S.settings.docType||"";b.form=f.hwpx||f.template?"파일":f.manual?"직접 입력":"";b.out=(S.exportLog||[]).length?`${S.exportLog.length}회`:"";
+  WSTAGES.forEach(([k])=>{if(wsLocked(k))b[k]="저장 ✓";});return b;};
+const _write36=VIEWS.write;VIEWS.write=()=>{let h=_write36();
+  h=h.replace(/준비 → 초록 → 본문 → 참고문헌 → 논문 확인 순서로 진행하세요\./,"준비 → 초록 → 본문 → 참고문헌 → 글 형태 → 양식 적용 → 논문 확인 → 출력 순서로 진행하세요. 단계마다 저장·임시저장·수정할 수 있습니다.");
+  const extra=(WST==="form"?formSection():"")+(WST==="out"?outSection():"")+wsBar();
+  h=h.replace(/<\/div>$/,extra+"</div>");if(wsLocked(WST))h=h.replace('<div class="wstage ','<div class="wstage ws-locked ');return h;};
+const _bwrite36=BIND.write;BIND.write=()=>{_bwrite36();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const wf=$("#wf_file");if(wf)wf.onchange=async e=>{const file=e.target.files[0];if(!file)return;try{await handleTemplateFile(file);await flush();toast("양식을 인식했습니다.");}catch(err){logSync("export","양식","error",err.message);toast(err.message);}rer();};
+  document.querySelectorAll("[data-wfdel]").forEach(b=>b.onclick=async()=>{if(b.dataset.wfdel==="hwpx"){await dbDel("data","hwpx:"+S.id);S.format.hwpx=null;}else{await dbDel("data","tpl:"+S.id);S.format.template=null;}await flush();rer();});
+  const ap=$("#wf_apply");if(ap)ap.onclick=async()=>{if(applyManual(false)){await flush();toast("양식 정보를 적용했습니다. 출력할 때 이 값으로 만듭니다.");rer();}};
+  const tm=$("#wsb_temp");if(tm)tm.onclick=async()=>{if(WST==="abs"&&$("#ab_ko")){S.front=S.front||{};Object.assign(S.front,{abstract_ko:$("#ab_ko").value,keywords_ko:$("#ab_kw").value,abstract_en:$("#ab_en").value,keywords_en:$("#ab_kwen").value,title_en:$("#ab_ten").value});}
+    const note=(prompt("임시저장 메모(선택)","")||"").trim();const sn=takeSnapshot(note,false,"write:"+WST);await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다. 히스토리에서 이어서 할 수 있습니다.`);rer();};
+  const sv=$("#wsb_save");if(sv)sv.onclick=async()=>{const k=WST;
+    if(k==="abs"&&$("#ab_ko")){S.front=S.front||{};Object.assign(S.front,{abstract_ko:$("#ab_ko").value,keywords_ko:$("#ab_kw").value,abstract_en:$("#ab_en").value,keywords_en:$("#ab_kwen").value,title_en:$("#ab_ten").value});}
+    if(k==="prep"&&$("#pp_concl")){const v=$("#pp_concl").value.trim();if(v.length>=20){pw().conclusion=v;pw().conclusion_at=pw().conclusion_at||now();}}
+    if(k==="prep"&&$("#wt_title")){const t=$("#wt_title").value.trim();if(t){S.settings.topic=t;setField("title",t,"연구자");}}
+    if(k==="form")applyManual(true);
+    S.wsSaved=S.wsSaved||{};S.wsSaved[k]={state:"saved",at:now()};logSync("write","단계 저장","ok",(WSTAGES.find(s=>s[0]===k)||[])[1]);await flush();toast("저장했습니다. 고치려면 수정하기를 누르세요.");rer();};
+  const ed=$("#wsb_edit");if(ed)ed.onclick=async()=>{S.wsSaved[WST]={state:"editing",at:now()};await flush();rer();};
+  const nx=$("#wsb_next");if(nx)nx.onclick=()=>{const i=WSTAGES.findIndex(s=>s[0]===WST);WST=WSTAGES[i+1][0];render();window.scrollTo(0,0);};};
+/* 히스토리 진행 단계에 AI 집필 세부 단계 이름 */
+const _snapStage36=snapStage;snapStage=function(sn){const r=_snapStage36(sn);const f=String(sn.from||"");if(f.startsWith("write:")){const k=f.slice(6),s=WSTAGES.find(x=>x[0]===k);if(s){r.here=k==="final"||k==="out"?"논문 확인":"AI 집필";r.sub=s[1];}}return r;};
+const _stageHTML36=stageHTML;stageHTML=function(sn){const s=sn.stage||snapStage(sn);const sub=String(sn.from||"").startsWith("write:")?(WSTAGES.find(x=>x[0]===String(sn.from).slice(6))||[])[1]:"";return _stageHTML36(sn)+(sub?`<div class="hint" style="margin-top:3px">AI 집필 › <b>${esc(sub)}</b>에서 저장</div>`:"");};
+/* ---------- 판단하기: 선택 삭제 ---------- */
+const _manage36=VIEWS.manage;VIEWS.manage=()=>_manage36().replace('<button class="btn sm" id="mg_none">선택 해제</button>','<button class="btn sm" id="mg_none">선택 해제</button><button class="btn sm danger" id="mg_del">선택 삭제</button>');
+const _bmanage36=BIND.manage;BIND.manage=()=>{_bmanage36();const d=$("#mg_del");if(d)d.onclick=async()=>{const list=mgTargets();if(!list.length)return toast("삭제할 자료를 선택하세요.");
+  if(!confirm(`선택한 ${list.length}편을 이 프로젝트에서 삭제할까요?\n분류·판단 기록과 함께 지워지며 되돌릴 수 없습니다. (연결된 원문 파일은 지우지 않습니다)`))return;
+  const ids=new Set(list.map(p=>p.id));S.items=S.items.filter(i=>!ids.has(i.id));(S.files||[]).forEach(f=>{if(ids.has(f.lit_id))f.lit_id="";});(S.design&&S.design.chapters||[]).forEach(c=>{c.doc_ids=(c.doc_ids||[]).filter(id=>!ids.has(id));});
+  MG.sel.clear();logSync("collect","자료 삭제","ok",`${list.length}편`);await flush();toast(`${list.length}편을 삭제했습니다.`);const y=window.scrollY;render();window.scrollTo(0,y);};};
+TOUR.forEach(t=>{if(t.v==="export"){t.v="write";t.sel=".wstabs";t.t="양식 적용 · 출력";t.d="AI 집필의 양식 적용 단계에서 양식 파일을 올리거나 직접 입력하고, 출력 단계에서 PDF·한글·워드로 내려받습니다.";}});
 
 /* ---------- 시작 ---------- */
 (async()=>{
