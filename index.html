@@ -736,6 +736,12 @@ th{background:#F3F7FF!important;color:var(--ink2)}tbody tr:nth-child(even){backg
 .fopen{all:unset;cursor:pointer;margin-left:6px;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:700;color:#2350C8;background:#E4EDFF;box-shadow:inset 0 0 0 1px #CFDDFF;vertical-align:middle}.fopen:hover{background:#D3E1FF}
 .notepre{white-space:pre-wrap;max-height:300px;overflow:auto;background:#fff;border-radius:12px;padding:12px;font-size:13px}
 .kcihow{margin:8px 0 12px;padding:14px 16px;border-radius:16px;background:#F3F7FF;border:1px solid #DCE7FF}.kcihow b{color:#2350C8}.kcihow ol{margin:8px 0 6px 18px;padding:0;font-size:14px;line-height:1.8}
+/* ===== 29단계: 논문 주제 · 논문 확인하기 ===== */
+.wstage:not(.st-prep) .ws-title{display:none}.wstage:not(.st-final) .ws-final{display:none}
+.wstage.st-final .prep,.wstage.st-final .wgrid,.wstage.st-final .savebar,.wstage.st-final .ws-type,.wstage.st-final .ws-abs,.wstage.st-final .ws-refs{display:none}
+.fchips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.fchip{padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;background:#F1F3F8;color:#7B86A3}.fchip.ok{background:#E6F7EE;color:#167A45}
+.finalprev{display:block;width:100%;height:78vh;margin-top:14px;border:0;border-radius:18px;background:#fff;box-shadow:inset 0 0 0 1px #E1E8F5}
+.wstabs{flex-wrap:nowrap}.wstabs button{flex:1 1 0;min-width:0;padding:12px}.wstabs .ht small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wstabs .harrow{font-size:18px}@media (max-width:1100px){.wstabs{flex-wrap:wrap}.wstabs button{flex:1 1 200px}}
 </style>
 </head>
 <body>
@@ -1354,7 +1360,7 @@ PANES.kci={html:()=>`<div class="panel" id="kci_status"><p class="hint">연결 �
   await checkServer();const st=$("#kci_status");if(!st)return;
   if(!SERVER.ok){st.innerHTML=`<h2>KCI 검색</h2><div class="notice"><b>로컬 연동 서버가 필요합니다.</b> ${esc(SERVER.err)}</div>${serverHowto()}`;return;}
   if(!SERVER.kci){st.innerHTML=`<h2>KCI 검색</h2><div class="notice">KCI 인증키가 등록되지 않아 검색할 수 없습니다. 아래 순서대로 신청·등록하세요. (검색 결과를 흉내 내지 않습니다)</div>${kciHowto()}<div class="row"><button class="btn primary" data-go="sync">연동 설정에서 인증키 등록</button></div>`;st.querySelector("[data-go]").onclick=()=>go("sync");return;}
-  const lk=(S.log||[]).find(l=>l.target==="kci"&&["검색","연결 테스트","가져오기"].includes(l.action));const kst=!lk?["warn","인증키 등록됨 — 아직 연결 확인 기록 없음"]:lk.result==="ok"?["ok",`KCI 응답 확인 (${fmtTime(lk.t)})`]:["off",`마지막 KCI 요청 실패: ${lk.msg}`];
+  const lk=kciLast();const kst=!lk?["warn","인증키 등록됨 — 아직 연결 확인 기록 없음"]:lk.result==="ok"?["ok",`KCI 응답 확인 (${fmtTime(lk.t)})`]:["off",`마지막 KCI 요청 실패: ${lk.msg}`];
   st.innerHTML=`<div class="row" style="justify-content:space-between"><div><i class="dot ${kst[0]}"></i><b>${esc(kst[1])}</b> <span class="hint">인증키 ${esc(SERVER.hint)} · 로컬 서버가 보관</span></div><span class="hint">제목 검색어는 필수입니다(KCI 규격). 여러 조건은 모두 만족(AND)으로 검색됩니다.</span></div>`;
   const q=KCI_STATE.q;
   $("#kci_body").innerHTML=`<div class="panel"><div class="kgrid">
@@ -2847,7 +2853,7 @@ function systemStatus(){const s=S.settings,out=[];const add=(area,state,label,ca
   add("Google Drive 동기화",s.driveInVault&&VAULT?"info":"off",s.driveInVault&&VAULT?"드라이브 폴더(연구자 확인)":"확인 안 됨","앱은 폴더의 실제 위치를 알 수 없어, 볼트가 드라이브 안에 있는지는 연구자가 체크한 값입니다","sync");
   if(!ON_HTTP)add("Google Drive API","off","사용 불가","file:// 주소로 열려 있어 구글 로그인이 안 됩니다 — 로컬 연동 서버(localhost)로 여세요","sync");
   else if(driveOn())add("Google Drive API","ok",`연결됨: ${DRIVE.user.emailAddress}`,"",null);else if(DRIVE.err)add("Google Drive API","error","연결 실패",DRIVE.err,"sync");else add("Google Drive API","off",G.driveClientId?"로그인 전":"클라이언트 ID 없음",G.driveClientId?"구글 계정 연결을 누르세요":"연동 설정에서 OAuth 클라이언트 ID를 등록해야 합니다","sync");
-  const k=lastLog("kci",l=>["검색","연결 테스트","가져오기"].includes(l.action));
+  const k=kciLast();
   if(!ON_HTTP)add("KCI Open API","off","사용 불가","로컬 연동 서버 없이 열려 있습니다","sync");else if(!k)add("KCI Open API","off","확인 기록 없음","인증키 등록과 연결 테스트가 필요합니다","sync");else if(k.result==="error")add("KCI Open API","error","최근 요청 실패",k.msg,"sync");else add("KCI Open API","ok",`최근 요청 성공 (${fmtTime(k.t)})`,k.msg,null);
   if(!G.apiKey)add("Claude API","off","키 없음 — 규칙 기반으로 동작","분류·분석·집필 초안은 규칙 기반 결과입니다","sync");else if(G.apiError)add("Claude API","error","오류",G.apiError,"sync");else if(G.apiVerified)add("Claude API","ok","응답 확인됨","",null);else add("Claude API","warn","키 저장됨 — 확인 전","연결 테스트를 아직 하지 않았습니다","sync");
   const P=papers(),noFull=P.filter(p=>p.has_fulltext!=="보유").length;if(P.length&&noFull)add("원문","warn",`${noFull}/${P.length}편 원문 미확보`,"원문이 없는 문헌은 제목·초록만으로 분석됩니다(원문 내용 분석은 아직 지원하지 않음)","collect");
@@ -3176,7 +3182,7 @@ PANES.kci={html:()=>{const q=KCI_STATE.q;return `<div id="kci_status" class="kst
   if(!SERVER.ok||!SERVER.kci){const g=$("#kq_go");if(g){g.disabled=true;g.title=!SERVER.ok?"로컬 연동 서버가 필요합니다":"KCI 인증키가 필요합니다";}}
   if(!SERVER.ok){st.innerHTML=`<i class="dot off"></i>KCI 검색은 <b>로컬 연동 서버</b>로 앱을 열어야 됩니다(<code>AI-WIKI 시작</code> 실행 → http://localhost:8765). <a href="#" data-go="sync">방법 보기</a>`;st.classList.add("warnline");}
   else if(!SERVER.kci){st.innerHTML=`<i class="dot warn"></i>KCI 인증키가 등록되지 않아 검색할 수 없습니다. <a href="#" data-go="sync">연결 설정에서 등록</a>`;st.classList.add("warnline");}
-  else{const lk=(S.log||[]).find(l=>l.target==="kci"&&["검색","연결 테스트","가져오기"].includes(l.action));st.innerHTML=!lk?`<i class="dot warn"></i>인증키 등록됨 — 아직 연결 확인 기록 없음 · 제목 검색어는 필수입니다(KCI 규격)`:lk.result==="ok"?`<i class="dot ok"></i>KCI 응답 확인 (${fmtTime(lk.t)}) · 제목 검색어는 필수입니다(KCI 규격)`:`<i class="dot off"></i>마지막 KCI 요청 실패: ${esc(lk.msg)}`;}
+  else{const lk=kciLast();st.innerHTML=!lk?`<i class="dot warn"></i>인증키 등록됨 — 아직 연결 확인 기록 없음 · 제목 검색어는 필수입니다(KCI 규격)`:lk.result==="ok"?`<i class="dot ok"></i>KCI 응답 확인 (${fmtTime(lk.t)}) · 제목 검색어는 필수입니다(KCI 규격)`:`<i class="dot off"></i>마지막 KCI 요청 실패: ${esc(lk.msg)}`;}
   st.querySelectorAll("[data-go]").forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.go);});}};
 kciRenderResults=function(){const box=$("#kci_res");if(!box)return;
   if(KCI_STATE.err){box.innerHTML=`<section class="kres-box"><div class="notice err"><b>검색 실패:</b> ${esc(KCI_STATE.err)}</div></section>`;return;}
@@ -3638,7 +3644,7 @@ function refsSection(){const r=refsList();return `<section class="card ws-refs">
    ${r.pool.length?`<ol class="reflist">${r.pool.map(p=>`<li>${esc(r.fmt(p))}${!p.authors||!p.year?' <span class="tag red">서지 정보 보완 필요</span>':""}${r.cited.includes(p)?"":' <span class="tag warn">본문 미인용</span>'}</li>`).join("")}</ol>`:`<p class="hint">아직 본문에 인용한 문헌이 없습니다. 본문에서 [@문헌] 인용을 넣으면 여기에 나타납니다.</p>`}
    <p class="hint" style="margin-top:10px">학술지·학교 규정과 정확히 같은지는 양식 적용 단계에서 올린 양식과 함께 확인하세요.</p></section>`;}
 const _write25=VIEWS.write;VIEWS.write=()=>{let h=_write25();
-  h=h.replace(/<h1>집필<\/h1><p class="lead">[\s\S]*?<\/p>/,`<h1>AI 집필</h1><p class="lead">자료 수집 및 분석에서 모은 자료와 분류, 연구 설정의 나의 관점으로 씁니다. 준비 → 초록 → 본문 → 참고문헌 순서로 진행하세요.</p>`+wsTabs()+typeSection());
+  h=h.replace(/<h1>집필<\/h1><p class="lead">[\s\S]*?<\/p>/,`<h1>AI 집필</h1><p class="lead">자료 수집 및 분석에서 모은 자료와 분류, 연구 설정의 나의 관점으로 씁니다. 준비 → 초록 → 본문 → 참고문헌 → 논문 확인 순서로 진행하세요.</p>`+wsTabs()+typeSection());
   if(!/wstabs/.test(h))h=wsTabs()+typeSection()+h;
   return `<div class="wstage st-${WST}">${h}${absSection()}${refsSection()}</div>`;};
 const _bwrite25=BIND.write;BIND.write=()=>{_bwrite25();
@@ -3778,10 +3784,51 @@ const _cs27=checkServer;checkServer=async function(){const r=await _cs27();if(IS
 const DEPLOY_KCI_HOWTO=`<div class="kcihow"><b>배포 앱의 KCI 인증키는 Vercel에 등록합니다</b><ol><li>vercel.com → <b>ai-wiki</b> 프로젝트 → <b>Settings → Environment Variables</b></li><li>Key에 <code>KCI_KEY</code>, Value에 발급받은 인증키를 넣고 <b>Save</b></li><li>같은 곳에 <code>GOOGLE_CLIENT_ID</code>(config.json의 클라이언트 ID)도 넣기 — 이 앱으로 로그인한 사람만 쓰게 합니다</li><li><b>Deployments</b>에서 맨 위 배포의 <b>⋯ → Redeploy</b></li></ol><p class="hint">인증키는 Vercel 서버에만 보관되고 웹페이지에는 나타나지 않습니다. 특정 계정만 쓰게 하려면 <code>ALLOWED_EMAILS</code>에 이메일을 쉼표로 넣으세요.</p></div>`;
 const _kb27=PANES.kci.bind;PANES.kci.bind=async()=>{await _kb27();if(!IS_DEPLOY||!SERVER.ok)return;const st=$("#kci_status");if(!st)return;
   if(!SERVER.kci){st.innerHTML=`<i class="dot warn"></i>배포 앱에 KCI 인증키가 아직 등록되지 않았습니다. 오른쪽 위 🔌 연결 설정에서 등록 방법을 확인하세요.`;st.classList.add("warnline");}
-  else{const g=$("#kq_go");if(g){g.disabled=false;g.title="";}const lk=(S.log||[]).find(l=>l.target==="kci"&&["검색","연결 테스트","가져오기"].includes(l.action));
+  else{const g=$("#kq_go");if(g){g.disabled=false;g.title="";}const lk=kciLast();
     st.classList.remove("warnline");st.innerHTML=lk&&lk.result==="error"?`<i class="dot off"></i>마지막 KCI 요청 실패: ${esc(lk.msg)}`:`<i class="dot ${lk?"ok":"warn"}"></i>배포 앱 KCI 연결${lk?` · 최근 응답 확인 (${fmtTime(lk.t)})`:" 준비됨 — 검색해 보세요"} · 제목 검색어는 필수입니다`;}};
 const _bsync27=BIND.sync;BIND.sync=()=>{_bsync27();if(!IS_DEPLOY)return;const fix=()=>{const k=$("#k_key");if(!k||k.dataset.dep)return;k.dataset.dep=1;const box=k.closest(".row")||k.parentElement;box.insertAdjacentHTML("beforebegin",DEPLOY_KCI_HOWTO);[k,$("#k_save"),$("#k_del")].forEach(e=>{if(e)e.style.display="none";});const lab=document.querySelector('label[for="k_key"]');if(lab)lab.style.display="none";};
   fix();setTimeout(fix,500);setTimeout(fix,1500);};
+
+
+/* =========================================================
+   28단계: KCI 연결 상태를 프로젝트 공통으로
+   ========================================================= */
+const KCI_ACTS=["검색","연결 테스트","가져오기"];
+function kciLast(){const own=(S&&S.log||[]).find(l=>l.target==="kci"&&KCI_ACTS.includes(l.action)),g=G.kciLast;if(!g)return own;if(!own)return g;return String(g.t)>String(own.t)?g:own;}
+const _ls28=logSync;logSync=function(t,a,r,m){_ls28(t,a,r,m);if(t==="kci"&&KCI_ACTS.includes(a)){G.kciLast={target:"kci",action:a,result:r,msg:m,t:now()};dbPut("data","global",G).catch(()=>{});}};
+
+
+/* =========================================================
+   29단계: 파일 올리기·직접 입력 삭제 · AI 집필에 논문 주제 · 5 논문 확인하기
+   ========================================================= */
+["upload","manual"].forEach(k=>{const i=SOURCES.findIndex(s=>s[0]===k);if(i>=0)SOURCES.splice(i,1);});
+const _collect29=VIEWS.collect;VIEWS.collect=()=>{if(!SOURCES.some(s=>s[0]===CTAB))CTAB="kci";return _collect29();};
+const _origBox29=origBox;origBox=function(it){return _origBox29(it).replace(/자료 수집 및 분석 → 자료 모으기 → <b>파일 올리기<\/b>나 <b>Google Drive<\/b>에서 이 문헌에 원문을 연결하세요\./,"자료 수집 및 분석 → 자료 모으기 → <b>Google Drive</b>에서 원문 파일을 이 문헌에 연결하세요.");};
+WSTAGES.push(["final","논문 확인","전체 미리보기·내려받기"]);
+function finalModel(){const t=S.format.toc;S.format.toc=true;try{return buildDoc();}finally{S.format.toc=t;}}
+function titleSection(){const s=S.settings,D=S.design;return `<section class="card ws-title"><h2>논문 주제</h2><p class="hint">논문의 제목입니다. 표지·초록·내려받는 문서에 그대로 들어갑니다.</p>
+  <div class="f2"><div><label for="wt_title">논문 제목(주제) *</label><input type="text" id="wt_title" value="${esc(D.fields.title.value||s.topic||"")}" placeholder="예: 한-베트남 기업·기관 간 MOU 체결 동향 분석"></div><div><label for="wt_sub">부제</label><input type="text" id="wt_sub" value="${esc(s.subtitle||"")}" placeholder="예: 2024~2026년 정상급 방문 계기 비즈니스 포럼을 중심으로"></div></div>
+  <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn primary sm" id="wt_save">제목 저장</button></div></section>`;}
+function finalSection(){const m=finalModel(),F=S.front||{},D=S.design;const errs=m.issues.filter(i=>i.level==="오류"),chars=D.chapters.reduce((a,c)=>a+String((S.writing[c.ch_id]||{}).text||"").replace(/\s/g,"").length,0);const hw=S.format&&S.format.hwpx;
+  const chip=(ok,t)=>`<span class="fchip ${ok?"ok":""}">${ok?"✓":"·"} ${t}</span>`;
+  return `<section class="card ws-final"><div class="row" style="justify-content:space-between"><h2 style="margin:0">논문 확인하기</h2><span class="hint">제목 → 목차 → 국문초록 → 본문 → 참고문헌 → 영문초록 순서의 완성 문서입니다.</span></div>
+   <div class="fchips">${chip(!!(D.fields.title.value||S.settings.topic),"논문 제목")}${chip(!!F.abstract_ko,"국문초록")}${chip(!!F.abstract_en,"영문초록")}${chip(D.chapters.length>0,`목차 ${D.chapters.length}장`)}${chip(chars>0,`본문 ${chars.toLocaleString()}자`)}${chip(m.refs.length>0,`참고문헌 ${m.refs.length}편`)}</div>
+   ${errs.length?`<details class="sub"><summary>확인할 곳 ${errs.length}건</summary><ul class="plist">${errs.slice(0,10).map(i=>`<li><span class="tag red">${esc(i.check)}</span> ${esc(i.detail)}</li>`).join("")}</ul></details>`:""}
+   <div class="fxdl"><button class="btn primary big" data-fd="pdf">PDF</button><button class="btn primary big" data-fd="hwpx" ${hw?"":"disabled title=\"양식 적용에서 한글(HWPX) 양식을 올리면 만들 수 있어요\""}>한글 (HWPX)</button><button class="btn primary big" data-fd="docx">워드 (DOCX)</button><button class="btn big" data-fd="html">HTML</button><button class="btn big" data-fd="md">Markdown</button></div>
+   <p class="hint">${hw?"한글 파일은 양식 적용에 올린 한글 양식에 채워 만듭니다.":"한글(HWPX)로 받으려면 <b>양식 적용</b>에서 한글 양식을 먼저 올리세요."} 워드는 ${S.format.template&&S.format.template.use?"올린 워드 양식으로":"글 형태 기본 서식으로"} 만듭니다. PDF는 인쇄 창에서 "PDF로 저장"을 고르세요.</p>
+   <iframe class="finalprev" title="논문 미리보기" srcdoc="${esc(printHtml(m))}"></iframe></section>`;}
+async function finalDownload(kind){const m=finalModel(),f=S.format,name=safeName(S.design.fields.title.value||S.settings.topic||S.settings.name);
+  const dl=(blob,ext)=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name+"."+ext;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);};
+  try{if(kind==="hwpx")dl(await buildHwpx(m),"hwpx");else if(kind==="docx")dl(await buildDocx(m),"docx");
+    else if(kind==="pdf"){const w=window.open("","_blank");if(!w)throw new Error("팝업이 막혀 인쇄 창을 열지 못했습니다. 팝업을 허용하세요.");w.document.write(printHtml(m));w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(e){}},600);}
+    else if(kind==="md")download(name+".md",markdownOut(m),"text/markdown");else download(name+".html",printHtml(m),"text/html");
+    S.exportLog.unshift({t:now(),format:{hwpx:"한글(HWPX)",docx:"워드(DOCX)",pdf:"PDF",html:"HTML",md:"Markdown"}[kind],name,errors:m.issues.filter(i=>i.level==="오류").length,warns:m.issues.filter(i=>i.level==="경고").length,template:kind==="hwpx"?(f.hwpx||{}).name:kind==="docx"&&f.template&&f.template.use?f.template.name:""});S.exportLog=S.exportLog.slice(0,50);logSync("export","논문 내려받기","ok",kind);await flush();}
+  catch(e){logSync("export","논문 내려받기","error",e.message);toast(e.message);}}
+const _wsb29=wsBadges;wsBadges=function(){const b=_wsb29();const m=WST==="final"?finalModel():null;b.final=m?(m.issues.filter(i=>i.level==="오류").length?`확인 ${m.issues.filter(i=>i.level==="오류").length}`:"준비됨"):"";return b;};
+const _write29=VIEWS.write;VIEWS.write=()=>{let h=_write29();h=h.replace('<section class="card ws-type">',titleSection()+'<section class="card ws-type">');if(WST==="final")h=h.replace(/<\/div>$/,finalSection()+"</div>");return h;};
+const _bwrite29=BIND.write;BIND.write=()=>{_bwrite29();
+  const s=$("#wt_save");if(s)s.onclick=async()=>{const t=$("#wt_title").value.trim();if(!t)return toast("논문 제목을 입력하세요.");S.settings.topic=t;S.settings.subtitle=$("#wt_sub").value.trim();ensure6();setField("title",t,"연구자");recordView&&0;await flush();toast("논문 제목을 저장했습니다.");render();};
+  document.querySelectorAll("[data-fd]").forEach(b=>b.onclick=()=>finalDownload(b.dataset.fd));};
 
 /* ---------- 시작 ---------- */
 (async()=>{
