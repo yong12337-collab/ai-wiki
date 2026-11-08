@@ -807,6 +807,12 @@ body:not(.homemode) .app{zoom:.9}
 .fxgrid1{display:flex;flex-direction:column;gap:10px;margin-top:10px}.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 12px}.mgrid label{margin-top:4px}
 .unit{display:flex;align-items:center;gap:4px}.unit span{font-size:12px;color:var(--ink3)}
 @media (max-width:1100px){.formgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.wstabs button{flex-basis:calc(50% - 12px)!important}}
+/* ===== 37단계 ===== */
+.kwrow{display:flex;gap:8px;align-items:center}.kwrow input{flex:1}.kwrow .btn{white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+#dlgBody .kwsearch{position:relative}#dlgBody .kws-list{top:100%}
+.kwh{font-size:14px;margin:16px 0 6px;display:flex;align-items:center;gap:8px}
+.kadd{all:unset;cursor:pointer;padding:4px 11px;border-radius:999px;background:#F3F6FC;color:#2C3A60;font-size:13px;font-weight:600;box-shadow:inset 0 0 0 1px #DDE5F4}.kadd:hover{background:#E4EDFF;color:#2350C8}.kadd small{color:#9AA5C0;font-weight:400}.kadd.ai{background:#F1EDFF;color:#4B32C9;box-shadow:inset 0 0 0 1px #DDD3FF}
+.kcikw{font-size:12px;color:#6B8BD6;margin-top:2px}.mgt td.reason{font-size:13px;color:var(--ink2);max-width:360px}
 </style>
 </head>
 <body>
@@ -4317,6 +4323,130 @@ const _bmanage36=BIND.manage;BIND.manage=()=>{_bmanage36();const d=$("#mg_del");
   const ids=new Set(list.map(p=>p.id));S.items=S.items.filter(i=>!ids.has(i.id));(S.files||[]).forEach(f=>{if(ids.has(f.lit_id))f.lit_id="";});(S.design&&S.design.chapters||[]).forEach(c=>{c.doc_ids=(c.doc_ids||[]).filter(id=>!ids.has(id));});
   MG.sel.clear();logSync("collect","자료 삭제","ok",`${list.length}편`);await flush();toast(`${list.length}편을 삭제했습니다.`);const y=window.scrollY;render();window.scrollTo(0,y);};};
 TOUR.forEach(t=>{if(t.v==="export"){t.v="write";t.sel=".wstabs";t.t="양식 적용 · 출력";t.d="AI 집필의 양식 적용 단계에서 양식 파일을 올리거나 직접 입력하고, 출력 단계에서 PDF·한글·워드로 내려받습니다.";}});
+
+
+/* =========================================================
+   37단계: 키워드 검색 버튼(검색+AI 추천) · AI 분류 개선(문헌 자체 주제·KCI 키워드·이유)
+           · 판단하기: 승인 없이 AI 분류 → 집필자 편집 → 저장/임시저장 → 토픽·방향
+   ========================================================= */
+/* ---------- 1) 연구 설정: 핵심 키워드 옆 '키워드 검색' 버튼 ---------- */
+const _setup37=VIEWS.setup;VIEWS.setup=()=>{let h=_setup37();
+  h=h.replace(/<div class="kwsearch">[\s\S]*?<div class="kws-chips"[\s\S]*?<\/div><\/div>/,"");
+  return h.replace(/(<label for="st_kw">)핵심 키워드 \(쉼표로 구분\)(<\/label>)(<input type="text" id="st_kw" value="[^"]*">)/,'$1핵심 키워드 <span class="hint">— 직접 입력(쉼표로 구분)하거나, 키워드 검색으로 찾아 넣으세요</span>$2<div class="kwrow">$3<button class="btn primary" id="kw_find" type="button">'+SVG(ICONS.search)+' 키워드 검색</button></div>');};
+let KWD_AI=[];
+function kwFindDialog(){const core=new Set((S.settings.keywords||[]).map(k=>k.toLowerCase()));const cands=kwCandidates().filter(c=>!core.has(c.term.toLowerCase()));
+  const rec=cands.filter(c=>c.src.has("AI 추천")||c.src.has("자료")).sort((a,b)=>b.n-a.n).slice(0,18);
+  $("#dlgBody").innerHTML=`<h2>키워드 검색</h2><p class="hint">검색하거나 추천 키워드를 누르면 핵심 키워드에 바로 들어갑니다. 후보는 수집한 자료의 KCI 키워드·AI 추천·키워드 사전에서 모읍니다.</p>
+   <div class="kwsearch"><div class="kws-box"><span class="kws-ico">${SVG(ICONS.search)}</span><input type="text" id="kws_q" autocomplete="off" placeholder="예: 공급망, 직접투자, 인력양성" role="combobox" aria-expanded="false" aria-controls="kws_list"><button class="btn sm primary" id="kws_add">추가</button></div><ul id="kws_list" class="kws-list" role="listbox" hidden></ul></div>
+   <h3 class="kwh">현재 핵심 키워드</h3><div class="kws-chips">${(S.settings.keywords||[]).map(k=>`<span class="kchip">${esc(k)}<button data-kwdel="${esc(k)}" aria-label="${esc(k)} 빼기">×</button></span>`).join("")||'<span class="hint">아직 없습니다.</span>'}</div>
+   <h3 class="kwh">추천 키워드 <span class="hint">— 자료에 많이 나오는 순</span></h3><div class="kws-chips">${rec.map(c=>`<button class="kadd" data-kwadd="${esc(c.term)}">＋ ${esc(c.term)} <small>${c.n}편</small></button>`).join("")||'<span class="hint">아직 추천할 키워드가 없습니다. 자료를 먼저 모으세요.</span>'}</div>
+   ${G.apiKey?`<h3 class="kwh">Claude 추천 <button class="btn sm" id="kw_ai">연구 주제로 추천 받기</button></h3><div class="kws-chips" id="kw_ai_box">${KWD_AI.filter(t=>!core.has(t.toLowerCase())).map(t=>`<button class="kadd ai" data-kwadd="${esc(t)}">＋ ${esc(t)}</button>`).join("")}</div>`:""}
+   <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="kw_close">닫기</button></div>`;
+  const d=$("#dlg");if(!d.open)d.showModal();
+  const re=()=>{kwFindDialog();const q=$("#kws_q");if(q)q.focus();};
+  const pick=t=>{if(kwAddCore(t)){toast(`"${t}"을(를) 핵심 키워드에 추가했습니다.`);re();}};
+  const q=$("#kws_q"),list=$("#kws_list");let I=-1;
+  const show=()=>{const v=q.value.trim().toLowerCase().replace(/\s+/g,"");const hits=v?cands.filter(c=>c.term.toLowerCase().replace(/\s+/g,"").includes(v)).sort((a,b)=>b.n-a.n||a.term.length-b.term.length).slice(0,8):[];const exact=hits.some(c=>c.term.toLowerCase().replace(/\s+/g,"")===v);
+    list.innerHTML=hits.map((c,i)=>`<li role="option" data-term="${esc(c.term)}" class="${i===I?"on":""}"><b>${esc(c.term)}</b><span>자료 ${c.n}편 · ${[...c.src].join("·")}</span></li>`).join("")+(v&&!exact?`<li role="option" class="kws-new" data-term="${esc(q.value.trim())}">＋ "${esc(q.value.trim())}" 새 키워드로 추가</li>`:"");
+    list.hidden=!v;q.setAttribute("aria-expanded",String(!!v));list.querySelectorAll("li").forEach(li=>li.onmousedown=e=>{e.preventDefault();pick(li.dataset.term);});};
+  q.oninput=()=>{I=-1;show();};q.onkeydown=e=>{const items=[...list.querySelectorAll("li")];if(e.key==="ArrowDown"){e.preventDefault();I=Math.min(items.length-1,I+1);show();}else if(e.key==="ArrowUp"){e.preventDefault();I=Math.max(-1,I-1);show();}else if(e.key==="Enter"){e.preventDefault();const li=items[I]||items[0];if(li)pick(li.dataset.term);}};
+  $("#kws_add").onclick=()=>{const v=q.value.trim();if(!v)return toast("키워드를 입력하세요.");pick(v);};
+  $("#dlgBody").querySelectorAll("[data-kwadd]").forEach(b=>b.onclick=()=>pick(b.dataset.kwadd));
+  $("#dlgBody").querySelectorAll("[data-kwdel]").forEach(b=>b.onclick=()=>{const t=b.dataset.kwdel;S.settings.keywords=(S.settings.keywords||[]).filter(k=>k!==t);const k=S.keywords.find(x=>x.term===t&&x.type==="core");if(k)k.type="related";save();re();});
+  $("#kw_close").onclick=()=>{d.close();const y=window.scrollY;render();window.scrollTo(0,y);};
+  const ai=$("#kw_ai");if(ai)ai.onclick=async()=>{ai.disabled=true;ai.textContent="추천 받는 중…";try{const s=S.settings;const sample=papers().slice(0,25).map(p=>({title:p.title,keywords:(p.keywords||[]).slice(0,6)}));
+      const r=parseJSON(await callClaude(`연구 주제: ${s.topic}\n나의 관점: ${s.view||""}\n연구 목적: ${s.purpose||""}\n현재 핵심 키워드: ${(s.keywords||[]).join(", ")}\n수집한 자료(제목·KCI 키워드): ${JSON.stringify(sample)}\n\n이 연구의 문헌 검색과 분류에 쓸 핵심 키워드를 10개 추천하세요. 현재 핵심 키워드와 겹치지 않게, 학술 검색에 실제로 쓰이는 짧은 용어로 쓰세요.\n반드시 JSON만: {"keywords":["",""]}`,1200));
+      KWD_AI=(r.keywords||[]).map(x=>String(x).trim()).filter(Boolean).slice(0,12);}catch(e){toast("추천 오류: "+e.message);}re();};}
+const _bsetup37=BIND.setup;BIND.setup=()=>{_bsetup37();const b=$("#kw_find");if(b)b.onclick=()=>{const kw=$("#st_kw");if(kw){const typed=kw.value.split(",").map(x=>x.trim()).filter(Boolean);if(typed.join("|")!==(S.settings.keywords||[]).join("|")){S.settings.keywords=typed;syncCoreFromSettings();save();}}kwFindDialog();};};
+/* ---------- 3) AI 분류 개선: 문헌 자체의 주제 · KCI 키워드 우선 · 이유 ---------- */
+classifyPapersAI=async function(batch){const topics=S.topics.map(t=>t.name),kwConfirmed=S.keywords.filter(k=>k.type==="core"||k.type==="confirmed").map(k=>k.term),excl=S.keywords.filter(k=>k.type==="excluded").map(k=>k.term);
+  const items=batch.map((it,i)=>({i,title:it.title,authors:it.authors,year:it.year,journal:it.journal,kci_keywords:(it.keywords||[]).join(", "),abstract:(it.abstract||it.summary||"").slice(0,1200)}));const corr=researcherCorrections();
+  const prompt=`${projectContext()}\n핵심 키워드: ${JSON.stringify(kwConfirmed)}\n제외 키워드: ${JSON.stringify(excl)}\n참고용 기존 토픽 이름: ${JSON.stringify(topics)}${corr?`\n연구자가 과거에 수정한 분류(같은 기준을 따르세요):\n${corr}`:""}
+
+각 문헌을 분류하세요.
+1) relevance(1~5): 이 연구 주제·나의 관점에 근거로 쓸 수 있는 정도. 1=무관, 3=배경 정도, 5=핵심 근거.
+2) topic: 이 문헌이 실제로 다루는 주제를 제목·초록·KCI 키워드에 근거해 8~25자로 직접 쓰세요(예: "한국 소설 속 베트남 심상지리·전쟁 관광"). 기존 토픽 이름은 이 문헌의 핵심 주제와 정확히 같을 때만 그대로 쓰고, 단어 몇 개가 겹친다는 이유로 고르지 마세요.
+3) reason: 관련도와 토픽을 그렇게 정한 이유를 두 문장 이내로. 제목·초록·키워드 중 무엇을 근거로 했는지 밝히세요.
+4) keywords: KCI 키워드를 먼저 그대로 넣고, 필요하면 보충 키워드를 더해 최대 8개.
+주어진 정보만 근거로 쓰고, 정보가 부족하면 confidence를 low로 하세요. 제외 키워드에 해당하면 relevance를 1~2로 하세요. 문헌 유형은 ["학술지 논문","학위논문","연구보고서","단행본","학술대회 발표","기사·기타"] 중 하나.
+반드시 JSON 배열만 출력하세요:
+[{"i":번호,"relevance":1~5,"topic":"","reason":"","evidence":["제목","초록","KCI 키워드"],"confidence":"high|mid|low","keywords":[""],"doc_type":"","doc_type_confidence":"high|mid|low","summary":"두 문장 요약"}]
+
+문헌:
+${JSON.stringify(items)}`;
+  const res=parseJSON(await callClaude(prompt,5000));const newKw=[];
+  for(const r of res){const it=batch[r.i];if(!it)continue;const v=parseInt(r.relevance);const reason=String(r.reason||"").trim();
+    if(v>=1&&v<=5&&it.cls_by!=="연구자"){it.relevance=v;it.relevance_reason=reason||it.relevance_reason;}if(r.summary&&!it.summary)it.summary=r.summary;
+    const conf=["high","mid","low"].includes(r.confidence)?r.confidence:"low";const topic=String(r.topic||"").trim().slice(0,40);
+    const kws=[...new Set([...(it.keywords||[]),...(r.keywords||[])].map(x=>String(x).trim()).filter(Boolean))].slice(0,8);
+    applyTopic(it,{topic,keywords:kws,reason,evidence:Array.isArray(r.evidence)?r.evidence:[],confidence:conf},"AI");it.kw_ai=kws;newKw.push(...(r.keywords||[]));
+    const dtv=DOC_ALIAS[r.doc_type]||r.doc_type;applyDocType(it,{value:LIT_TYPES.includes(dtv)?dtv:"",confidence:["high","mid","low"].includes(r.doc_type_confidence)?r.doc_type_confidence:"low",reason:"",evidence:["AI 판단(서지정보)"]},"AI");
+    if(it.cls_by!=="연구자")it.cls_by="AI";it.updated=now();
+    if(topic&&!S.topics.some(t=>kwN(t.name)===kwN(topic)))S.topics.push({topic_id:uid(),name:topic,desc:"",kw_ids:[],by:"AI"});}
+  return registerAiKeywords(countTop(newKw,1));};
+const _rule37=classifyPaperRule;classifyPaperRule=function(it){const out=_rule37(it);const tp=it.topic_ai&&it.topic_ai.topic;
+  if(tp){const hay=`${it.title} ${(it.keywords||[]).join(" ")} ${it.abstract||""}`.toLowerCase().replace(/\s+/g,"");const T=S.topics.find(t=>t.name===tp);
+    const terms=[...String(tp).split(/[\s·,/]+/),...((T&&T.kw_ids||[]).map(id=>{const k=S.keywords.find(x=>x.kw_id===id);return k&&k.term;}).filter(Boolean))].map(x=>x.toLowerCase().replace(/\s+/g,"")).filter(x=>x.length>=2&&!["한베","베트남","한국","연구","분석"].includes(x));
+    const hit=[...new Set(terms)].filter(t=>hay.includes(t)).length;
+    if(hit<2&&it.cls_by!=="연구자"){it.topic_ai.topic="";it.topic_ai.reason="규칙 기반: 근거가 충분한 토픽이 없어 붙이지 않았습니다(AI 분류하기로 다시 판단하세요).";}}
+  if((it.keywords||[]).length&&it.topic_ai){it.topic_ai.keywords=[...new Set([...(it.keywords||[]),...(it.topic_ai.keywords||[])])].slice(0,8);it.kw_ai=it.topic_ai.keywords;}
+  return out;};
+/* ---------- 2) 판단하기: 승인 없이 분류 → 편집 → 저장/임시저장 ---------- */
+if(!SNAP_KEYS.includes("judgeSave"))SNAP_KEYS.push("judgeSave");
+const JS=()=>S.judgeSave||null;const inJudge=p=>{const j=JS();return !!(j&&j.ids&&j.ids.includes(p.id))&&p.decision!=="제외";};
+const reasonOf=p=>String((p.topic_ai&&p.topic_ai.reason)||p.relevance_reason||"").trim();
+VIEWS.manage=()=>{const all=papers(),L=mgList();MG.sel=new Set([...MG.sel].filter(id=>all.some(p=>p.id===id)));const opt=(arr,v)=>arr.map(([k,t])=>`<option value="${k}" ${v===k?"selected":""}>${t}</option>`).join("");const j=JS();const cls=all.filter(p=>p.relevance&&p.decision!=="제외").length;
+  return hubHeader("manage","AI가 관련도와 토픽을 분류하고 그 이유를 비고에 적습니다. 오른쪽에서 집필자가 고친 뒤 저장하면 토픽·방향으로 넘어갑니다.")+`
+  <div class="mg-grid">
+   <section class="card mg-box"><h3>1. AI 분류</h3><p class="hint">선택한 자료(없으면 미분류 전체)를 AI가 관련도(높음·중간·낮음)와 토픽으로 분류하고, 그렇게 판단한 이유를 비고에 적습니다.</p>
+    <div class="row"><button class="btn primary" id="mg_cls">AI 분류하기</button><button class="btn danger" id="mg_reset">분류 초기화</button><span class="hint" id="mg_prog">${MG.busy?"분류 중…":`분류 ${cls}/${all.length}편`}</span></div></section>
+   <section class="card mg-box"><h3>2. 집필자 분류 및 토픽 지정</h3><p class="hint">AI 판단을 보고 선택한 자료의 관련도를 고치거나 토픽을 지정합니다. <b>토픽을 지정한 자료는 저장할 때 토픽·방향의 토픽 자료로 자동으로 들어갑니다.</b> 빼야 할 자료는 눌러서 제외하거나 삭제하세요.</p>
+    <div class="row"><label for="mg_setband" class="sr">관련도 지정</label><select id="mg_setband" style="width:auto"><option value="">관련도 지정…</option><option value="5">높음</option><option value="3">중간</option><option value="1">낮음</option></select><button class="btn" id="mg_band_ok">관련도 적용</button><span class="sep-v"></span><button class="btn" id="mg_topic">토픽 지정</button><button class="btn" id="mg_untopic">토픽 지정 해제</button></div></section></div>
+  <section class="card"><div class="row mg-tools"><span class="mg-selinfo"><b>${MG.sel.size}</b>편 선택 · 보이는 자료 ${L.length}편</span><button class="btn sm" id="mg_all">전체 선택</button><button class="btn sm" id="mg_none">선택 해제</button><button class="btn sm danger" id="mg_del">선택 삭제</button>
+    <span class="mg-right"><label for="mg_q" class="sr">검색</label><input type="search" id="mg_q" placeholder="제목·저자·학술지 검색" value="${esc(MG.q)}">
+    <label for="mg_band" class="sr">관련도</label><select id="mg_band">${opt([["all","관련도 전체"],["높음","높음"],["중간","중간"],["낮음","낮음"],["미분류","미분류"]],MG.band)}</select>
+    <label for="mg_sort" class="sr">정렬</label><select id="mg_sort">${opt([["added_desc","최신 수집순"],["added_asc","오래된 수집순"],["year_desc","발행연도 최신순"],["year_asc","발행연도 오래된순"],["rel_desc","관련도 높은순"],["title","제목순(가나다)"]],MG.sort)}</select></span></div>
+   ${L.length?`<div class="tablewrap"><table class="mgt"><thead><tr><th></th><th>제목 · 저자</th><th>발행연도</th><th>관련도</th><th>AI 토픽</th><th>비고 (AI 판단 이유)</th></tr></thead><tbody>${L.map(p=>{const r=reasonOf(p);return `<tr data-mg="${p.id}" class="${MG.sel.has(p.id)?"sel":""} ${p.decision==="제외"?"dim":""}"><td><input type="checkbox" class="mg_ck" data-id="${p.id}" ${MG.sel.has(p.id)?"checked":""} aria-label="선택"></td>
+     <td><b class="t">${esc(p.title)}</b>${originals(p).length?` <button class="fopen" data-fopen="${p.id}">원문</button>`:""}<div class="hint">${esc(p.authors||"저자 미확인")}${p.journal?` · ${esc(p.journal)}`:""}</div>${(p.keywords||[]).length?`<div class="kcikw">KCI 키워드: ${esc((p.keywords||[]).slice(0,6).join(", "))}</div>`:""}</td><td>${esc(String(p.year||"-"))}</td>
+     <td class="nowrap">${p.relevance?`${gradeBadge(p.relevance)} ${bandChip(p.relevance)}`:'<span class="hint">미분류</span>'}${p.cls_by==="연구자"?'<div class="hint">집필자 수정</div>':""}</td>
+     <td>${p.topic_set?`<span class="st st-topic">${esc(p.topic_final)}</span><div class="hint">집필자 지정</div>`:esc((p.topic_ai&&p.topic_ai.topic)||"")||'<span class="hint">-</span>'}</td><td class="reason">${p.decision==="제외"?'<span class="st st-off">제외</span> ':""}${r?esc(r):'<span class="hint">-</span>'}</td></tr>`;}).join("")}</tbody></table></div>`:`<p class="hint">${all.length?"조건에 맞는 자료가 없습니다.":"아직 자료가 없습니다. 자료 모으기에서 가져오세요."}</p>`}
+   <p class="hint" style="margin-top:8px">자료를 누르면 상세 창에서 원문을 보고 <b>채택하기 / 제외하기</b>를 정할 수 있습니다.</p></section>
+  <div class="wsbar ${j?"saved":""}"><span class="hint">${j?`✓ <b>저장됨</b> · ${fmtTime(j.at)} · ${j.ids.length}편이 토픽·방향에 있습니다. 고친 뒤 다시 저장하면 반영됩니다.`:"분류와 편집을 마치면 <b>저장</b>하세요. 저장하면 토픽·방향으로 넘어갑니다. <b>임시저장</b>은 히스토리에 남습니다."}</span><span class="row"><button class="btn" id="mg_temp">임시저장</button><button class="btn primary" id="mg_save">저장 → 토픽·방향</button></span></div>`;};
+const _bmanage37=BIND.manage;BIND.manage=()=>{const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>{if(b.dataset.hub!==current)go(b.dataset.hub);});
+  ["sort","band"].forEach(k=>{$("#mg_"+k).onchange=e=>{MG[k]=e.target.value;rer();};});MG.appr="all";
+  let qt;$("#mg_q").oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{MG.q=e.target.value;rer();const q=$("#mg_q");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length);}},300);};
+  $("#mg_all").onclick=()=>{mgList().forEach(p=>MG.sel.add(p.id));rer();};$("#mg_none").onclick=()=>{MG.sel.clear();rer();};
+  document.querySelectorAll(".mg_ck").forEach(c=>{c.onclick=e=>e.stopPropagation();c.onchange=()=>{c.checked?MG.sel.add(c.dataset.id):MG.sel.delete(c.dataset.id);rer();};});
+  document.querySelectorAll("tr[data-mg]").forEach(r=>r.onclick=()=>openItem(r.dataset.mg));document.querySelectorAll("[data-fopen]").forEach(b=>b.onclick=e=>{e.stopPropagation();openFirstOriginal(b.dataset.fopen);});
+  $("#mg_cls").onclick=async()=>{let list=mgTargets();if(!list.length){list=papers().filter(p=>!p.relevance||p.cls_by==="규칙");if(!list.length)return toast("다시 분류할 자료를 선택하세요.");if(!confirm(`선택한 자료가 없어 미분류·규칙 분류 ${list.length}편을 AI로 분류할까요?`))return;}
+    MG.busy=true;const pr=$("#mg_prog");try{await runClassification(list,(d,t)=>{if(pr)pr.textContent=typeof d==="string"?d:`분류 중… ${d}/${t}`;});toast(`${list.length}편을 분류했습니다. 비고에서 판단 이유를 확인하세요.`);}catch(e){toast("분류 오류: "+e.message);}finally{MG.busy=false;await flush();rer();}};
+  $("#mg_reset").onclick=async()=>{let list=mgTargets();const allx=!list.length;if(allx)list=papers();if(!list.length)return;if(!confirm(`${allx?"전체":"선택한"} ${list.length}편의 분류와 토픽 지정을 초기화할까요? (제외 판단은 유지)`))return;
+    for(const p of list){addHistory(p,"상태",p.cls_state,"미분류","연구자","분류 초기화");Object.assign(p,{relevance:0,relevance_reason:"",topic_ai:null,kw_ai:[],topic_final:"",topic_set:false,cls_state:"미분류",cls_by:"",review_status:"미검토",in_topic:false});if(p.decision==="채택")p.decision="미판단";}
+    MG.sel.clear();logSync("classify","분류 초기화","ok",`${list.length}편`);await flush();toast(`${list.length}편을 초기화했습니다.`);rer();};
+  $("#mg_band_ok").onclick=async()=>{const v=+$("#mg_setband").value;const list=mgTargets();if(!list.length)return toast("관련도를 정할 자료를 선택하세요.");if(!v)return toast("관련도를 고르세요.");list.forEach(p=>{addHistory(p,"관련도",String(p.relevance||""),String(v),"연구자","집필자 분류");p.relevance=v;p.cls_by="연구자";});await flush();toast(`${list.length}편을 '${BAND(v)}'(으)로 정했습니다.`);rer();};
+  $("#mg_topic").onclick=()=>{const list=mgTargets();if(!list.length)return toast("토픽을 지정할 자료를 선택하세요.");topicPicker(`${list.length}편 토픽 지정`,async name=>{list.forEach(p=>{if(p.topic_final!==name)addHistory(p,"최종 토픽",p.topic_final,name,"연구자","토픽 지정");p.topic_final=name;p.topic_set=true;});await flush();toast(`${list.length}편에 "${name}" 토픽을 지정했습니다. 저장하면 토픽 자료로 들어갑니다.`);rer();});};
+  $("#mg_untopic").onclick=async()=>{const list=mgTargets().filter(p=>p.topic_set);if(!list.length)return toast("토픽을 지정한 자료를 선택하세요.");list.forEach(p=>{p.topic_set=false;p.in_topic=false;});await flush();rer();};
+  $("#mg_del").onclick=async()=>{const list=mgTargets();if(!list.length)return toast("삭제할 자료를 선택하세요.");if(!confirm(`선택한 ${list.length}편을 삭제할까요? 되돌릴 수 없습니다. (연결된 원문 파일은 지우지 않습니다)`))return;const ids=new Set(list.map(p=>p.id));S.items=S.items.filter(i=>!ids.has(i.id));(S.files||[]).forEach(f=>{if(ids.has(f.lit_id))f.lit_id="";});(S.design&&S.design.chapters||[]).forEach(c=>{c.doc_ids=(c.doc_ids||[]).filter(id=>!ids.has(id));});if(S.judgeSave)S.judgeSave.ids=S.judgeSave.ids.filter(id=>!ids.has(id));MG.sel.clear();logSync("collect","자료 삭제","ok",`${list.length}편`);await flush();rer();};
+  $("#mg_temp").onclick=async()=>{const note=(prompt("임시저장 메모(선택)","")||"").trim();const sn=takeSnapshot(note,false,"manage");await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다.`);rer();};
+  $("#mg_save").onclick=async()=>{const pool=papers().filter(p=>p.relevance&&p.decision!=="제외");if(!pool.length)return toast("분류된 자료가 없습니다. 먼저 AI 분류하기를 하세요.");
+    pool.forEach(p=>{if(p.topic_set)p.in_topic=true;if(!p.cls_state||p.cls_state==="미분류")p.cls_state="분류";setDecision(p,"채택",true);});papers().filter(p=>!pool.includes(p)).forEach(p=>{p.in_topic=false;});
+    S.judgeSave={at:now(),ids:pool.map(p=>p.id)};if(TS().state==="saved")TS().state="editing";logSync("classify","판단하기 저장","ok",`${pool.length}편 (토픽 지정 ${pool.filter(p=>p.topic_set).length}편)`);await flush();toast(`${pool.length}편을 저장했습니다. 토픽·방향에서 확인하세요.`);go("topics");};};
+/* ---------- 토픽·방향: 저장한 자료 = 왼쪽, 토픽 지정 자료 = 오른쪽 ---------- */
+VIEWS.topics=()=>{const A=papers().filter(inJudge),T=A.filter(p=>p.in_topic),Rf=A.filter(p=>!p.in_topic);const st=TS(),locked=st.state==="saved";const sortR=l=>l.slice().sort((a,b)=>(b.relevance||0)-(a.relevance||0));
+  return hubHeader("topics","판단하기에서 저장한 자료가 넘어옵니다. 왼쪽은 참고문헌 자료, 오른쪽은 토픽을 지정한 자료(이 논문의 방향)입니다. 끌어서 옮길 수 있습니다.")+
+  (A.length?`<div class="tpstate ${locked?"saved":""}">${locked?`<b>저장됨</b> · ${fmtTime(st.at)} · 토픽 자료 ${T.length}편 · 참고문헌 자료 ${Rf.length}편 — AI 집필을 시작할 수 있습니다. 고치려면 <b>수정하기</b>를 누르세요.`:st.state==="editing"?"<b>수정 중</b> · 다 고친 뒤 <b>저장</b>을 누르세요.":"토픽 자료를 확인하고 필요하면 끌어서 옮긴 뒤 <b>저장</b>하세요. 저장해야 AI 집필이 열립니다."}</div>
+   <div class="tpcols"><section class="card tpcol" data-drop="ref"><div class="tpc-h"><h3>참고문헌 자료 <span class="cnt">${Rf.length}</span></h3><span class="hint">판단하기에서 저장한 자료 · 참고문헌으로 쓰입니다</span></div><ul class="tpul">${sortR(Rf).map(p=>tpRow(p,"ref",locked)).join("")||`<li class="tpempty">모두 토픽 자료에 있습니다.</li>`}</ul></section>
+    <section class="card tpcol topic" data-drop="topic"><div class="tpc-h"><h3>토픽 자료 <span class="cnt">${T.length}</span></h3><span class="hint">토픽을 지정한 자료 · AI가 각 장의 근거로 먼저 씁니다</span></div><ul class="tpul">${sortR(T).map(p=>tpRow(p,"topic",locked)).join("")||`<li class="tpempty">판단하기에서 토픽을 지정하거나, 왼쪽에서 끌어다 놓으세요.</li>`}</ul></section></div>
+   <div class="tpbtns"><span class="hint">두 목록 모두 참고문헌으로 쓰이며, 오른쪽 토픽 자료가 논문의 중심 근거가 됩니다.</span><span class="row"><button class="btn" id="tp_temp">임시저장</button><button class="btn" id="tp_edit" ${locked?"":"disabled"}>수정하기</button><button class="btn primary" id="tp_save" ${locked?"disabled":""}>저장</button>${locked?`<button class="btn primary" id="tp_write">AI 집필로 →</button>`:""}</span></div>`
+  :`<section class="card"><p class="hint" style="margin:0">아직 판단하기에서 저장한 자료가 없습니다. <b>판단하기</b>에서 AI 분류 → 편집 → 저장하세요.</p><button class="btn primary" style="margin-top:12px" data-hub="manage">판단하기로 →</button></section>`);};
+const _btopics37=BIND.topics;BIND.topics=()=>{_btopics37();const sv=$("#tp_save");if(sv)sv.onclick=async()=>{const A=papers().filter(inJudge),T=A.filter(p=>p.in_topic);if(!T.length)return toast("토픽 자료를 한 편 이상 넣어 주세요.");
+  ensure6();syncOutline();const ids=[...A].sort((a,b)=>(b.in_topic?1:0)-(a.in_topic?1:0)||(b.relevance||0)-(a.relevance||0)).map(p=>p.id);S.design.chapters.forEach(c=>{c.doc_ids=ids.slice();});A.forEach(p=>setDecision(p,"채택",true));
+  if(S.settings.view)setField("view",S.settings.view,"연구자");S.design.confirmed_at=S.design.confirmed_at||now();Object.assign(TS(),{state:"saved",at:now(),topic:T.length,ref:A.length-T.length});logSync("design","토픽·방향 저장","ok",`토픽 ${T.length}편 · 참고문헌 ${A.length-T.length}편`);await flush();toast("저장했습니다. 이제 AI 집필을 시작할 수 있습니다.");const y=window.scrollY;render();window.scrollTo(0,y);};};
+const _hub37=hubHeader;hubHeader=function(v,lead){return _hub37(v,lead).replace(/(<button role="tab" data-hub="topics"[\s\S]*?)(<em>[^<]*<\/em>)?(<\/button>)/,(m,a,em,c)=>{const j=JS(),st=TS().state;return a+(j?`<em>${st==="saved"?"저장됨":`${papers().filter(inJudge).length}편`}</em>`:"")+c;}).replace("AI 분류·승인·토픽 지정","AI 분류·편집·저장");};
+const _snapStage37=snapStage;snapStage=function(sn){const r=_snapStage37(sn);const n=sn.judgeSave&&sn.judgeSave.ids?sn.judgeSave.ids.length:0;r.steps[0]=["판단",n?true:(sn.topicItems||[]).length?"half":false,n?`저장 ${n}편`:""];if(sn.from==="manage")r.here="판단";return r;};
+const _restore37=restoreSnapshot;restoreSnapshot=async function(sn){await _restore37(sn);if(sn.from==="manage"){if(sn.topicItems){const m=new Map(sn.topicItems.map(x=>[x.id,x]));papers().forEach(p=>{const x=m.get(p.id);if(x&&x.topic)p.topic_set=true;});}go("manage");}};
+const _take37=takeSnapshot;takeSnapshot=function(note,auto,from){const sn=_take37(note,auto,from);(sn.topicItems||[]).forEach(x=>{const p=S.items.find(i=>i.id===x.id);if(p)x.set=!!p.topic_set;});const extra=papers().filter(p=>p.relevance&&!(sn.topicItems||[]).some(x=>x.id===p.id)).map(p=>({id:p.id,in:!!p.in_topic,topic:p.topic_final||"",cls:p.cls_state||"",dec:p.decision||"",set:!!p.topic_set}));sn.topicItems=[...(sn.topicItems||[]),...extra];return sn;};
 
 /* ---------- 시작 ---------- */
 (async()=>{
