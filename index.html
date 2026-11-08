@@ -751,6 +751,16 @@ body:not(.homemode) .app{zoom:.9}
 .hbar{gap:14px;margin-bottom:10px}.chk{display:inline-flex;align-items:center;gap:6px;font-weight:600;margin:0}
 .htable2 tbody tr{cursor:pointer}.htable2 tr.sel{background:#EEF4FF!important}
 .snapprev{height:62vh}
+/* ===== 32단계: 목차별 관점 ===== */
+.prep-grid.two{grid-template-columns:1.55fr 1fr}
+.pvlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pvlist li{border-radius:14px;background:#fff;border:1px solid #E4ECFF;overflow:hidden}.pvlist li.open{border-color:#BFD2FF;box-shadow:0 6px 16px rgba(103,128,186,.16)}
+.pv-h{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px}.pv-h:hover{background:#F5F8FF}
+.pv-n{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:8px;background:#E4EDFF;color:#2350C8;font-weight:800;font-size:13px}
+.pv-h b{flex:1;font-size:14.5px}.pv-h em{font-style:normal;font-size:12px;color:#9AA5C0}.pv-h em.on{color:#167A45;font-weight:700}.pv-c{color:#9AA5C0;font-size:11px}
+.pv-t{display:block;width:calc(100% - 24px);margin:0 12px 4px}.pv-saved{margin:0 12px 10px;font-size:12px}
+.pv-sum{margin:0 12px 10px 48px;font-size:13px;color:var(--ink2)}
+@media (max-width:1000px){.prep-grid.two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3477,7 +3487,7 @@ function profileMenu(anchor){document.querySelectorAll(".pmenu").forEach(e=>e.re
   m.querySelector('[data-pm="profile"]').onclick=()=>{m.remove();profileDialog();};
   m.querySelector('[data-pm="backup"]').onclick=async()=>{m.remove();const all=[];for(const x of INDEX){const d=await dbGet("data","prj:"+x.id);if(d)all.push(d);}download(`AI-WIKI_전체백업_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({app:"AI WIKI",version:17,exported:now(),global:{model:G.model,seq:G.seq,driveClientId:G.driveClientId,driveBrowse:G.driveBrowse},projects:all},null,1),"application/json");};
   m.querySelector("#pm_restore").onchange=async e=>{const f=e.target.files[0];m.remove();if(!f)return;try{const d=JSON.parse(await f.text());const list=Array.isArray(d.projects)?d.projects:Array.isArray(d.items)?[{legacy:true,d}]:null;if(!list)throw new Error("AI WIKI 백업 파일이 아닙니다.");if(!confirm(`프로젝트 ${list.length}개를 불러올까요?`))return;for(const x of list){if(x.legacy){await migrateLegacy(JSON.stringify(x.d));continue;}await dbPut("data","prj:"+x.id,x);upsertIndex(x);}await dbPut("data","index",INDEX);toast("백업을 불러왔습니다.");goHome();}catch(err){toast("불러오지 못했습니다: "+err.message);}};
-  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}DRIVE.token=null;DRIVE.exp=0;DRIVE.user=null;try{localStorage.removeItem("aiwiki_dtok")}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
+  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}DRIVE.token=null;DRIVE.exp=0;DRIVE.user=null;AUTH=null;try{localStorage.removeItem("aiwiki_dtok");localStorage.removeItem("aiwiki_atok")}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
 function profileDialog(){const p=G.profile||{};$("#dlgBody").innerHTML=`<h2>내 정보</h2><p class="hint">새 프로젝트를 만들 때 표지의 저자·소속과 목표 학회지에 자동으로 들어갑니다.</p>
   <label for="pf2_name">이름</label><input type="text" id="pf2_name" value="${esc(p.name||"")}"><label>이메일</label><input type="text" value="${esc(p.email||"(로그인 없이 사용 중)")}" disabled>
   <label for="pf2_affil">소속</label><input type="text" id="pf2_affil" value="${esc(p.affil||"")}" placeholder="예: 한국외국어대학교 대학원 ○○학과"><label for="pf2_journal">목표 학회지·학교</label><input type="text" id="pf2_journal" value="${esc(p.journal||"")}" placeholder="예: 한국동남아학회 『동남아시아연구』">
@@ -3658,14 +3668,14 @@ const _write25=VIEWS.write;VIEWS.write=()=>{let h=_write25();
   return `<div class="wstage st-${WST}">${h}${absSection()}${refsSection()}</div>`;};
 const _bwrite25=BIND.write;BIND.write=()=>{_bwrite25();
   document.querySelectorAll("[data-wst]").forEach(b=>b.onclick=()=>{WST=b.dataset.wst;render();window.scrollTo(0,0);});
-  document.querySelectorAll('input[name="wr_type"]').forEach(r=>r.onchange=async()=>{const nt=r.value,s=S.settings;if(nt===s.docType)return;s.docType=nt;
+  document.querySelectorAll('input[name="wr_type"]').forEach(r=>r.onchange=async()=>{const nt=r.value,s=S.settings;if(nt===s.docType)return;const prevT=s.docType;s.docType=nt;
     S.format=Object.assign({},FMT_PRESETS[nt],{required:undefined,template:S.format&&S.format.template,hwpx:S.format&&S.format.hwpx});
     const D=S.design,P=pw();const noText=D.chapters.every(c=>!String((S.writing[c.ch_id]||{}).text||"").trim());
-    if(!P.outline_ok&&noText){s.outline=DOC_TYPES[nt].outline;D.chapters=outlineParts().map(t=>({ch_id:"C"+uid(),title:t,points:"",doc_ids:[],claim_ids:[],state:"draft"}));ensure6();}
-    logSync("write","글 형태","ok",nt);await flush();toast(`글 형태를 "${nt}"(으)로 정했습니다.${!P.outline_ok&&noText?" 기본 목차도 바꿨습니다.":""}`);render();});
+    const isDefault=!String(s.outline||"").trim()||String(s.outline).replace(/\s+/g,"")===String(DOC_TYPES[prevT].outline).replace(/\s+/g,"");const swapOutline=noText&&isDefault;if(swapOutline){s.outline=DOC_TYPES[nt].outline;D.chapters=outlineParts().map(t=>({ch_id:"C"+uid(),title:t,points:"",doc_ids:[],claim_ids:[],state:"draft"}));ensure6();}
+    logSync("write","글 형태","ok",nt);await flush();toast(`글 형태를 "${nt}"(으)로 정했습니다.${swapOutline?" 기본 목차도 글 형태에 맞게 바꿨습니다.":" 직접 적은 목차는 그대로 둡니다."}`);render();});
   const getF=()=>{S.front=S.front||{};const F=S.front;F.abstract_ko=$("#ab_ko").value;F.keywords_ko=$("#ab_kw").value;F.abstract_en=$("#ab_en").value;F.keywords_en=$("#ab_kwen").value;F.title_en=$("#ab_ten").value;return F;};
   const sv=$("#ab_save");if(sv)sv.onclick=async()=>{getF();await flush();toast("초록을 저장했습니다.");render();};
-  const material=()=>{const D=S.design;return D.chapters.map((c,i)=>{const w=S.writing[c.ch_id]||{};const t=String(w.text||w.draft_orig||"").replace(CITE_RE,"").replace(/\s+/g," ").trim();return `${i+1}. ${c.title}: ${t.slice(0,600)}`;}).join("\n");};
+  const material=()=>{const D=S.design;return D.chapters.map((c,i)=>{const w=S.writing[c.ch_id]||{};const t=String(w.text||w.draft_orig||c.points||"").replace(CITE_RE,"").replace(/\s+/g," ").trim();return `${i+1}. ${c.title}: ${t.slice(0,600)}`;}).join("\n");};
   const ko=$("#ab_ai_ko");if(ko)ko.onclick=async()=>{const F=getF();const P=pw(),s=S.settings,p=$("#ab_prog");
     if(!G.apiKey){const qs=String(s.questions||"").split("\n").filter(Boolean);F.abstract_ko=[`본 연구는 ${s.topic||"[연구 주제]"}을(를) 다룬다.`,s.purpose?`연구 목적은 ${s.purpose}`:"",qs.length?`연구 질문은 ${qs.join(", ")}이다.`:"",P.conclusion?`분석 결과, ${P.conclusion}`:"[결론: 저자 작성]","[규칙 기반 초안 — 연구 방법과 결과를 저자가 채워 주세요]"].filter(Boolean).join(" ");F.keywords_ko=F.keywords_ko||(s.keywords||[]).join(", ");F.abstract_by="규칙 기반 초안";await flush();render();return;}
     ko.disabled=true;p.textContent="국문초록 작성 중…";
@@ -3883,6 +3893,60 @@ const _go30=go;go=function(v){if(v==="history"&&current!=="history")HSEL=new Set
 /* 논문 확인에 임시저장 */
 const _final30=finalSection;finalSection=function(){const n=(S.drafts||[]).length,last=(S.drafts||[]).find(x=>!x.auto);return _final30().replace('<div class="fxdl">',`<div class="snapbar"><div><b>임시저장</b><span class="hint"> 지금 원고를 통째로 보관합니다 · 히스토리 ${n}개${last?` · 마지막 ${fmtKDate(last.t)}`:""}</span></div><div class="row" style="flex-wrap:nowrap"><input type="text" id="sn_note" placeholder="메모(선택) 예: 지도교수 1차 검토 전"><button class="btn primary" id="sn_save">임시저장</button><button class="btn" id="sn_hist">히스토리 보기</button></div></div><div class="fxdl">`);};
 const _bwrite30=BIND.write;BIND.write=()=>{_bwrite30();const s=$("#sn_save");if(s)s.onclick=async()=>{const sn=takeSnapshot($("#sn_note").value,false);await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다.`);render();};const h=$("#sn_hist");if(h)h.onclick=()=>go("history");};
+
+
+/* =========================================================
+   31단계: KCI 로그인 확인을 드라이브 권한과 분리(경고 없는 가벼운 권한)
+   ========================================================= */
+const ATK="aiwiki_atok";let AUTH=(()=>{try{const d=JSON.parse(localStorage.getItem(ATK)||"null");return d&&d.exp>Date.now()+30000?d:null;}catch(e){return null;}})();
+function saveAuth(tok,expires){AUTH={t:tok,exp:Date.now()+((parseInt(expires)||3600)-60)*1000};try{localStorage.setItem(ATK,JSON.stringify(AUTH));}catch(e){}}
+async function ensureAuthToken(){if(AUTH&&AUTH.exp>Date.now()+30000)return AUTH.t;
+  if(!(G.profile&&G.profile.login==="google"))throw Object.assign(new Error("KCI 검색은 구글 로그인 후 쓸 수 있습니다."),{kind:"auth"});
+  const cid=await loginClientId();if(!cid)throw Object.assign(new Error("구글 로그인 설정(config.json)이 없습니다."),{kind:"auth"});await loadGIS();
+  const r=await new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:"openid email profile",hint:G.profile.email||undefined,callback:x=>x&&x.error?rej(new Error(x.error)):res(x),error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"로그인 확인 창을 닫았습니다.":"로그인 확인이 막혔습니다(팝업 차단 등). 다시 눌러 주세요."))});tc.requestAccessToken({prompt:""});});
+  saveAuth(r.access_token,r.expires_in);return AUTH.t;}
+api=async function(path,opt={}){
+  if(IS_DEPLOY&&/^\/api\/kci\/(test|search|detail)/.test(path)){let tok;try{tok=await ensureAuthToken();}catch(e){throw Object.assign(e,{kind:e.kind||"auth"});}
+    opt=Object.assign({},opt,{headers:Object.assign({"X-AIWIKI":"1","Content-Type":"application/json"},opt.headers||{},{Authorization:"Bearer "+tok})});}
+  try{return await _api27(path,opt);}
+  catch(e){if(IS_DEPLOY&&e.kind==="noserver")e.message="배포 앱의 KCI 서버 기능에 연결하지 못했습니다. 깃허브에 api 폴더와 vercel.json이 올라갔는지 확인하세요.";
+    if(IS_DEPLOY&&/로그인이 만료/.test(e.message||"")){AUTH=null;try{localStorage.removeItem(ATK);}catch(x){}}throw e;}};
+/* 로그인할 때 받은 토큰도 KCI 확인용으로 저장 */
+const _gl31=googleLogin;googleLogin=async function(btn){const _init=window.google&&google.accounts&&google.accounts.oauth2&&google.accounts.oauth2.initTokenClient;await _gl31(btn);if(DRIVE.token&&DRIVE.exp>Date.now())saveAuth(DRIVE.token,Math.round((DRIVE.exp-Date.now())/1000)+60);};
+
+
+/* =========================================================
+   32단계: 집필 준비 = 목차(연구 설정에서 동기화) + 목차별 관점 + 예측 결론
+   ========================================================= */
+function syncOutline(){ensure6();const parts=outlineParts();if(!parts.length)return false;const D=S.design;
+  if(parts.length>=2)pw().outline_ok=true;
+  if(D.chapters.map(c=>c.title).join("\u0001")===parts.join("\u0001"))return false;
+  const used=new Set();const next=parts.map(t=>{const c=D.chapters.find(x=>!used.has(x.ch_id)&&x.title===t)||D.chapters.find(x=>!used.has(x.ch_id)&&normTitle(x.title)&&normTitle(x.title)===normTitle(t));
+    if(c){used.add(c.ch_id);c.title=t;return c;}return {ch_id:"C"+uid(),title:t,points:"",doc_ids:[],claim_ids:[],state:"draft"};});
+  D.chapters.filter(c=>!used.has(c.ch_id)).forEach(c=>{const w=S.writing[c.ch_id];if((w&&String(w.text||"").trim())||String(c.points||"").trim()){S.archivedChapters=S.archivedChapters||[];S.archivedChapters.push({title:c.title,text:(w&&w.text)||"",points:c.points||"",t:now()});}});
+  D.chapters=next;ensure6();if(!D.chapters.find(c=>c.ch_id===DS.ch))DS.ch=D.chapters[0].ch_id;logSync("write","목차 동기화","ok",`연구 설정 목차 ${parts.length}개 장`);save();return true;}
+prepState=function(){ensure6();const P=pw(),D=S.design;const o=D.chapters.length>=2,c=String(P.conclusion||"").trim().length>=20;return {o,c,d:true,ready:o&&c};};
+let PV_OPEN=null;
+prepPanel=function(){const P=pw(),st=prepState(),D=S.design;const filled=D.chapters.filter(c=>String(c.points||"").trim()).length,last=D.chapters.length-1;
+  const ex=i=>i===0?"예: 연구 목적 및 필요성, 연구 배경, 연구 대상과 방법, 논문의 구성":i===last?"예: 분석 결과 요약, 시사점, 연구의 한계와 후속 연구":"예: 한-베 수교는 1992년부터… 이 장에서 꼭 다룰 개념·사실·주장을 적으세요";
+  return `<section class="prep" aria-labelledby="prep_h"><div class="row" style="justify-content:space-between"><h2 id="prep_h" style="margin:0">집필 준비 <span class="hint">목차는 연구 설정에서 가져옵니다 — 장마다 관점을 적고 예측 결론을 쓰면 AI 집필이 열립니다</span></h2>${st.ready?'<span class="tag">AI 집필 가능</span>':'<span class="tag red">AI 집필 잠김</span>'}</div>
+   <div class="prep-grid two">
+    <div class="prep-step ${filled?"ok":""}"><div class="ps-head"><span class="ps-n">${filled?"✓":"1"}</span><b>목차별 관점</b><span class="tag">${filled}/${D.chapters.length}장 작성</span></div>
+     <p class="hint" style="margin:0 0 8px">장 제목을 누르고 그 장에 들어갈 관점·내용을 직접 적으세요. AI가 그 장을 쓸 때 반드시 따릅니다. 목차 자체는 <a href="#" id="pv_setup">연구 설정</a>에서 바꿉니다.</p>
+     ${D.chapters.length?`<ul class="pvlist">${D.chapters.map((c,i)=>{const open=PV_OPEN===c.ch_id,has=String(c.points||"").trim();return `<li class="${open?"open":""}"><button class="pv-h" data-pv="${c.ch_id}" aria-expanded="${open}"><span class="pv-n">${i+1}</span><b>${esc(c.title.replace(/^\s*\d+\s*[.)]\s*/,""))}</b><em class="${has?"on":""}">${has?"작성됨":"비어 있음"}</em><span class="pv-c" aria-hidden="true">${open?"▲":"▼"}</span></button>${open?`<textarea class="pv-t" data-pvt="${c.ch_id}" rows="5" aria-label="${esc(c.title)} 관점" placeholder="${esc(ex(i))}">${esc(c.points||"")}</textarea><p class="hint pv-saved">입력하면 바로 저장됩니다.</p>`:has?`<p class="pv-sum">${esc(String(c.points).replace(/\s+/g," ").slice(0,110))}${String(c.points).length>110?"…":""}</p>`:""}</li>`;}).join("")}</ul>`:`<p class="hint">연구 설정에 목차가 없습니다. <a href="#" id="pv_setup2">연구 설정에서 목차 적기</a></p>`}</div>
+    <div class="prep-step ${st.c?"ok":""}"><div class="ps-head"><span class="ps-n">${st.c?"✓":"2"}</span><b>예측 결론</b>${st.c?'<span class="tag">완료</span>':'<span class="tag warn">필요</span>'}</div>
+     <p class="hint" style="margin:0 0 6px">이 연구가 도달할 것으로 예상하는 결론을 저자의 말로 적습니다. AI는 이 결론에서 벗어나지 않게 씁니다. (20자 이상)</p>
+     <label for="pp_concl" class="sr">예측 결론</label><textarea id="pp_concl" rows="7" placeholder="예: 정상외교 계기 MOU는 교역 중심에서 투자·공급망·인력양성 협력으로 확장되었으며, 중소·중견기업 참여가 늘었다.">${esc(P.conclusion||"")}</textarea>
+     <div class="row" style="justify-content:space-between;margin-top:8px"><span><button class="btn sm" id="pp_concl_ok">결론 저장</button>${P.conclusion_at?`<span class="hint"> ${fmtTime(P.conclusion_at)}</span>`:""}</span><button class="btn primary" id="pp_next" ${st.ready?"":"disabled title=\"예측 결론을 저장하면 열립니다\""}>다음: 초록 쓰기 →</button></div></div>
+   </div></section>`;};
+const _write32=VIEWS.write;VIEWS.write=()=>{syncOutline();return _write32();};
+let PV_T=null;
+const _bwrite32=BIND.write;BIND.write=()=>{_bwrite32();
+  document.querySelectorAll("[data-pv]").forEach(b=>b.onclick=()=>{PV_OPEN=PV_OPEN===b.dataset.pv?null:b.dataset.pv;render();const t=document.querySelector(`[data-pvt="${PV_OPEN}"]`);if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}});
+  document.querySelectorAll("[data-pvt]").forEach(t=>t.oninput=()=>{const c=dsChapter(t.dataset.pvt);if(!c)return;c.points=t.value;clearTimeout(PV_T);PV_T=setTimeout(()=>{save();logSync("write","목차별 관점","ok",c.title);},700);});
+  ["pv_setup","pv_setup2"].forEach(id=>{const a=$("#"+id);if(a)a.onclick=e=>{e.preventDefault();go("setup");};});
+  const nx=$("#pp_next");if(nx)nx.onclick=()=>{WST="abs";render();window.scrollTo(0,0);};};
+const _pc32=projectContext;projectContext=function(){const b=_pc32();return S&&S.design&&S.design.chapters.some(c=>String(c.points||"").trim())?b+"\n장별 관점: 각 장의 '핵심 논점'은 저자가 직접 정한 관점입니다. 반드시 반영하고 벗어나지 마세요.":b;};
 
 /* ---------- 시작 ---------- */
 (async()=>{
