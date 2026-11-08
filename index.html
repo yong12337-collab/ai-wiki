@@ -773,6 +773,20 @@ body:not(.homemode) .app{zoom:.9}
 .tpl-a{display:flex;gap:6px;flex:none}.tpl-a select{width:auto;max-width:220px}
 .tp-start{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;background:linear-gradient(135deg,#F3F7FF,#E6EEFF)!important}
 @media (max-width:1100px){.mg-grid{grid-template-columns:1fr}.mg-right{margin-left:0}}
+/* ===== 34단계: 토픽·방향 두 목록 ===== */
+.tpstate{margin:0 0 12px;padding:12px 16px;border-radius:16px;background:#F3F7FF;border:1px solid #DCE7FF;font-size:14px}.tpstate.saved{background:#EEFBF3;border-color:#CDEFD9}
+.tpcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.tpcol{min-height:320px;transition:box-shadow .15s,outline-color .15s;outline:2px dashed transparent;outline-offset:-6px}.tpcol.over{outline-color:#8FB0FF;background:#F3F7FF!important}
+.tpcol.topic{background:linear-gradient(160deg,rgba(236,252,243,.85),rgba(255,255,255,.8))!important}
+.tpc-h{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}.tpc-h h3{margin:0;font-size:16px}.cnt{display:inline-block;margin-left:6px;padding:0 9px;border-radius:999px;background:#E4EDFF;color:#2350C8;font-size:13px}.tpcol.topic .cnt{background:#DCFCE7;color:#15803D}
+.tpul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}
+.tpi{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:#fff;border:1px solid #E6ECF8}.tpi[draggable=true]{cursor:grab}.tpi.dragging{opacity:.45}
+.tpi-grip{color:#B3BDD6;font-size:12px;letter-spacing:-2px}.tpi-b{display:flex;flex-direction:column;flex:1;min-width:0}.tpi-b b{cursor:pointer;font-size:14px}.tpi-b b:hover{color:#2350C8}.tpi-b small{color:var(--ink3)}.tpi-b em{font-style:normal;color:#15803D}
+.tpempty{padding:24px;text-align:center;color:var(--ink3);border:1px dashed #D7E0F2;border-radius:12px}
+.tpbtns{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:14px}
+.stg{display:flex;flex-wrap:wrap;align-items:center;gap:4px}.stg-i{font-size:12px;padding:1px 8px;border-radius:999px;background:#F1F3F8;color:#9AA5C0}.stg-i.half{background:#FEF3C7;color:#B45309}.stg-i.ok{background:#DCFCE7;color:#15803D}.stg-i.here{box-shadow:inset 0 0 0 1.5px #2350C8;font-weight:700}.stg-a{color:#C3CBDD;font-size:12px}
+.tpgate{margin:10px 0 0;padding:10px 14px;border-radius:14px;background:#FFF8EC;border:1px solid #F7E2BD;font-size:13.5px;color:#7A4B0E}.tpgate.ok{background:#EEFBF3;border-color:#CDEFD9;color:#167A45}
+@media (max-width:1000px){.tpcols{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3890,7 +3904,7 @@ function snapDetail(sn){const st=snapStats(sn);const html=withSnapshot(sn,()=>pr
    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="sd_x">닫기</button><button class="btn primary" id="sd_load">이 원고 불러와서 고치기</button></div>`;
   $("#dlg").showModal();$("#sd_x").onclick=()=>$("#dlg").close();$("#sd_load").onclick=()=>{$("#dlg").close();restoreSnapshot(sn);};}
 let HSEL=new Set();
-VIEWS.history=()=>{const L=S.drafts||[];HSEL=new Set([...HSEL].filter(id=>L.some(x=>x.id===id)));return `<h1>히스토리</h1><p class="lead">AI 집필 → 논문 확인에서 임시저장한 원고가 쌓입니다. 누르면 상세보기, <b>불러오기</b>를 누르면 그때의 원고가 AI 집필에 다시 깔립니다.</p>
+VIEWS.history=()=>{const L=S.drafts||[];HSEL=new Set([...HSEL].filter(id=>L.some(x=>x.id===id)));return `<h1>히스토리</h1><p class="lead">AI 집필 → 논문 확인에서 임시저장한 원고가 쌓입니다. 누르면 상세보기, <b>불러오기</b>를 누르면 저장한 단계로 돌아가 이어서 할 수 있습니다.</p>
   ${L.length?`<section class="card"><div class="row hbar"><label class="chk"><input type="checkbox" id="hs_all" ${HSEL.size&&HSEL.size===L.length?"checked":""}> 전체 선택</label><span class="hint">${HSEL.size}개 선택됨 · 전체 ${L.length}개</span><button class="btn sm danger" id="hs_del" ${HSEL.size?"":"disabled"}>선택 삭제</button></div>
    <div class="tablewrap"><table class="htable2"><thead><tr><th></th><th>저장 시각</th><th>제목 · 메모</th><th>글 형태</th><th>진행</th><th></th></tr></thead><tbody>${L.map(sn=>{const st=snapStats(sn);return `<tr data-sn="${sn.id}" class="${HSEL.has(sn.id)?"sel":""}"><td><input type="checkbox" class="hs_ck" data-id="${sn.id}" ${HSEL.has(sn.id)?"checked":""} aria-label="선택"></td><td class="nowrap"><b>${fmtKDate(sn.t)}</b>${sn.auto?'<div><span class="tag warn">자동 저장</span></div>':""}</td><td><b>${esc(sn.title||"(제목 없음)")}</b>${sn.note?`<div class="hint">${esc(sn.note)}</div>`:""}</td><td>${esc(sn.docType)}</td><td class="hint">목차 ${st.chapters}장 · 본문 ${st.chars.toLocaleString()}자<br>참고문헌 ${st.refs}편 · 초록 ${st.abs}</td><td class="nowrap"><button class="btn sm" data-hv="${sn.id}">상세보기</button><button class="btn sm primary" data-hl="${sn.id}">불러오기</button></td></tr>`;}).join("")}</tbody></table></div></section>`
   :`<section class="card"><p class="hint" style="margin:0">아직 임시저장한 원고가 없습니다. <b>AI 집필 → 5 논문 확인</b>에서 <b>임시저장</b>을 누르면 여기에 쌓입니다.</p><button class="btn primary" style="margin-top:12px" id="hs_go">AI 집필로 가기 →</button></section>`}`;};
@@ -4042,6 +4056,71 @@ BIND.topics=()=>{document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()
     ensure6();syncOutline();const ids=T.map(p=>p.id);S.design.chapters.forEach(c=>{c.doc_ids=ids.slice();});T.forEach(p=>setDecision(p,"채택",true));
     if(S.settings.view)setField("view",S.settings.view,"연구자");S.design.confirmed_at=S.design.confirmed_at||now();logSync("design","AI 집필 시작","ok",`토픽 자료 ${ids.length}편`);await flush();toast(`토픽 자료 ${ids.length}편으로 AI 집필을 시작합니다.`);WST="prep";go("write");};};
 TOUR.forEach(t=>{if(t.sel===".tlist"){t.sel=".tpgroups";t.t="토픽·방향";t.d="판단하기에서 지정한 토픽 자료가 토픽별로 모두 나옵니다. 토픽을 바꾸거나 빼서 다듬으세요.";}if(t.sel==="#tp_go"){t.sel="#tp_start";t.t="AI 집필 시작";t.d="지정한 자료를 근거 문헌과 참고문헌 후보로 깔고 AI 집필로 넘어갑니다.";}if(t.v==="manage"){t.sel=".mg-grid";t.d="AI 분류하기 → AI 승인하기 → 내 검토(승인 해제·토픽 지정) 순서로 진행합니다. 아래 목록은 정렬과 검색으로 볼 수 있습니다.";delete t.act;}});
+
+
+/* =========================================================
+   34단계: 판단하기 초기화 · 토픽·방향 = 참고문헌 자료 ↔ 토픽 자료(끌어서 이동) · 저장/임시저장/수정하기
+   ========================================================= */
+const isApproved=p=>["승인","수정"].includes(p.cls_state)&&p.decision!=="제외";
+function TS(){if(!S.topicSave)S.topicSave={state:"",at:""};return S.topicSave;}
+/* ---------- 판단하기: 밴드 버튼 삭제 · 초기화 추가 ---------- */
+const _manage34=VIEWS.manage;VIEWS.manage=()=>{let h=_manage34();const ap=papers().filter(isApproved).length;
+  h=h.replace(/<span class="sep-v"><\/span>(?:<button class="btn" data-mgband="[^"]*">[^<]*<\/button>)+/,"");
+  h=h.replace('<button class="btn primary" id="mg_ok">AI 승인하기</button>','<button class="btn primary" id="mg_ok">AI 승인하기</button><button class="btn danger" id="mg_reset">분류·승인 초기화</button>');
+  h=h.replace("승인 결과를 보고 승인을 해제하거나(사유 필수), 토픽을 지정합니다. 지정한 자료가 토픽·방향과 AI 집필의 근거가 됩니다.","승인 결과를 보고 승인을 해제하거나(사유 필수), 토픽 이름을 붙입니다. <b>승인한 자료만</b> 토픽·방향으로 넘어갑니다.");
+  h=h.replace(/<span class="hint">토픽 지정 \d+편<\/span><button class="btn primary" id="mg_next"[^>]*>/,`<span class="hint">승인 ${ap}편이 토픽·방향으로 넘어갑니다</span><button class="btn primary" id="mg_next" ${ap?"":"disabled"}>`);
+  return h;};
+const _bmanage34=BIND.manage;BIND.manage=()=>{_bmanage34();const rerender=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const rs=$("#mg_reset");if(rs)rs.onclick=async()=>{let list=mgTargets();const all=!list.length;if(all)list=papers();if(!list.length)return;
+    if(!confirm(`${all?"전체":"선택한"} ${list.length}편의 AI 분류·승인·토픽 지정을 초기화할까요?\n관련도·AI 토픽·승인·토픽 자료 지정이 지워지고 처음 상태로 돌아갑니다. (제외한 자료의 '제외' 판단은 유지)`))return;
+    for(const p of list){addHistory(p,"상태",p.cls_state,"미분류","연구자","분류·승인 초기화");Object.assign(p,{relevance:0,relevance_reason:"",topic_ai:null,topic_final:"",cls_state:"미분류",cls_by:"",review_status:"미검토",in_topic:false,unapprove_reason:""});if(p.decision==="채택")p.decision="미판단";}
+    if(TS().state==="saved")TS().state="editing";MG.sel.clear();logSync("classify","분류·승인 초기화","ok",`${list.length}편`);await flush();toast(`${list.length}편을 초기화했습니다. AI 분류하기부터 다시 하세요.`);rerender();};
+  const nx=$("#mg_next");if(nx)nx.onclick=()=>{if(!papers().some(isApproved))return toast("먼저 AI 승인하기로 승인하세요.");go("topics");};};
+/* ---------- 토픽·방향: 두 목록 ---------- */
+function tpRow(p,side,locked){return `<li class="tpi" draggable="${!locked}" data-tpid="${p.id}"><span class="tpi-grip" aria-hidden="true">⋮⋮</span>${gradeBadge(p.relevance)}<span class="tpi-b"><b data-topen="${p.id}">${esc(p.title)}</b><small>${esc(p.authors||"저자 미확인")} · ${esc(String(p.year||"연도 미확인"))}${tpName(p)?` · <em>${esc(tpName(p))}</em>`:""}</small></span>${locked?"":side==="ref"?`<button class="btn sm tpmv" data-tpmv="${p.id}" title="토픽 자료로" aria-label="토픽 자료로 옮기기">→</button>`:`<button class="btn sm tpmv" data-tpmv="${p.id}" title="참고문헌 자료로" aria-label="참고문헌 자료로 옮기기">←</button>`}</li>`;}
+VIEWS.topics=()=>{const A=papers().filter(isApproved),T=A.filter(p=>p.in_topic),Rf=A.filter(p=>!p.in_topic);const st=TS(),locked=st.state==="saved";const sortR=l=>l.slice().sort((a,b)=>(b.relevance||0)-(a.relevance||0));
+  return hubHeader("topics","판단하기에서 승인한 자료가 넘어옵니다. 왼쪽은 참고문헌으로 쓸 자료, 오른쪽은 이 논문의 방향이 되는 토픽 자료입니다. 끌어서 옮기세요.")+
+  (A.length?`<div class="tpstate ${locked?"saved":""}">${locked?`<b>저장됨</b> · ${fmtTime(st.at)} · 토픽 자료 ${T.length}편 · 참고문헌 자료 ${Rf.length}편 — AI 집필을 시작할 수 있습니다. 고치려면 <b>수정하기</b>를 누르세요.`:st.state==="editing"?"<b>수정 중</b> · 다 고친 뒤 <b>저장</b>을 누르세요.":"자료를 끌어서 토픽 자료로 옮긴 뒤 <b>저장</b>을 누르세요. 저장해야 AI 집필이 열립니다."}</div>
+   <div class="tpcols">
+    <section class="card tpcol" data-drop="ref"><div class="tpc-h"><h3>참고문헌 자료 <span class="cnt">${Rf.length}</span></h3><span class="hint">승인된 자료 · 참고문헌으로 쓰입니다</span></div><ul class="tpul">${sortR(Rf).map(p=>tpRow(p,"ref",locked)).join("")||`<li class="tpempty">모두 토픽 자료로 옮겼습니다.</li>`}</ul></section>
+    <section class="card tpcol topic" data-drop="topic"><div class="tpc-h"><h3>토픽 자료 <span class="cnt">${T.length}</span></h3><span class="hint">이 논문의 방향 · AI가 각 장의 근거로 먼저 씁니다</span></div><ul class="tpul">${sortR(T).map(p=>tpRow(p,"topic",locked)).join("")||`<li class="tpempty">왼쪽에서 자료를 끌어다 놓으세요.</li>`}</ul></section></div>
+   <div class="tpbtns"><span class="hint" id="tp_msg">${locked?"":"두 목록 모두 참고문헌으로 쓰이며, 오른쪽 토픽 자료가 논문의 중심 근거가 됩니다."}</span><span class="row"><button class="btn" id="tp_temp">임시저장</button><button class="btn" id="tp_edit" ${locked?"":"disabled"}>수정하기</button><button class="btn primary" id="tp_save" ${locked?"disabled":""}>저장</button>${locked?`<button class="btn primary" id="tp_write">AI 집필로 →</button>`:""}</span></div>`
+  :`<section class="card"><p class="hint" style="margin:0">아직 승인한 자료가 없습니다. <b>판단하기</b>에서 AI 분류하기 → AI 승인하기를 하세요.</p><button class="btn primary" style="margin-top:12px" data-hub="manage">판단하기로 →</button></section>`);};
+let TP_DRAG=null;
+BIND.topics=()=>{document.querySelectorAll("[data-hub]").forEach(b=>b.onclick=()=>{if(b.dataset.hub!==current)go(b.dataset.hub);});const rerender=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const locked=TS().state==="saved";const move=async(id,toTopic)=>{const p=S.items.find(i=>i.id===id);if(!p||locked||!!p.in_topic===toTopic)return;p.in_topic=toTopic;if(toTopic&&!p.topic_final)p.topic_final=(p.topic_ai&&p.topic_ai.topic)||"";addHistory(p,"토픽 자료",toTopic?"참고문헌":"토픽",toTopic?"토픽":"참고문헌","연구자");if(!TS().state)TS().state="editing";await flush();rerender();};
+  document.querySelectorAll("[data-topen]").forEach(b=>b.onclick=()=>openItem(b.dataset.topen));
+  document.querySelectorAll("[data-tpmv]").forEach(b=>b.onclick=e=>{e.stopPropagation();const p=S.items.find(i=>i.id===b.dataset.tpmv);move(p.id,!p.in_topic);});
+  document.querySelectorAll(".tpi[draggable=true]").forEach(li=>{li.ondragstart=e=>{TP_DRAG=li.dataset.tpid;e.dataTransfer.setData("text/plain",TP_DRAG);e.dataTransfer.effectAllowed="move";li.classList.add("dragging");};li.ondragend=()=>{li.classList.remove("dragging");document.querySelectorAll(".tpcol").forEach(c=>c.classList.remove("over"));};});
+  document.querySelectorAll("[data-drop]").forEach(col=>{col.ondragover=e=>{if(locked)return;e.preventDefault();col.classList.add("over");};col.ondragleave=e=>{if(!col.contains(e.relatedTarget))col.classList.remove("over");};
+    col.ondrop=e=>{e.preventDefault();col.classList.remove("over");const id=(e.dataTransfer&&e.dataTransfer.getData("text/plain"))||TP_DRAG;TP_DRAG=null;if(id)move(id,col.dataset.drop==="topic");};});
+  const sv=$("#tp_save");if(sv)sv.onclick=async()=>{const A=papers().filter(isApproved),T=A.filter(p=>p.in_topic);if(!T.length)return toast("토픽 자료를 한 편 이상 옮겨 주세요.");
+    ensure6();syncOutline();const ids=[...T,...A.filter(p=>!p.in_topic)].sort((a,b)=>(b.in_topic?1:0)-(a.in_topic?1:0)||(b.relevance||0)-(a.relevance||0)).map(p=>p.id);
+    S.design.chapters.forEach(c=>{c.doc_ids=ids.slice();});A.forEach(p=>setDecision(p,"채택",true));if(S.settings.view)setField("view",S.settings.view,"연구자");S.design.confirmed_at=S.design.confirmed_at||now();
+    Object.assign(TS(),{state:"saved",at:now(),topic:T.length,ref:A.length-T.length});logSync("design","토픽·방향 저장","ok",`토픽 ${T.length}편 · 참고문헌 ${A.length-T.length}편`);await flush();toast("저장했습니다. 이제 AI 집필을 시작할 수 있습니다.");rerender();};
+  const ed=$("#tp_edit");if(ed)ed.onclick=async()=>{TS().state="editing";logSync("design","토픽·방향 수정","ok","");await flush();rerender();};
+  const tm=$("#tp_temp");if(tm)tm.onclick=async()=>{const note=(prompt("임시저장 메모(선택)","")||"").trim();const sn=takeSnapshot(note,false,"topics");await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다. 히스토리에서 이어서 할 수 있습니다.`);rerender();};
+  const wr=$("#tp_write");if(wr)wr.onclick=()=>{WST="prep";go("write");};};
+/* ---------- 임시저장: 진행 단계와 토픽 상태까지 보관 · 그 단계로 이어서 ---------- */
+const _take34=takeSnapshot;takeSnapshot=function(note,auto,from){const sn=_take34(note,auto);sn.from=from||(current==="write"?"write:"+WST:current);sn.topicSave=clone(S.topicSave||null);
+  sn.topicItems=papers().filter(p=>p.cls_state||p.in_topic).map(p=>({id:p.id,in:!!p.in_topic,topic:p.topic_final||"",cls:p.cls_state||"",dec:p.decision||""}));sn.stage=snapStage(sn);return sn;};
+function snapStage(sn){const it=sn.topicItems||[],ap=it.filter(x=>["승인","수정"].includes(x.cls)&&x.dec!=="제외").length,tp=it.filter(x=>x.in&&x.dec!=="제외").length,saved=sn.topicSave&&sn.topicSave.state==="saved";const st=snapStats(sn);
+  const steps=[["판단",ap>0,`승인 ${ap}`],["토픽·방향",saved?true:tp>0?"half":false,saved?`저장 · 토픽 ${tp}`:tp?`임시 · 토픽 ${tp}`:""],["AI 집필",st.chars>0?true:(sn.prework&&sn.prework.conclusion)?"half":false,st.chars?`본문 ${st.chars.toLocaleString()}자`:""],["논문 확인",String(sn.from||"").endsWith("final"),""]];
+  const here={topics:"토픽·방향",manage:"판단",history:"",collect:"판단"}[sn.from]||(String(sn.from).startsWith("write")?(sn.from.endsWith("final")?"논문 확인":"AI 집필"):"");return {steps,here};}
+function stageHTML(sn){const s=sn.stage||snapStage(sn);return `<div class="stg">${s.steps.map(([t,ok,d])=>`<span class="stg-i ${ok===true?"ok":ok==="half"?"half":""} ${s.here===t?"here":""}" title="${esc(d)}">${t}${s.here===t?" ●":""}</span>`).join('<span class="stg-a">›</span>')}</div>`;}
+restoreSnapshot=async function(sn){if(!confirm(`${fmtKDate(sn.t)}에 임시저장한 상태로 돌아갈까요?\n지금 작업 중인 내용은 '불러오기 전 자동 저장'으로 히스토리에 먼저 보관됩니다.`))return;
+  takeSnapshot("불러오기 전 자동 저장",true);SNAP_KEYS.forEach(k=>{S[k]=clone(sn[k]);});S.settings.topic=sn.title;S.settings.subtitle=sn.subtitle;S.settings.docType=sn.docType;
+  if(sn.topicItems){const m=new Map(sn.topicItems.map(x=>[x.id,x]));papers().forEach(p=>{const x=m.get(p.id);if(x){p.in_topic=x.in;p.topic_final=x.topic;p.cls_state=x.cls||p.cls_state;if(x.dec)p.decision=x.dec;}else if(p.in_topic){p.in_topic=false;}});}
+  S.topicSave=clone(sn.topicSave||{state:"",at:""});ensure6();logSync("write","히스토리 불러오기","ok",fmtKDate(sn.t));await flush();
+  const f=String(sn.from||"");toast("임시저장한 단계로 돌아왔습니다. 이어서 하세요.");if(f==="topics")go("topics");else if(f.startsWith("write:")){WST=f.slice(6)||"prep";go("write");}else{WST="final";go("write");}};
+/* 히스토리 표에 진행 단계 열 */
+const _hist34=VIEWS.history;VIEWS.history=()=>{let h=_hist34();h=h.replace("<th>진행</th>","<th>진행 단계</th>").replace("AI 집필 → 논문 확인에서 임시저장한 원고가 쌓입니다.","토픽·방향과 AI 집필에서 임시저장한 작업이 쌓입니다. 진행 단계(● 저장한 곳)를 보고");
+  (S.drafts||[]).forEach(sn=>{h=h.replace(new RegExp(`(<tr data-sn="${sn.id}"[\\s\\S]*?<td class="hint">)([\\s\\S]*?)(</td><td class="nowrap"><button class="btn sm" data-hv)`),(m,a,b,c)=>a+stageHTML(sn)+`<div class="hint" style="margin-top:4px">${b}</div>`+c);});return h;};
+/* AI 집필: 토픽·방향을 저장해야 열림 */
+const _ps34=prepState;prepState=function(){const r=_ps34();const t=TS().state==="saved";return Object.assign(r,{t,ready:r.ready&&t});};
+const _pp34=prepPanel;prepPanel=function(){const h=_pp34();const t=TS().state==="saved";return h.replace('<div class="prep-grid two">',`<div class="tpgate ${t?"ok":""}">${t?`✓ 토픽·방향 저장됨 (${fmtTime(TS().at)}) · 토픽 자료 ${TS().topic||0}편 · 참고문헌 자료 ${TS().ref||0}편`:`토픽·방향을 아직 저장하지 않았습니다. <a href="#" id="pp_gotp">토픽·방향에서 저장</a>해야 AI 집필이 열립니다.`}</div><div class="prep-grid two">`);};
+const _bwrite34=BIND.write;BIND.write=()=>{_bwrite34();const a=$("#pp_gotp");if(a)a.onclick=e=>{e.preventDefault();go("topics");};};
+const _hub34=hubHeader;hubHeader=function(v,lead){return _hub34(v,lead).replace(/(<button role="tab" data-hub="topics"[\s\S]*?)(<em>[^<]*<\/em>)?(<\/button>)/,(m,a,em,c)=>{const n=papers().filter(isApproved).length,st=TS().state;return a+(n?`<em>${st==="saved"?"저장됨":`승인 ${n}`}</em>`:"")+c;});};
 
 /* ---------- 시작 ---------- */
 (async()=>{
