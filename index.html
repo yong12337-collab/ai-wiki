@@ -813,6 +813,11 @@ body:not(.homemode) .app{zoom:.9}
 .kwh{font-size:14px;margin:16px 0 6px;display:flex;align-items:center;gap:8px}
 .kadd{all:unset;cursor:pointer;padding:4px 11px;border-radius:999px;background:#F3F6FC;color:#2C3A60;font-size:13px;font-weight:600;box-shadow:inset 0 0 0 1px #DDE5F4}.kadd:hover{background:#E4EDFF;color:#2350C8}.kadd small{color:#9AA5C0;font-weight:400}.kadd.ai{background:#F1EDFF;color:#4B32C9;box-shadow:inset 0 0 0 1px #DDD3FF}
 .kcikw{font-size:12px;color:#6B8BD6;margin-top:2px}.mgt td.reason{font-size:13px;color:var(--ink2);max-width:360px}
+/* ===== 38단계 ===== */
+.mgt input[type=checkbox],.mg_ck{width:20px;height:20px;cursor:pointer;accent-color:#2F6BFF}
+.mgt td:first-child{width:36px;text-align:center}
+.mg-locked .mg-box button,.mg-locked .mg-box select,.mg-locked #mg_del,.mg-locked .mg_ck,.mg-locked #mg_all,.mg-locked #mg_none{pointer-events:none;opacity:.45}
+.tpsum2{margin:0 0 10px;font-size:15px}
 </style>
 </head>
 <body>
@@ -873,7 +878,7 @@ const fmtTime=t=>t?new Date(t).toLocaleString("ko-KR",{dateStyle:"short",timeSty
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),3400);}
 function safeName(s){return String(s||"무제").replace(/[\\/:*?"<>|#^\[\]]/g,"").replace(/\s+/g," ").trim().slice(0,70)||"무제";}
 function download(name,text,type="text/plain"){const b=new Blob([text],{type:type+";charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
-const papers=()=>S.items.filter(i=>i.kind==="paper");
+const papers=()=>S.items.filter(i=>i.kind==="paper"&&!i.deleted);const allPapers=()=>S.items.filter(i=>i.kind==="paper");
 const mous=()=>S.items.filter(i=>i.kind==="mou");
 const splitKw=v=>String(v||"").split(/[,，]/).map(x=>x.trim()).filter(Boolean);
 
@@ -4447,6 +4452,38 @@ const _hub37=hubHeader;hubHeader=function(v,lead){return _hub37(v,lead).replace(
 const _snapStage37=snapStage;snapStage=function(sn){const r=_snapStage37(sn);const n=sn.judgeSave&&sn.judgeSave.ids?sn.judgeSave.ids.length:0;r.steps[0]=["판단",n?true:(sn.topicItems||[]).length?"half":false,n?`저장 ${n}편`:""];if(sn.from==="manage")r.here="판단";return r;};
 const _restore37=restoreSnapshot;restoreSnapshot=async function(sn){await _restore37(sn);if(sn.from==="manage"){if(sn.topicItems){const m=new Map(sn.topicItems.map(x=>[x.id,x]));papers().forEach(p=>{const x=m.get(p.id);if(x&&x.topic)p.topic_set=true;});}go("manage");}};
 const _take37=takeSnapshot;takeSnapshot=function(note,auto,from){const sn=_take37(note,auto,from);(sn.topicItems||[]).forEach(x=>{const p=S.items.find(i=>i.id===x.id);if(p)x.set=!!p.topic_set;});const extra=papers().filter(p=>p.relevance&&!(sn.topicItems||[]).some(x=>x.id===p.id)).map(p=>({id:p.id,in:!!p.in_topic,topic:p.topic_final||"",cls:p.cls_state||"",dec:p.decision||"",set:!!p.topic_set}));sn.topicItems=[...(sn.topicItems||[]),...extra];return sn;};
+
+
+/* =========================================================
+   38단계: 체크 칸 크게 · 판단하기 저장 잠금/수정하기 · 삭제는 숨김(분류 초기화로 복구) · 저장 범위 = 삭제·제외 안 한 전체
+   ========================================================= */
+const judgeLocked=()=>!!(S.judgeSave&&S.judgeSave.state==="saved");
+const deletedCount=()=>allPapers().filter(p=>p.deleted).length;
+const _manage38=VIEWS.manage;VIEWS.manage=()=>{let h=_manage38();const L=judgeLocked(),dc=deletedCount(),j=S.judgeSave;
+  h=h.replace('<span class="row"><button class="btn" id="mg_temp">임시저장</button>',`<span class="row"><button class="btn" id="mg_edit" ${L?"":"disabled"}>수정하기</button><button class="btn" id="mg_temp">임시저장</button>`);
+  h=h.replace('<button class="btn primary" id="mg_save">',`<button class="btn primary" id="mg_save" ${L?"disabled":""}>`);
+  const pool=papers().filter(p=>p.decision!=="제외"),tp=pool.filter(p=>p.topic_set).length;
+  h=h.replace(/<div class="wsbar[^"]*"><span class="hint">[\s\S]*?<\/span><span class="row">/,`<div class="wsbar ${L?"saved":""}"><span class="hint">${L?`✓ <b>저장됨</b> · ${fmtTime(j.at)} · 참고문헌 자료 ${j.ref??"-"}편 + 토픽 자료 ${j.topic??"-"}편 = ${j.ids.length}편. 고치려면 <b>수정하기</b>를 누르세요.`:j&&j.state==="editing"?`<b>수정 중</b> · 저장하면 참고문헌 자료 ${pool.length-tp}편 + 토픽 자료 ${tp}편 = ${pool.length}편이 토픽·방향으로 넘어갑니다.`:`저장하면 참고문헌 자료 ${pool.length-tp}편 + 토픽 자료 ${tp}편 = ${pool.length}편이 토픽·방향으로 넘어갑니다. <b>임시저장</b>은 히스토리에 남습니다.`}${dc?`<br>삭제한 자료 ${dc}편 — 선택 없이 <b>분류 초기화</b>를 누르면 되돌릴 수 있습니다.`:""}</span><span class="row">`);
+  return `<div class="mgwrap ${L?"mg-locked":""}">${h}</div>`;};
+const _bmanage38=BIND.manage;BIND.manage=()=>{_bmanage38();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const ed=$("#mg_edit");if(ed)ed.onclick=async()=>{S.judgeSave.state="editing";logSync("classify","판단하기 수정","ok","");await flush();rer();};
+  $("#mg_del").onclick=async()=>{const list=mgTargets();if(!list.length)return toast("삭제할 자료를 선택하세요.");if(!confirm(`선택한 ${list.length}편을 삭제할까요?\n목록에서 숨겨지며, 나중에 선택 없이 '분류 초기화'를 누르면 되돌릴 수 있습니다.`))return;
+    const ids=new Set(list.map(p=>p.id));list.forEach(p=>{p.deleted=true;p.in_topic=false;addHistory(p,"상태","","삭제","연구자");});(S.design&&S.design.chapters||[]).forEach(c=>{c.doc_ids=(c.doc_ids||[]).filter(id=>!ids.has(id));});if(S.judgeSave)S.judgeSave.ids=S.judgeSave.ids.filter(id=>!ids.has(id));
+    MG.sel.clear();logSync("collect","자료 삭제","ok",`${list.length}편 (분류 초기화로 복구 가능)`);await flush();toast(`${list.length}편을 삭제했습니다. 분류 초기화로 되돌릴 수 있습니다.`);rer();};
+  $("#mg_reset").onclick=async()=>{let list=mgTargets();const allx=!list.length;if(allx)list=allPapers();if(!list.length)return;const dc=list.filter(p=>p.deleted).length;
+    if(!confirm(`${allx?"전체":"선택한"} ${list.length}편의 분류와 토픽 지정을 초기화할까요?${dc?`\n삭제한 자료 ${dc}편도 되살아납니다.`:""}\n(제외 판단은 유지)`))return;
+    for(const p of list){addHistory(p,"상태",p.deleted?"삭제":p.cls_state,"미분류","연구자","분류 초기화");Object.assign(p,{relevance:0,relevance_reason:"",topic_ai:null,kw_ai:[],topic_final:"",topic_set:false,cls_state:"미분류",cls_by:"",review_status:"미검토",in_topic:false,deleted:false});if(p.decision==="채택")p.decision="미판단";}
+    if(S.judgeSave)S.judgeSave.state="editing";MG.sel.clear();logSync("classify","분류 초기화","ok",`${list.length}편${dc?` · 삭제 복구 ${dc}편`:""}`);await flush();toast(`${list.length}편을 초기화했습니다.${dc?` 삭제한 ${dc}편도 되살렸습니다.`:""}`);rer();};
+  $("#mg_save").onclick=async()=>{const pool=papers().filter(p=>p.decision!=="제외");if(!pool.length)return toast("저장할 자료가 없습니다.");
+    pool.forEach(p=>{p.in_topic=!!(p.topic_set||p.in_topic);if(!p.cls_state||p.cls_state==="미분류")p.cls_state=p.relevance?"분류":"미분류";setDecision(p,"채택",true);});allPapers().filter(p=>!pool.includes(p)).forEach(p=>{p.in_topic=false;});
+    MG.sel.clear();const tp=pool.filter(p=>p.in_topic).length;S.judgeSave={at:now(),ids:pool.map(p=>p.id),state:"saved",topic:tp,ref:pool.length-tp};if(TS().state==="saved")TS().state="editing";
+    logSync("classify","판단하기 저장","ok",`참고문헌 ${pool.length-tp}편 + 토픽 ${tp}편 = ${pool.length}편`);await flush();toast(`저장했습니다: 참고문헌 자료 ${pool.length-tp}편 + 토픽 자료 ${tp}편 = ${pool.length}편`);go("topics");};};
+const _go38=go;go=function(v){if(v==="manage"&&current!=="manage")MG.sel.clear();return _go38(v);};
+/* 잠긴 동안 상세 창의 채택/제외도 잠금 */
+const _oi38=openItem;openItem=function(id){_oi38(id);if(judgeLocked()&&current==="manage"){document.querySelectorAll("#dlgBody [data-dec2]").forEach(b=>{b.disabled=true;b.title="판단하기가 저장되어 잠겨 있습니다. 수정하기를 누르세요.";});}};
+/* 토픽·방향: 합계 표시 */
+const _topics38=VIEWS.topics;VIEWS.topics=()=>{const h=_topics38();const A=papers().filter(inJudge),T=A.filter(p=>p.in_topic);if(!A.length)return h;
+  return h.replace('<div class="tpcols">',`<p class="tpsum2">전체 <b>${A.length}</b>편 = 참고문헌 자료 <b>${A.length-T.length}</b>편 + 토픽 자료 <b>${T.length}</b>편</p><div class="tpcols">`);};
 
 /* ---------- 시작 ---------- */
 (async()=>{
