@@ -818,6 +818,10 @@ body:not(.homemode) .app{zoom:.9}
 .mgt td:first-child{width:36px;text-align:center}
 .mg-locked .mg-box button,.mg-locked .mg-box select,.mg-locked #mg_del,.mg-locked .mg_ck,.mg-locked #mg_all,.mg-locked #mg_none{pointer-events:none;opacity:.45}
 .tpsum2{margin:0 0 10px;font-size:15px}
+/* ===== 39단계 ===== */
+.fnpanel{margin-top:12px;padding:14px 16px;border-radius:16px;background:#F7F9FD;border:1px solid #E6ECF8}.fnlist{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px}.fnlist li{display:flex;gap:8px;align-items:flex-start}.fnlist textarea{flex:1}
+.pgtarget{margin:0 0 8px;font-size:13.5px;color:var(--ink2)}.pgbar{display:inline-block;width:90px;height:7px;border-radius:99px;background:#E6ECF8;vertical-align:middle;overflow:hidden}.pgbar i{display:block;height:100%;background:linear-gradient(90deg,#8FB0FF,#2F6BFF)}
+.ws-pages{margin-top:16px}.wstage:not(.st-type) .ws-pages{display:none!important}.pgtable{margin-top:10px}.pgtable input{width:80px}.pgtable tfoot td{border-top:2px solid #E1E8F5}
 </style>
 </head>
 <body>
@@ -2641,7 +2645,7 @@ function buildDoc(){
   ensure6();const D=S.design,F=S.front,f=S.format,issues=[],blocks=[],notes=[],seen=new Set();let tN=0,fN=0;const cnt=[0,0,0];const cites=[];
   const addIssue=(level,check,detail,where)=>issues.push({level,check,detail,where:where||""});
   const runs=(text,where)=>{const out=[];let last=0;CITE_RE.lastIndex=0;let m;const w=where.w;
-    const raw=String(text);
+    const raw0=String(text);if(/\[\^[^\]\n]+\]/.test(raw0)){const acc=[];for(const s of raw0.split(/(\[\^[^\]\n]+\])/)){const mm=s.match(/^\[\^([^\]\n]+)\]$/);if(mm){notes.push({n:notes.length+1,text:mm[1].trim(),kind:"footnote"});acc.push({note:notes.length});}else if(s)acc.push(...runs(s,where));}return acc;}const raw=raw0;
     while((m=CITE_RE.exec(raw))){if(m.index>last)out.push({t:raw.slice(last,m.index)});const d=litById(m[1]);
       if(!d){out.push({t:"(문헌 확인 필요)"});addIssue("오류","미확인 인용",`등록되지 않은 문헌 ID ${m[1]}`,where.ch);}
       else{let pg="";const rec=w&&w.citations.find(x=>x.doc_id===d.id&&x.verified&&x.page);if(m[2]){if(rec&&rec.page)pg=`${rec.page}쪽`;else addIssue("경고","미확인 인용",`쪽수(${m[2]})가 원문 확인 기록 없이 적혀 있어 출력에서 뺍니다: ${d.title.slice(0,40)}`,where.ch);}
@@ -2808,7 +2812,7 @@ function printHtml(model){const f=S.format,[w,h]=PAPERS[f.paper]||PAPERS.A4,[,ko
   const serif=/바탕|명조|Times/.test(f.font+f.latin);const fam=`"${lat}","${ko}",${serif?'"Noto Serif CJK KR","Nanum Myeongjo","AppleMyungjo",serif':'"Noto Sans CJK KR","Apple SD Gothic Neo",sans-serif'}`;
   const heads=model.blocks.filter(b=>b.type==="heading"&&b.level<=2||b.type==="fronthead"&&b.refsHead);let chNotes=[];const out=[];
   const runsH=(runs)=>runs.map(r=>r.note?`<sup class="fn">${r.note}</sup>`:esc(r.t)).join("");
-  const flushNotes=()=>{if(chNotes.length&&f.citeMode!=="inline"){out.push(`<div class="notes"><div class="nh">${f.citeMode==="endnote"?"미주":"주"}</div>${chNotes.map(n=>`<p><sup>${n.n}</sup> ${esc(n.text)}</p>`).join("")}</div>`);}chNotes=[];};
+  const flushNotes=()=>{if(chNotes.length&&(f.citeMode!=="inline"||chNotes.some(n=>n&&n.kind==="footnote"))){out.push(`<div class="notes"><div class="nh">${f.citeMode==="endnote"?"미주":"주"}</div>${chNotes.map(n=>`<p><sup>${n.n}</sup> ${esc(n.text)}</p>`).join("")}</div>`);}chNotes=[];};
   const B=model.blocks;for(let bi=0;bi<B.length;bi++){const b=B[bi];const nx=B[bi+1]||{};
     if(b.type==="pagebreak"&&nx.type==="heading"&&nx.level===1&&f.chapterBreak)continue;
     if(b.type==="title")out.push(`<section class="tp"><h1 class="title">${esc(b.text)}</h1>${b.sub?`<p class="c">${esc(b.sub)}</p>`:""}${b.en?`<p class="c">${esc(b.en)}</p>`:""}<div class="meta">${[b.author,b.aff,b.date].filter(Boolean).map(x=>`<p class="c">${esc(x)}</p>`).join("")}</div></section>`);
@@ -3454,7 +3458,7 @@ const _write14=VIEWS.write;VIEWS.write=()=>{let h=_write14();ensure6();const st=
   const w=S.design.chapters.length&&DS.ch&&S.writing[DS.ch];if(w&&w.draft_orig)h=h.replace('<textarea id="w_text"',`<details class="sub draftorig"><summary>이 장의 초고 원본 (${esc(w.draft_from||"")}) 보기</summary><pre>${esc(w.draft_orig)}</pre></details><textarea id="w_text"`);
   if(!st.ready)h=h.replace(/(<button class="btn" id="w_ai")/,'<span class="lockmsg">🔒 집필 준비를 마치면 열립니다</span>$1');return h;};
 const _bwrite14=BIND.write;BIND.write=()=>{_bwrite14();const P=pw(),st=prepState(),D=S.design;
-  const ai=$("#w_ai");if(ai&&!st.ready){ai.disabled=true;ai.title="목차 확정 · 예측 결론 · 초고 업로드를 먼저 하세요";}
+  const ai=$("#w_ai");if(ai&&!st.ready){ai.disabled=true;ai.title="준비 단계의 예측 결론과 토픽·방향 저장을 먼저 하세요";}
   const oo=$("#pp_outline_ok");if(oo)oo.onclick=()=>{const titles=$("#pp_outline").value.split("\n").map(s=>s.trim()).filter(Boolean);if(titles.length<2)return toast("장을 2개 이상 적으세요.");
     const old=D.chapters;D.chapters=titles.map(t=>old.find(c=>c.title===t)||{ch_id:"C"+uid(),title:t,points:"",doc_ids:[],claim_ids:[],state:"confirmed"});
     old.filter(c=>!D.chapters.includes(c)).forEach(c=>{const w=S.writing[c.ch_id];if(w&&w.text){S.archivedChapters=S.archivedChapters||[];S.archivedChapters.push({title:c.title,text:w.text,t:now()});}});
@@ -4484,6 +4488,94 @@ const _oi38=openItem;openItem=function(id){_oi38(id);if(judgeLocked()&&current==
 /* 토픽·방향: 합계 표시 */
 const _topics38=VIEWS.topics;VIEWS.topics=()=>{const h=_topics38();const A=papers().filter(inJudge),T=A.filter(p=>p.in_topic);if(!A.length)return h;
   return h.replace('<div class="tpcols">',`<p class="tpsum2">전체 <b>${A.length}</b>편 = 참고문헌 자료 <b>${A.length-T.length}</b>편 + 토픽 자료 <b>${T.length}</b>편</p><div class="tpcols">`);};
+
+
+/* =========================================================
+   39단계: 전체 집필(각주 자동·수동) · 양식 없이도 한글(HWPX) 출력 · 링크(유튜브) 자료 · 장별 희망 분량
+   ========================================================= */
+/* ---------- 1) 전체 집필 + 각주 ---------- */
+{const b=WSTAGES.find(s=>s[0]==="body");if(b){b[1]="전체 집필";b[2]="장별 집필·각주";}}
+const FN_RE=/\[\^([^\]\n]+)\]/g;
+function fnList(t){const out=[];String(t||"").replace(FN_RE,(m,x,off)=>{out.push({text:x,at:off,raw:m});return m;});return out;}
+function fnPanel(chId){const w=S.writing[chId]||{};const L=fnList(w.text);const has=!!G.apiKey;
+  return `<div class="fnpanel" aria-labelledby="fn_h"><div class="row" style="justify-content:space-between"><b id="fn_h">각주 <span class="hint">${L.length}개 · 본문에 <code>[^각주 내용]</code>으로 들어가고, 출력하면 페이지 아래 각주가 됩니다</span></b>
+   <span class="row"><button class="btn sm" id="fn_add">＋ 커서 위치에 각주 넣기</button><button class="btn sm primary" id="fn_ai" ${has?"":"disabled title=\"Claude API 키가 필요합니다\""}>AI 각주 달기</button></span></div>
+   ${L.length?`<ol class="fnlist">${L.map((f,i)=>`<li><textarea class="fn_t" data-fni="${i}" rows="2" aria-label="각주 ${i+1}">${esc(f.text)}</textarea><button class="btn sm danger" data-fnd="${i}" aria-label="각주 ${i+1} 지우기">지우기</button></li>`).join("")}</ol>`:`<p class="hint" style="margin:6px 0 0">아직 각주가 없습니다. 본문에서 각주를 달 곳에 커서를 두고 <b>각주 넣기</b>를 누르거나, <b>AI 각주 달기</b>로 용어 설명·보충 설명 각주를 제안받으세요. 문헌 인용([@문헌])은 글 형태가 각주식이면 자동으로 각주가 됩니다.</p>`}</div>`;}
+function setChText(chId,t){const w=S.writing[chId];w.text=t;const ta=$("#w_text");if(ta){ta.value=t;ta.dispatchEvent(new Event("input",{bubbles:true}));}save();}
+/* 문서 만들 때 [^…]를 실제 각주로 */
+{const k='const raw=String(text);';const _src=document.currentScript;}
+/* ---------- 4) 장별 희망 분량 ---------- */
+function charsPerPage(){const f=S.format||{};const sz=+f.size||10,ln=+f.line||160;return Math.round(1650*Math.pow(10/sz,2)*(160/ln));}
+function chChars(c){return String((S.writing[c.ch_id]||{}).text||"").replace(FN_RE,"").replace(CITE_RE,"").replace(/\s/g,"").length;}
+function pagesSection(){ensure6();if(typeof syncOutline==="function")syncOutline();const D=S.design,cpp=charsPerPage();const tot=D.chapters.reduce((a,c)=>a+(+c.pages||0),0);
+  return `<section class="card ws-pages"><div class="row" style="justify-content:space-between"><h2 style="margin:0">희망 분량</h2><span class="hint">목차(연구 설정)에 맞춰 장마다 원하는 분량을 적으세요. 1장 = 1쪽, 지금 서식 기준 약 ${cpp.toLocaleString()}자</span></div>
+   <table class="pgtable"><thead><tr><th>목차</th><th>희망 분량</th><th>목표 글자 수</th><th>지금 쓴 분량</th></tr></thead><tbody>${D.chapters.map(c=>{const p=+c.pages||0,cur=chChars(c),goal=p*cpp;return `<tr><td>${esc(c.title)}</td><td><span class="unit"><input type="number" min="0" step="0.5" class="pg_in" data-pg="${c.ch_id}" value="${p||""}" placeholder="예: 2" aria-label="${esc(c.title)} 희망 분량"><span>장</span></span></td><td class="hint">${p?`약 ${goal.toLocaleString()}자`:"-"}</td><td>${cur.toLocaleString()}자${p?` <span class="pgbar"><i style="width:${Math.min(100,Math.round(cur/goal*100))}%"></i></span> ${Math.round(cur/goal*100)}%`:""}</td></tr>`;}).join("")}</tbody>
+   <tfoot><tr><td><b>합계</b></td><td><b>${tot||0}장</b></td><td class="hint">${tot?`약 ${(tot*cpp).toLocaleString()}자`:""}</td><td>${D.chapters.reduce((a,c)=>a+chChars(c),0).toLocaleString()}자</td></tr></tfoot></table>
+   <p class="hint">AI로 장을 쓸 때 이 분량을 목표로 씁니다. 실제 쪽수는 양식(용지·글자 크기·줄 간격)에 따라 달라집니다.</p></section>`;}
+const _wca39=writeChapterAI;writeChapterAI=async function(chId){const ch=dsChapter(chId);const p=+(ch&&ch.pages)||0;if(!p)return _wca39(chId);const orig=ch.points;
+  ch.points=`${orig||""}\n[목표 분량] 약 ${p}장(약 ${(p*charsPerPage()).toLocaleString()}자) — 이 분량에 맞춰 쓰세요.`;try{return await _wca39(chId);}finally{ch.points=orig;}};
+/* 뷰 연결 */
+const _write39=VIEWS.write;VIEWS.write=()=>{let h=_write39();
+  h=h.replace(/준비 → 초록 → 본문 → 참고문헌 →/,"준비 → 초록 → 전체 집필 → 참고문헌 →");
+  if(WST==="body"&&S.design.chapters.length&&DS.ch){const c=dsChapter(DS.ch);if(c){const p=+c.pages||0,cur=chChars(c);
+    h=h.replace(/(<textarea id="w_text"[\s\S]*?<\/textarea>)/,`${p?`<p class="pgtarget">이 장 목표 <b>${p}장</b>(약 ${(p*charsPerPage()).toLocaleString()}자) · 지금 ${cur.toLocaleString()}자 <span class="pgbar"><i style="width:${Math.min(100,Math.round(cur/(p*charsPerPage())*100))}%"></i></span></p>`:""}$1${fnPanel(c.ch_id)}`);}}
+  if(WST==="type")h=h.replace(/(<section class="card ws-type">[\s\S]*?<\/section>)/,"$1"+pagesSection());
+  return h;};
+const _bwrite39=BIND.write;BIND.write=()=>{_bwrite39();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};const chId=DS.ch;
+  const add=$("#fn_add");if(add)add.onclick=()=>{const ta=$("#w_text");if(!ta)return;const pos=ta.selectionEnd||ta.value.length;const v=ta.value;const tok="[^각주 내용을 적으세요]";setChText(chId,v.slice(0,pos)+tok+v.slice(pos));rer();const t=document.querySelectorAll(".fn_t");const last=[...t].find(x=>x.value==="각주 내용을 적으세요")||t[t.length-1];if(last){last.focus();last.select();}};
+  document.querySelectorAll(".fn_t").forEach(t=>t.onchange=()=>{const i=+t.dataset.fni,w=S.writing[chId],L=fnList(w.text),f=L[i];if(!f)return;const nt=t.value.replace(/\[/g,"(").replace(/\]/g,")").replace(/\n/g," ").trim();if(!nt)return;setChText(chId,w.text.slice(0,f.at)+`[^${nt}]`+w.text.slice(f.at+f.raw.length));rer();});
+  document.querySelectorAll("[data-fnd]").forEach(b=>b.onclick=()=>{const i=+b.dataset.fnd,w=S.writing[chId],f=fnList(w.text)[i];if(!f)return;setChText(chId,w.text.slice(0,f.at)+w.text.slice(f.at+f.raw.length));rer();});
+  const ai=$("#fn_ai");if(ai)ai.onclick=async()=>{const w=S.writing[chId],ch=dsChapter(chId);const txt=String(w.text||"");if(txt.replace(/\s/g,"").length<50)return toast("각주를 달 본문이 너무 짧습니다.");ai.disabled=true;ai.textContent="각주 다는 중…";
+    try{const r=parseJSON(await callClaude(`${projectContext()}\n장: 「${ch.title}」\n본문:\n${txt.slice(0,6000)}\n\n이 본문에 학술 논문식 설명 각주를 최대 5개 제안하세요. 용어 정의, 배경 사실, 보충 설명처럼 본문 흐름을 끊지 않을 내용만 각주로 빼세요. 본문에 없는 수치·사실을 지어내지 말고, 확인이 필요한 사실은 각주 끝에 (확인 필요)를 붙이세요. 각주 안에 대괄호 [ ]는 쓰지 마세요. 문헌 인용은 각주로 만들지 마세요(이미 [@문헌]으로 처리됨).\nafter에는 각주를 붙일 위치 바로 앞의 본문 구절을 그대로(8~30자) 쓰세요.\n반드시 JSON만: {"notes":[{"after":"본문 구절","note":"각주 내용"}]}`,2500));
+      let t=txt,n=0;for(const x of (r.notes||[])){const a=String(x.after||"").trim(),note=String(x.note||"").replace(/\[/g,"(").replace(/\]/g,")").replace(/\n/g," ").trim();if(!a||!note)continue;const k=t.indexOf(a);if(k<0)continue;const pos=k+a.length;t=t.slice(0,pos)+`[^${note}]`+t.slice(pos);n++;}
+      if(!n)toast("붙일 위치를 찾지 못했습니다. 다시 시도하거나 직접 넣어 주세요.");else{setChText(chId,t);logSync("write","AI 각주","ok",`${ch.title}: ${n}개`);toast(`각주 ${n}개를 달았습니다. 아래 목록에서 고치거나 지울 수 있습니다.`);}}
+    catch(e){toast("오류: "+e.message);}rer();};
+  document.querySelectorAll(".pg_in").forEach(inp=>inp.onchange=async()=>{const c=dsChapter(inp.dataset.pg);if(!c)return;const v=parseFloat(inp.value);c.pages=isFinite(v)&&v>0?v:0;logSync("write","희망 분량","ok",`${c.title}: ${c.pages}장`);await flush();rer();});};
+/* ---------- 2) 양식 없이도 한글(HWPX): 기본 한글 서식 만들기 ---------- */
+function hwpu(mm){return Math.round(mm*7200/25.4);}
+async function makeBaseHwpx(){const f=S.format||{},pp=PAPERS[f.paper]||[210,297],font=(FONTS[f.font]||["바탕","바탕"])[1]||"바탕",sz=Math.round((+f.size||10)*100),ln=Math.round(+f.line||160);
+  const NS='xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head"';
+  const langs=["HANGUL","LATIN","HANJA","JAPANESE","OTHER","SYMBOL","USER"];
+  const charPr=(id,h,bold)=>`<hh:charPr id="${id}" height="${h}" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1"><hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/><hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/><hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/><hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/><hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>${bold?"<hh:bold/>":""}<hh:underline type="NONE" shape="SOLID" color="#000000"/><hh:strikeout shape="NONE" color="#000000"/><hh:outline type="NONE"/><hh:shadow type="NONE" color="#B2B2B2" offsetX="10" offsetY="10"/></hh:charPr>`;
+  const paraPr=(id,align,prev,next,indent)=>`<hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0"><hh:align horizontal="${align}" vertical="BASELINE"/><hh:heading type="NONE" idRef="0" level="0"/><hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="${id>0?1:0}" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/><hh:autoSpacing eAsianEng="0" eAsianNum="0"/><hh:margin><hc:intent value="${indent}" unit="HWPUNIT"/><hc:left value="0" unit="HWPUNIT"/><hc:right value="0" unit="HWPUNIT"/><hc:prev value="${prev}" unit="HWPUNIT"/><hc:next value="${next}" unit="HWPUNIT"/></hh:margin><hh:lineSpacing type="PERCENT" value="${ln}" unit="HWPUNIT"/><hh:border borderFillIDRef="1" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/></hh:paraPr>`;
+  const header=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><hh:head ${NS} version="1.4" secCnt="1"><hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/><hh:refList>`+
+   `<hh:fontfaces itemCnt="7">${langs.map(l=>`<hh:fontface lang="${l}" fontCnt="1"><hh:font id="0" face="${esc(font)}" type="TTF" isEmbedded="0"/></hh:fontface>`).join("")}</hh:fontfaces>`+
+   `<hh:borderFills itemCnt="1"><hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0"><hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/><hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/><hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/><hh:topBorder type="NONE" width="0.1 mm" color="#000000"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#000000"/><hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/></hh:borderFill></hh:borderFills>`+
+   `<hh:charProperties itemCnt="3">${charPr(0,sz,false)}${charPr(1,Math.round(sz*1.4),true)}${charPr(2,Math.round(sz*1.15),true)}</hh:charProperties>`+
+   `<hh:tabProperties itemCnt="1"><hh:tabPr id="0" autoTabLeft="0" autoTabRight="0"/></hh:tabProperties><hh:numberings itemCnt="0"/>`+
+   `<hh:paraProperties itemCnt="3">${paraPr(0,"JUSTIFY",0,0,Math.round(sz*2))}${paraPr(1,"LEFT",1200,600,0)}${paraPr(2,"LEFT",800,400,0)}</hh:paraProperties>`+
+   `<hh:styles itemCnt="3"><hh:style id="0" type="PARA" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042" lockForm="0"/><hh:style id="1" type="PARA" name="개요 1" engName="Outline 1" paraPrIDRef="1" charPrIDRef="1" nextStyleIDRef="0" langID="1042" lockForm="0"/><hh:style id="2" type="PARA" name="개요 2" engName="Outline 2" paraPrIDRef="2" charPrIDRef="2" nextStyleIDRef="0" langID="1042" lockForm="0"/></hh:styles>`+
+   `</hh:refList><hh:compatibleDocument targetProgram="HWP201X"><hh:layoutCompatibility/></hh:compatibleDocument><hh:docOption><hh:linkinfo path="" pageInherit="0" footnoteInherit="0"/></hh:docOption><hh:trackchageConfig flags="56"/></hh:head>`;
+  const note=(place)=>`<hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/><hp:noteLine length="-1" type="SOLID" width="0.12 mm" color="#000000"/><hp:noteSpacing betweenNotes="283" belowLine="567" aboveLine="850"/><hp:numbering type="CONTINUOUS" newNum="1"/><hp:placement place="${place}" beneathText="0"/>`;
+  const section=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><hs:sec ${NS}><hp:p id="0" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0"><hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" memoShapeIDRef="0" textVerticalWidthHead="0" masterPageCnt="0"><hp:grid lineGrid="0" charGrid="0" wonggojiFormat="0"/><hp:startNum pageStartsOn="BOTH" page="0" pic="0" tbl="0" equation="0"/><hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" border="SHOW_ALL" fill="SHOW_ALL" hideFirstPageNum="0" hideFirstEmptyLine="0" showLineNumber="0"/><hp:lineNumberShape restartType="0" countBy="0" distance="0" startNumber="0"/><hp:pagePr landscape="WIDELY" width="${hwpu(pp[0])}" height="${hwpu(pp[1])}" gutterType="LEFT_ONLY"><hp:margin header="${hwpu(15)}" footer="${hwpu(15)}" gutter="0" left="${hwpu(+f.ml||30)}" right="${hwpu(+f.mr||30)}" top="${hwpu(+f.mt||20)}" bottom="${hwpu(+f.mb||15)}"/></hp:pagePr><hp:footNotePr>${note("EACH_COLUMN")}</hp:footNotePr><hp:endNotePr>${note("END_OF_DOCUMENT")}</hp:endNotePr><hp:pageBorderFill type="BOTH" borderFillIDRef="1" textBorder="PAPER" headerInside="0" footerInside="0" fillArea="PAPER"><hp:offset left="1417" right="1417" top="1417" bottom="1417"/></hp:pageBorderFill></hp:secPr><hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl><hp:t></hp:t></hp:run></hp:p></hs:sec>`;
+  const files=[["mimetype","application/hwp+zip"],["version.xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><hv:HCFVersion xmlns:hv="http://www.hancom.co.kr/hwpml/2011/version" tagetApplication="WORDPROCESSOR" major="5" minor="1" micro="0" buildNumber="1" os="1" xmlVersion="1.4" application="Hancom Office Hangul" appVersion="11, 0, 0, 0"/>'],
+   ["META-INF/container.xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ocf:container xmlns:ocf="urn:oasis:names:tc:opendocument:xmlns:container" xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf"><ocf:rootfiles><ocf:rootfile full-path="Contents/content.hpf" media-type="application/hwpml-package+xml"/></ocf:rootfiles></ocf:container>'],
+   ["META-INF/manifest.xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><odf:manifest xmlns:odf="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"/>'],
+   ["Contents/content.hpf",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><opf:package xmlns:opf="http://www.idpf.org/2007/opf/" xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf" version="" unique-identifier="" id=""><opf:metadata><opf:title>${esc(S.settings.topic||"AI WIKI")}</opf:title><opf:language>ko</opf:language></opf:metadata><opf:manifest><opf:item id="header" href="Contents/header.xml" media-type="application/xml"/><opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/><opf:item id="settings" href="settings.xml" media-type="application/xml"/></opf:manifest><opf:spine><opf:itemref idref="header" linear="yes"/><opf:itemref idref="section0" linear="yes"/></opf:spine></opf:package>`],
+   ["Contents/header.xml",header],["Contents/section0.xml",section],
+   ["settings.xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ha:HWPApplicationSetting xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"><ha:CaretPosition listIDRef="0" paraIDRef="0" pos="0"/></ha:HWPApplicationSetting>']];
+  const blob=zipStore(files.map(([n,s])=>({name:n,data:te.encode(s)})),"application/hwp+zip");return await (blob instanceof Blob?blob:new Blob([blob])).arrayBuffer();}
+const _bh39=buildHwpx;buildHwpx=async function(m){const f=S.format;if(f.hwpx)return _bh39(m);
+  const buf=await makeBaseHwpx();const info=await analyzeHwpx(buf);await dbPut("data","hwpx:"+S.id,buf);f.hwpx={name:"AI WIKI 기본 한글 서식",info,builtin:true,at:now()};
+  try{return await _bh39(m);}finally{f.hwpx=null;await dbDel("data","hwpx:"+S.id);}};
+const _out39=outSection;outSection=function(){return _out39().replace(/<button class="btn primary big" data-fd="hwpx" disabled title="[^"]*">/,'<button class="btn primary big" data-fd="hwpx">').replace('한글(HWPX)로 받으려면 <b>양식 적용</b> 단계에서 한글 양식을 올리세요.','한글 양식을 올리지 않았으면 <b>AI WIKI 기본 한글 서식</b>(양식 적용에서 입력한 용지·여백·글꼴·글자 크기·줄 간격)으로 만듭니다.');};
+/* ---------- 3) 링크(유튜브) 자료 ---------- */
+SOURCE_L.link="링크·유튜브";
+{const i=SOURCES.findIndex(s=>s[0]==="list");SOURCES.splice(i<0?SOURCES.length:i,0,["link","링크(유튜브)"]);}
+const ytId=u=>{const m=String(u).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/);return m?m[1]:"";};
+PANES.link={html:()=>`<div class="panel"><h2>링크(유튜브) 자료</h2><p class="hint">유튜브·웹 주소를 한 줄에 하나씩 붙여넣으세요. 유튜브는 제목·채널을 자동으로 가져오고, 웹 주소는 주소를 제목으로 두니 상세 창에서 고치세요. 영상의 핵심 내용을 메모로 적어 두면 AI 분류가 더 정확해집니다.</p>
+  <label for="lk_urls">주소</label><textarea id="lk_urls" rows="4" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..."></textarea>
+  <label for="lk_memo">내용 메모 (선택 · 모든 링크에 함께 들어감)</label><textarea id="lk_memo" rows="2" placeholder="예: 2024년 한-베 정상회담 비즈니스 포럼 현장 보도. MOU 체결 기업 소개."></textarea>
+  <label for="lk_year">연도 (선택)</label><input type="number" id="lk_year" style="width:160px" placeholder="예: 2024">
+  <div class="row" style="margin-top:10px"><button class="btn primary" id="lk_go">링크 가져오기 + 분석</button><span class="hint" id="lk_msg"></span></div></div>${intakePanel()}`,
+ bind:()=>{const go2=$("#lk_go");if(!go2)return;go2.onclick=async()=>{const urls=[...new Set($("#lk_urls").value.split(/\s+/).map(s=>s.trim()).filter(s=>/^https?:\/\//i.test(s)))];if(!urls.length)return toast("http로 시작하는 주소를 붙여넣으세요.");
+   const memo=$("#lk_memo").value.trim(),yr=$("#lk_year").value.trim(),msg=$("#lk_msg");go2.disabled=true;const added=[];let dup=0;
+   for(const [i,u] of urls.entries()){msg.textContent=`가져오는 중… ${i+1}/${urls.length}`;let o={title:"",authors:"",journal:"",url:u};const id=ytId(u);
+     if(id){try{const r=await fetch("https://www.youtube.com/oembed?format=json&url="+encodeURIComponent("https://www.youtube.com/watch?v="+id));if(r.ok){const j=await r.json();o.title=j.title||"";o.authors=j.author_name||"";}}catch(e){}o.journal="YouTube";o.title=o.title||`유튜브 영상 (${id})`;o.url="https://www.youtube.com/watch?v="+id;}
+     else{let host="";try{host=new URL(u).hostname.replace(/^www\./,"");}catch(e){}o.journal=host||"웹";o.title=decodeURIComponent((new URL(u)).pathname.split("/").filter(Boolean).pop()||host).replace(/[-_]+/g," ").slice(0,80)||host;}
+     const r=addLiterature(Object.assign(o,{year:yr,abstract:memo,doc_type:"기사·기타",keywords:[]}),"link");if(r.dup)dup++;else added.push(r.item.id);}
+   if(added.length){S.lastIntake={ids:added,at:now(),by:"링크"};logSync("collect","링크 가져오기","ok",`${added.length}건${dup?` · 중복 ${dup}`:""}`);}await flush();go2.disabled=false;
+   toast(added.length?`${added.length}건을 가져와 분석했습니다.${dup?` (중복 ${dup}건 제외)`:""}`:"새로 가져온 링크가 없습니다(중복).");const y=window.scrollY;render();window.scrollTo(0,y);};}};
 
 /* ---------- 시작 ---------- */
 (async()=>{
