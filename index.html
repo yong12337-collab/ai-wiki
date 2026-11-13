@@ -824,6 +824,7 @@ body:not(.homemode) .app{zoom:.9}
 .ws-pages{margin-top:16px}.wstage:not(.st-type) .ws-pages{display:none!important}.pgtable{margin-top:10px}.pgtable input{width:80px}.pgtable tfoot td{border-top:2px solid #E1E8F5}
 .scopeline{margin:8px 0 0;padding:9px 12px;border-radius:12px;background:#FFF8EC;border:1px solid #F7E2BD;font-size:13.5px;color:#7A4B0E}.scopeline.ok{background:#EEFBF3;border-color:#CDEFD9;color:#167A45}.fpath{font-size:12px;color:#6B8BD6;margin-top:2px}.subnote{margin:0 0 8px}
 .dtools{gap:8px;margin:10px 0 0}.dlocked .dck,.dlocked .dlink,.dlocked #dg_link,.dlocked #dg_all,.dlocked #dg_none{pointer-events:none;opacity:.45}#drv_files .dck{width:19px;height:19px;accent-color:#2F6BFF;cursor:pointer}
+.ftchip{display:inline-block;margin-left:4px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:700;background:#DCFCE7;color:#15803D;vertical-align:middle}.ftchip.no{background:#FEF3C7;color:#B45309}.ftbox{margin:0 0 12px}
 </style>
 </head>
 <body>
@@ -4371,7 +4372,7 @@ function kwFindDialog(){const core=new Set((S.settings.keywords||[]).map(k=>k.to
 const _bsetup37=BIND.setup;BIND.setup=()=>{_bsetup37();const b=$("#kw_find");if(b)b.onclick=()=>{const kw=$("#st_kw");if(kw){const typed=kw.value.split(",").map(x=>x.trim()).filter(Boolean);if(typed.join("|")!==(S.settings.keywords||[]).join("|")){S.settings.keywords=typed;syncCoreFromSettings();save();}}kwFindDialog();};};
 /* ---------- 3) AI 분류 개선: 문헌 자체의 주제 · KCI 키워드 우선 · 이유 ---------- */
 classifyPapersAI=async function(batch){const topics=S.topics.map(t=>t.name),kwConfirmed=S.keywords.filter(k=>k.type==="core"||k.type==="confirmed").map(k=>k.term),excl=S.keywords.filter(k=>k.type==="excluded").map(k=>k.term);
-  const items=batch.map((it,i)=>({i,title:it.title,authors:it.authors,year:it.year,journal:it.journal,kci_keywords:(it.keywords||[]).join(", "),abstract:(it.abstract||it.summary||"").slice(0,1200)}));const corr=researcherCorrections();
+  const items=batch.map((it,i)=>({i,title:it.title,authors:it.authors,year:it.year,journal:it.journal,kci_keywords:(it.keywords||[]).join(", "),abstract:(it.abstract||it.summary||"").slice(0,1200),fulltext:(it.ft&&it.ft.text||"").slice(0,3500),needs_bib:!it.authors}));const corr=researcherCorrections();
   const prompt=`${projectContext()}\n핵심 키워드: ${JSON.stringify(kwConfirmed)}\n제외 키워드: ${JSON.stringify(excl)}\n참고용 기존 토픽 이름: ${JSON.stringify(topics)}${corr?`\n연구자가 과거에 수정한 분류(같은 기준을 따르세요):\n${corr}`:""}
 
 각 문헌을 분류하세요.
@@ -4379,15 +4380,16 @@ classifyPapersAI=async function(batch){const topics=S.topics.map(t=>t.name),kwCo
 2) topic: 이 문헌이 실제로 다루는 주제를 제목·초록·KCI 키워드에 근거해 8~25자로 직접 쓰세요(예: "한국 소설 속 베트남 심상지리·전쟁 관광"). 기존 토픽 이름은 이 문헌의 핵심 주제와 정확히 같을 때만 그대로 쓰고, 단어 몇 개가 겹친다는 이유로 고르지 마세요.
 3) reason: 관련도와 토픽을 그렇게 정한 이유를 두 문장 이내로. 제목·초록·키워드 중 무엇을 근거로 했는지 밝히세요.
 4) keywords: KCI 키워드를 먼저 그대로 넣고, 필요하면 보충 키워드를 더해 최대 8개.
+fulltext(원문 앞부분)가 있으면 제목·초록보다 우선하는 가장 중요한 근거로 쓰고, evidence에 "원문"을 넣고 reason에 원문 내용을 근거로 들었음을 밝히세요. needs_bib가 true면 fulltext에서 bib(title·authors·year·journal)를 찾아 채우고, 없으면 빈칸으로 두세요.
 주어진 정보만 근거로 쓰고, 정보가 부족하면 confidence를 low로 하세요. 제외 키워드에 해당하면 relevance를 1~2로 하세요. 문헌 유형은 ["학술지 논문","학위논문","연구보고서","단행본","학술대회 발표","기사·기타"] 중 하나.
 반드시 JSON 배열만 출력하세요:
-[{"i":번호,"relevance":1~5,"topic":"","reason":"","evidence":["제목","초록","KCI 키워드"],"confidence":"high|mid|low","keywords":[""],"doc_type":"","doc_type_confidence":"high|mid|low","summary":"두 문장 요약"}]
+[{"i":번호,"relevance":1~5,"topic":"","reason":"","evidence":["제목","초록","KCI 키워드"],"confidence":"high|mid|low","keywords":[""],"doc_type":"","doc_type_confidence":"high|mid|low","summary":"두 문장 요약","bib":{"title":"","authors":"","year":"","journal":""}}]
 
 문헌:
 ${JSON.stringify(items)}`;
   const res=parseJSON(await callClaude(prompt,5000));const newKw=[];
   for(const r of res){const it=batch[r.i];if(!it)continue;const v=parseInt(r.relevance);const reason=String(r.reason||"").trim();
-    if(v>=1&&v<=5&&it.cls_by!=="연구자"){it.relevance=v;it.relevance_reason=reason||it.relevance_reason;}if(r.summary&&!it.summary)it.summary=r.summary;
+    if(v>=1&&v<=5&&it.cls_by!=="연구자"){it.relevance=v;it.relevance_reason=reason||it.relevance_reason;}if(r.summary&&!it.summary)it.summary=r.summary;if(r.bib&&typeof applyBib==="function")applyBib(it,r.bib);
     const conf=["high","mid","low"].includes(r.confidence)?r.confidence:"low";const topic=String(r.topic||"").trim().slice(0,40);
     const kws=[...new Set([...(it.keywords||[]),...(r.keywords||[])].map(x=>String(x).trim()).filter(Boolean))].slice(0,8);
     applyTopic(it,{topic,keywords:kws,reason,evidence:Array.isArray(r.evidence)?r.evidence:[],confidence:conf},"AI");it.kw_ai=kws;newKw.push(...(r.keywords||[]));
@@ -4625,6 +4627,51 @@ const _dfp41=driveFilesPane;driveFilesPane=function(){_dfp41();const box=$("#drv
 /* 임시저장 → 드라이브 화면으로 이어서 */
 const _restore41=restoreSnapshot;restoreSnapshot=async function(sn){await _restore41(sn);if(String(sn.from||"")==="collect:drive"){CTAB="drive";go("collect");}};
 const _stageHTML41=stageHTML;stageHTML=function(sn){const h=_stageHTML41(sn);return sn.from==="collect:drive"?h+`<div class="hint" style="margin-top:3px">자료 모으기 › <b>Google Drive</b>에서 저장</div>`:h;};
+
+
+/* =========================================================
+   42단계: 원문 읽기 — PDF(pdf.js)·DOCX·HWPX 텍스트 추출, 스캔 PDF는 Claude가 직접 읽기,
+           AI 분류에 원문 앞부분을 핵심 근거로 · 파일 이름 자료의 서지정보 채우기
+   ========================================================= */
+const PDFJS_V="3.11.174";let PDFJS_P=null;
+function loadPdfJs(){if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(!PDFJS_P)PDFJS_P=new Promise((res,rej)=>{const s=document.createElement("script");s.src=`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_V}/pdf.min.js`;
+  s.onload=()=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc=`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_V}/pdf.worker.min.js`;res(pdfjsLib);}catch(e){rej(e);}};s.onerror=()=>{PDFJS_P=null;rej(new Error("PDF 읽기 도구를 불러오지 못했습니다(인터넷 연결 확인)."));};document.head.appendChild(s);});return PDFJS_P;}
+async function pdfText(buf,maxPages=12){const lib=await loadPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0)),cMapUrl:`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_V}/cmaps/`,cMapPacked:true,standardFontDataUrl:`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_V}/standard_fonts/`}).promise;let out="";const n=Math.min(doc.numPages,maxPages);
+  for(let i=1;i<=n;i++){const pg=await doc.getPage(i);const tc=await pg.getTextContent();let prev=null;for(const it of tc.items){if(typeof it.str!=="string")continue;const tr=it.transform||[1,0,0,10,0,0],x=tr[4],y=tr[5],hh=Math.abs(tr[3])||10;if(prev){if(Math.abs(y-prev.y)>hh*0.5)out+="\n";else if(x-(prev.x+prev.w)>hh*0.22)out+=" ";}out+=it.str;if(it.hasEOL){out+="\n";prev=null;}else prev={x,y,w:it.width||0};}out+="\n\n";if(out.length>24000)break;}return {text:out,pages:doc.numPages};}
+const xmlText=(x,tag)=>x.replace(new RegExp(`</${tag}>`,"g"),"\n").replace(/<[^>]+>/g,"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&amp;/g,"&");
+async function docxText(buf){const f=await unzip(buf);const x=f["word/document.xml"]?td.decode(f["word/document.xml"]):"";return {text:xmlText(x,"w:p"),pages:0};}
+async function hwpxText(buf){const f=await unzip(buf);const t=Object.keys(f).filter(n=>/^Contents\/section\d+\.xml$/.test(n)).sort().map(n=>xmlText(td.decode(f[n]),"hp:p")).join("\n");return {text:t,pages:0};}
+const cleanText=t=>String(t||"").replace(/[ \t\u00a0]+/g," ").replace(/\n\s*\n\s*\n+/g,"\n\n").trim();
+function bufToB64(buf){const u=new Uint8Array(buf);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);}
+async function callClaudeDoc(prompt,buf,maxTokens=3000){if(!G.apiKey)throw new Error("API 키가 없습니다.");
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":G.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:G.model,max_tokens:maxTokens,messages:[{role:"user",content:[{type:"document",source:{type:"base64",media_type:"application/pdf",data:bufToB64(buf)}},{type:"text",text:prompt}]}]})});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error((d.error&&d.error.message)||("API 오류 "+r.status));return (d.content||[]).map(c=>c.type==="text"?c.text:"").join("\n");}
+async function originalBuffer(it){for(const o of originals(it)){if(o.kind==="vault"){const f=await vaultFile(o.rec.path);return {buf:await f.arrayBuffer(),name:o.rec.name||f.name};}
+    if(o.kind==="drive"){const f=await driveFile(o.rec);if(f)return {buf:await f.arrayBuffer(),name:o.rec.name||f.name};}}return null;}
+const looksFileTitle=t=>/\.(pdf|docx?|hwpx?)$/i.test(t)||/^\d{4}[\s_]/.test(t)||/_/.test(t);
+function applyBib(it,b){if(!b)return;const s=v=>String(v||"").trim();if(s(b.authors)&&!it.authors)it.authors=s(b.authors);if(s(b.year)&&!it.year)it.year=s(b.year).slice(0,4);if(s(b.journal)&&!it.journal)it.journal=s(b.journal);
+  if(s(b.title)&&looksFileTitle(it.title)){it.file_title=it.title;it.title=s(b.title);}}
+async function readFulltext(it){const got=await originalBuffer(it);if(!got)return false;const n=got.name.toLowerCase();let r={text:"",pages:0},by="";
+  if(/\.pdf$/.test(n)){try{r=await pdfText(got.buf);by="pdf.js";}catch(e){r={text:"",pages:0};}
+    if(cleanText(r.text).replace(/\s/g,"").length<Math.max(60,(r.pages||1)*25)){if(!G.apiKey){it.ft={text:"",chars:0,pages:r.pages,by:"스캔 PDF(글자 없음)",at:now(),name:got.name,scanned:true};return false;}
+      if(got.buf.byteLength>25*1024*1024){it.ft={text:"",chars:0,pages:r.pages,by:"스캔 PDF(25MB 초과 — 읽지 못함)",at:now(),name:got.name,scanned:true};return false;}
+      const o=parseJSON(await callClaudeDoc(`이 PDF는 학술 자료입니다. 앞부분을 읽고 다음을 JSON으로만 답하세요.\n{"title":"","authors":"","year":"","journal":"","text_excerpt":"제목·초록·서론을 중심으로 본문을 요약하지 말고 그대로 옮긴 글(최대 4000자)"}\n읽을 수 없는 부분은 비워 두고 지어내지 마세요.`,got.buf,5000));
+      r={text:o.text_excerpt||"",pages:r.pages};by="Claude 문서 읽기(스캔 PDF)";applyBib(it,o);}}
+  else if(/\.docx$/.test(n)){r=await docxText(got.buf);by="워드(DOCX)";}else if(/\.hwpx$/.test(n)){r=await hwpxText(got.buf);by="한글(HWPX)";}
+  else return false;
+  const t=cleanText(r.text);it.ft={text:t.slice(0,8000),chars:t.length,pages:r.pages,by,at:now(),name:got.name};return t.length>0;}
+/* 분류 전에 원문 읽기 */
+const _rc42=runClassification;runClassification=async function(list,onProg){const need=list.filter(it=>!it.ft&&originals(it).some(o=>o.kind==="vault"||o.kind==="drive"));let ok=0,fail=0;
+  for(const [i,it] of need.entries()){onProg&&onProg(`원문 읽는 중… ${i+1} / ${need.length} · ${it.title.slice(0,24)}`);try{if(await readFulltext(it))ok++;else fail++;}catch(e){fail++;it.ft_err=e.message;}}
+  if(need.length){logSync("classify","원문 읽기","ok",`${ok}편 읽음${fail?` · ${fail}편 못 읽음`:""}`);save();}return _rc42(list,onProg);};
+/* 규칙 기반 분류도 원문 앞부분 사용 */
+const _rule42=classifyPaperRule;classifyPaperRule=function(it){if(it.abstract||!it.ft||!it.ft.text)return _rule42(it);it.abstract=it.ft.text.slice(0,2500);try{return _rule42(it);}finally{it.abstract="";}};
+/* 표·상세 창에 '원문 읽음' 표시 */
+const ftChip=p=>p.ft?(p.ft.chars?`<span class="ftchip" title="${esc(p.ft.by)} · ${fmtTime(p.ft.at)}">원문 읽음${p.ft.pages?` · ${p.ft.pages}쪽`:""}</span>`:`<span class="ftchip no" title="${esc(p.ft.by)}">원문 글자 없음</span>`):"";
+const _bmanage42=BIND.manage;BIND.manage=()=>{_bmanage42();document.querySelectorAll("#view tr[data-mg]").forEach(tr=>{const p=S.items.find(i=>i.id===tr.dataset.mg);const b=tr.querySelector("b.t");if(p&&p.ft&&b&&!tr.querySelector(".ftchip"))b.insertAdjacentHTML("afterend"," "+ftChip(p));});};
+const _oi42=openItem;openItem=function(id){_oi42(id);const it=S.items.find(i=>i.id===id);const box=document.querySelector("#dlgBody .origbox");if(!it||!it.ft||!box||document.querySelector("#dlgBody .ftbox"))return;
+  box.insertAdjacentHTML("afterend",`<details class="sub ftbox"><summary>AI가 읽은 원문 앞부분 <span class="hint">${esc(it.ft.by)}${it.ft.pages?` · ${it.ft.pages}쪽`:""} · ${it.ft.chars.toLocaleString()}자 · ${fmtTime(it.ft.at)}</span></summary><pre class="notepre">${esc(it.ft.text.slice(0,2500))}${it.ft.text.length>2500?"\n…":""}</pre></details>`);};
 
 /* ---------- 시작 ---------- */
 (async()=>{
