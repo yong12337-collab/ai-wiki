@@ -822,6 +822,8 @@ body:not(.homemode) .app{zoom:.9}
 .fnpanel{margin-top:12px;padding:14px 16px;border-radius:16px;background:#F7F9FD;border:1px solid #E6ECF8}.fnlist{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px}.fnlist li{display:flex;gap:8px;align-items:flex-start}.fnlist textarea{flex:1}
 .pgtarget{margin:0 0 8px;font-size:13.5px;color:var(--ink2)}.pgbar{display:inline-block;width:90px;height:7px;border-radius:99px;background:#E6ECF8;vertical-align:middle;overflow:hidden}.pgbar i{display:block;height:100%;background:linear-gradient(90deg,#8FB0FF,#2F6BFF)}
 .ws-pages{margin-top:16px}.wstage:not(.st-type) .ws-pages{display:none!important}.pgtable{margin-top:10px}.pgtable input{width:80px}.pgtable tfoot td{border-top:2px solid #E1E8F5}
+.scopeline{margin:8px 0 0;padding:9px 12px;border-radius:12px;background:#FFF8EC;border:1px solid #F7E2BD;font-size:13.5px;color:#7A4B0E}.scopeline.ok{background:#EEFBF3;border-color:#CDEFD9;color:#167A45}.fpath{font-size:12px;color:#6B8BD6;margin-top:2px}.subnote{margin:0 0 8px}
+.dtools{gap:8px;margin:10px 0 0}.dlocked .dck,.dlocked .dlink,.dlocked #dg_link,.dlocked #dg_all,.dlocked #dg_none{pointer-events:none;opacity:.45}#drv_files .dck{width:19px;height:19px;accent-color:#2F6BFF;cursor:pointer}
 </style>
 </head>
 <body>
@@ -3809,7 +3811,7 @@ googleLogin=async function(btn){
   const cid=await loginClientId();if(!cid){toast("구글 로그인 설정(config.json의 클라이언트 ID)이 없습니다.");const s=$("#land_setup");if(s)s.hidden=false;return;}
   if(btn){btn.disabled=true;btn.classList.add("busy");}
   try{await loadGIS();G.driveClientId=G.driveClientId||cid;
-    const r=await new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:"openid email profile "+SCOPE_FILE,callback:x=>x&&x.error?rej(new Error(x.error)):res(x),error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"로그인 창을 닫았습니다.":"로그인 오류: "+((e&&(e.message||e.type))||"알 수 없음")))});tc.requestAccessToken({prompt:"select_account"});});
+    const r=await new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:"openid email profile "+SCOPE_FILE+(G.driveBrowse?" "+SCOPE_READ:""),callback:x=>x&&x.error?rej(new Error(x.error)):res(x),error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"로그인 창을 닫았습니다.":"로그인 오류: "+((e&&(e.message||e.type))||"알 수 없음")))});tc.requestAccessToken({prompt:"select_account"});});
     const u=await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+r.access_token}})).json();
     if(!u||!u.email)throw new Error("구글 계정 정보를 받지 못했습니다.");
     G.profile=Object.assign({},G.profile||{},{name:u.name||u.email,email:u.email,picture:u.picture||"",sub:u.sub,login:"google",at:now()});
@@ -4576,6 +4578,53 @@ PANES.link={html:()=>`<div class="panel"><h2>링크(유튜브) 자료</h2><p cla
      const r=addLiterature(Object.assign(o,{year:yr,abstract:memo,doc_type:"기사·기타",keywords:[]}),"link");if(r.dup)dup++;else added.push(r.item.id);}
    if(added.length){S.lastIntake={ids:added,at:now(),by:"링크"};logSync("collect","링크 가져오기","ok",`${added.length}건${dup?` · 중복 ${dup}`:""}`);}await flush();go2.disabled=false;
    toast(added.length?`${added.length}건을 가져와 분석했습니다.${dup?` (중복 ${dup}건 제외)`:""}`:"새로 가져온 링크가 없습니다(중복).");const y=window.scrollY;render();window.scrollTo(0,y);};}};
+
+
+/* =========================================================
+   40단계: 드라이브 — 읽기 권한 자동 요청 · 하위 폴더까지 파일 찾기 · 권한 상태 표시
+   ========================================================= */
+const hasRead=()=>String(DRIVE.scope||"").includes(SCOPE_READ);
+async function ensureReadScope(){if(!G.driveBrowse||hasRead())return true;await driveConnect();if(!hasRead()){toast("드라이브 읽기 권한이 허용되지 않았습니다. 구글 창에서 '드라이브 파일 보기' 권한에 체크하고 허용해 주세요.");return false;}return true;}
+async function driveListDeep(rootId,maxDepth=3){const files=[],folders=[{id:rootId,path:"",d:0}];
+  while(folders.length&&files.length<1000){const f=folders.shift();const items=await driveList(`'${f.id}' in parents and trashed=false`);
+    for(const it of items){if(it.mimeType===FOLDER_MIME){if(f.d<maxDepth)folders.push({id:it.id,path:(f.path?f.path+"/":"")+it.name,d:f.d+1});}else{it._path=f.path;files.push(it);}}}
+  return files;}
+const _drvBind40=PANES.drive.bind;PANES.drive.bind=()=>{_drvBind40();const top=$("#drv_top");if(!top||!driveOn())return;
+  top.insertAdjacentHTML("beforeend",`<p class="scopeline ${hasRead()?"ok":""}">${hasRead()?"✓ 권한: 드라이브 읽기 포함 — 드라이브에 직접 올린 파일도 보입니다.":`권한: <b>앱이 만든 파일만</b> — 드라이브에 직접 올린 파일은 앱에 보이지 않습니다. <button class="btn sm primary" id="dg_scope">드라이브 읽기 권한 받기</button>`}</p>`);
+  const sc=$("#dg_scope");if(sc)sc.onclick=async()=>{G.driveBrowse=true;await dbPut("data","global",G);try{if(await ensureReadScope())toast("드라이브 읽기 권한을 받았습니다. 프로젝트 폴더 파일 보기를 누르세요.");}catch(e){toast(e.message);}render();};
+  const fb=$("#dg_folder");if(fb)fb.onclick=async()=>{$("#dg_prog").textContent="불러오는 중…";try{await ensureReadScope();const f=await driveEnsureProjectFolder();DRV_FILES=await driveListDeep(f.id);
+      const sub=[...new Set(DRV_FILES.map(x=>x._path).filter(Boolean))];logSync("drive","파일 목록","ok",`${DRV_FILES.length}개${sub.length?` (하위 폴더 ${sub.length}곳 포함)`:""}`);
+      if(!DRV_FILES.length)toast(hasRead()?"폴더와 하위 폴더에 파일이 없습니다.":"파일이 보이지 않습니다. '드라이브 읽기 권한 받기'를 눌러 주세요.");}
+    catch(e){logSync("drive","파일 목록","error",e.message);toast(e.message);}render();};
+  const bb=$("#dg_browse");if(bb)bb.onclick=async()=>{try{if(await ensureReadScope())driveBrowse("root","내 드라이브");}catch(e){toast(e.message);}};
+  const box=$("#drv_files");if(box&&DRV_FILES&&DRV_FILES.length){const sub=[...new Set(DRV_FILES.map(x=>x._path).filter(Boolean))];if(sub.length)box.insertAdjacentHTML("afterbegin",`<p class="hint subnote">하위 폴더 안 파일까지 찾았습니다: ${sub.map(esc).join(", ")}</p>`);
+    box.querySelectorAll("tr").forEach(tr=>{const td=tr.querySelector("td:nth-child(2)")||tr.querySelector("td");if(!td)return;const f=DRV_FILES.find(x=>td.textContent.includes(x.name)&&x._path);if(f&&!td.querySelector(".fpath"))td.insertAdjacentHTML("beforeend",`<div class="fpath">📁 ${esc(f._path)}</div>`);});}};
+
+
+/* =========================================================
+   41단계: 드라이브 파일 — 전체 선택·전체 해제 · 수정하기·임시저장·저장
+   ========================================================= */
+if(!SNAP_KEYS.includes("driveSel"))SNAP_KEYS.push("driveSel","driveSave");
+const dSel=()=>{if(!Array.isArray(S.driveSel))S.driveSel=[];return S.driveSel;};
+const dLocked=()=>!!(S.driveSave&&S.driveSave.state==="saved");
+const _dfp41=driveFilesPane;driveFilesPane=function(){_dfp41();const box=$("#drv_files");if(!box||!DRV_FILES)return;const panel=box.querySelector(".panel");if(!panel)return;
+  const files=DRV_FILES.filter(f=>f.mimeType!==FOLDER_MIME);const L=dLocked(),sel=new Set(dSel());const cks=[...box.querySelectorAll(".dck")];
+  cks.forEach(c=>{const f=files[+c.dataset.i];c.checked=!!(f&&sel.has(f.id));});
+  const avail=cks.length,on=cks.filter(c=>c.checked).length;
+  panel.querySelector(".tablewrap").insertAdjacentHTML("beforebegin",`<div class="row dtools"><span class="hint"><b>${on}</b>개 선택 · 연결할 수 있는 파일 ${avail}개</span><button class="btn sm" id="dg_all">전체 선택</button><button class="btn sm" id="dg_none">전체 해제</button></div>`);
+  panel.insertAdjacentHTML("beforeend",`<div class="wsbar ${L?"saved":""}"><span class="hint">${L?`✓ <b>저장됨</b> · ${fmtTime(S.driveSave.at)} · ${S.driveSave.n||0}개 파일 연결 — 고치려면 <b>수정하기</b>`:S.driveSave&&S.driveSave.state==="editing"?"<b>수정 중</b> · 다 고친 뒤 저장하세요.":"파일을 고르고 <b>저장</b>하면 선택한 파일이 문헌으로 등록·연결됩니다. <b>임시저장</b>은 히스토리에 남습니다."}</span>
+   <span class="row"><button class="btn" id="dg_edit" ${L?"":"disabled"}>수정하기</button><button class="btn" id="dg_temp">임시저장</button><button class="btn primary" id="dg_save" ${L?"disabled":""}>저장</button></span></div>`);
+  if(L)panel.classList.add("dlocked");
+  const sync=()=>{const s=new Set(dSel());files.forEach((f,i)=>{const c=box.querySelector(`.dck[data-i="${i}"]`);if(!c)return;c.checked?s.add(f.id):s.delete(f.id);});S.driveSel=[...s];save();const t=box.querySelector(".dtools b");if(t)t.textContent=box.querySelectorAll(".dck:checked").length;};
+  cks.forEach(c=>c.addEventListener("change",sync));
+  $("#dg_all").onclick=()=>{cks.forEach(c=>c.checked=true);sync();};$("#dg_none").onclick=()=>{cks.forEach(c=>c.checked=false);sync();};
+  $("#dg_edit").onclick=async()=>{S.driveSave.state="editing";await flush();render();};
+  $("#dg_temp").onclick=async()=>{sync();const note=(prompt("임시저장 메모(선택)","")||"").trim();const sn=takeSnapshot(note,false,"collect:drive");await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다. 히스토리에서 이어서 할 수 있습니다.`);render();};
+  $("#dg_save").onclick=async()=>{sync();const n=box.querySelectorAll(".dck:checked").length;if(n){const lk=$("#dg_link");lk.click();}
+    S.driveSel=[];S.driveSave={state:"saved",at:now(),n:(S.files||[]).filter(f=>f.location==="drive").length};logSync("drive","드라이브 저장","ok",`${n}개 연결`);await flush();if(!n)toast("저장했습니다. (새로 연결한 파일은 없습니다)");render();};};
+/* 임시저장 → 드라이브 화면으로 이어서 */
+const _restore41=restoreSnapshot;restoreSnapshot=async function(sn){await _restore41(sn);if(String(sn.from||"")==="collect:drive"){CTAB="drive";go("collect");}};
+const _stageHTML41=stageHTML;stageHTML=function(sn){const h=_stageHTML41(sn);return sn.from==="collect:drive"?h+`<div class="hint" style="margin-top:3px">자료 모으기 › <b>Google Drive</b>에서 저장</div>`:h;};
 
 /* ---------- 시작 ---------- */
 (async()=>{
