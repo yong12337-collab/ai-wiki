@@ -1031,7 +1031,7 @@ async function callClaude(prompt,maxTokens=4000){
   let r;try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":G.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:G.model,max_tokens:maxTokens,messages:[{role:"user",content:prompt}]})});}catch(e){G.apiVerified=false;G.apiError="네트워크 오류: Claude API에 연결하지 못했습니다";throw new Error(G.apiError);}
   const d=await r.json().catch(()=>({}));
   if(!r.ok){G.apiVerified=false;G.apiError=(d.error&&d.error.message)||("API 오류 "+r.status);throw new Error(G.apiError);}
-  G.apiVerified=true;G.apiError="";
+  G.apiVerified=true;G.apiError="";G.lastStop=d.stop_reason||"";
   return (d.content||[]).map(c=>c.type==="text"?c.text:"").join("\n");
 }
 function parseJSON(t){t=t.replace(/```json|```/g,"").trim();const a=t.indexOf("["),o=t.indexOf("{");const s=(a>=0&&(a<o||o<0))?a:o;return JSON.parse(t.slice(s,t.lastIndexOf(s===a?"]":"}")+1));}
@@ -4942,6 +4942,18 @@ const _bman45=BIND.manage;BIND.manage=()=>{_bman45();const rer=()=>{const y=wind
 const _top45=VIEWS.topics;VIEWS.topics=()=>{const h=_top45();const B='<div class="row" style="margin:-4px 0 10px"><button class="btn sm" id="tp_role">AI 추천대로 다시 나누기</button><span class="hint">AI가 핵심 근거(토픽)와 배경·선행연구(참고문헌)를 나눕니다. 끌어서 직접 옮길 수도 있습니다.</span></div>';if(/<p class="tpsum2">/.test(h))return h.replace(/(<p class="tpsum2">[\s\S]*?<\/p>)/,"$1"+B);return h.replace('<div class="tpcols">',B+'<div class="tpcols">');};
 const _btop45=BIND.topics;BIND.topics=()=>{_btop45();const b=$("#tp_role");if(b)b.onclick=async()=>{await splitByRole(b);render();};};
 
+/* ===== p46: Claude 응답이 비거나 잘릴 때 다시 받기 · JSON 복구 ===== */
+const _cc46=callClaude;callClaude=async function(p,mt=4000,...a){let t=await _cc46(p,mt,...a);let stop=G.lastStop;
+  if((!String(t).trim()||stop==="max_tokens")&&mt<16000){try{const t2=await _cc46(p,Math.min(16000,Math.max(mt*2,6000)),...a);if(String(t2).trim()){t=t2;stop=G.lastStop;}}catch(e){}}
+  if(!String(t).trim())throw new Error(stop==="refusal"?"Claude가 이 요청에 답하지 않았습니다. 내용을 조금 바꿔 다시 눌러 주세요.":"Claude 응답이 비어 있습니다. 잠시 후 다시 눌러 주세요.");
+  return t;};
+const _pj46=parseJSON;parseJSON=function(t){try{return _pj46(t);}catch(e){const s0=String(t||"").replace(/```json|```/g,"").trim();const a=s0.indexOf("["),o=s0.indexOf("{");const st0=(a>=0&&(a<o||o<0))?a:o;
+  if(st0<0)throw new Error("AI 응답에서 결과를 찾지 못했습니다. 다시 눌러 주세요.");
+  let out="",inS=false,esc=false;const st=[];
+  for(const ch of s0.slice(st0)){if(inS){if(esc){esc=false;out+=ch;continue;}if(ch==="\\"){esc=true;out+=ch;continue;}if(ch==='"'){inS=false;out+=ch;continue;}if(ch==="\n"){out+="\\n";continue;}if(ch==="\r"||ch==="\t"){out+=" ";continue;}out+=ch;continue;}
+    if(ch==='"')inS=true;else if(ch==="{"||ch==="[")st.push(ch);else if(ch==="}"||ch==="]"){st.pop();out+=ch;if(!st.length)break;continue;}out+=ch;}
+  if(esc)out=out.slice(0,-1);if(inS)out+='"';out=out.replace(/,\s*$/,"").replace(/:\s*$/,':""');while(st.length)out+=st.pop()==="{"?"}":"]";
+  try{return JSON.parse(out.replace(/,\s*([}\]])/g,"$1"));}catch(e2){throw new Error("AI 응답이 중간에 끊겼습니다. 다시 눌러 주세요.");}}};
 /* ---------- 시작 ---------- */
 (async()=>{
   $("#view").innerHTML=`<p class="hint">불러오는 중…</p>`;
