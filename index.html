@@ -4847,6 +4847,72 @@ buildHwpx=async function(m){const f=S.format;let tmp=false;
   try{const b=await hwpxCore(m);try{await saveOutputToVault(b,"hwpx");}catch(e){}return b;}finally{if(tmp){f.hwpx=null;await dbDel("data","hwpx:"+S.id);}}};
 const _out43=outSection;outSection=function(){return _out43().replace(/(<\/div>\s*<p class="hint">)/,`</div><label class="radio" style="margin-top:8px"><input type="checkbox" id="hw_inl" ${S.format&&S.format.hwpxInlineNotes?"checked":""}> 한글(HWPX) 각주를 본문 괄호로 넣기 <span class="hint">— 기본은 페이지 아래 실제 각주. 한글에서 파일이 열리지 않을 때만 켜세요</span></label><p class="hint">`);};
 
+/* ===== p44: 목표 분량 강제 · 분류한 문헌 전체 활용 · 단계별 초기화 ===== */
+const CHUNK=2000; // 한 번에 쓰는 최대 글자 수(응답이 잘리지 않게)
+const stripTxt=t=>String(t||"").replace(/^```[a-z]*\n?|```$/g,"").replace(/^\s*(본문|text)\s*[:：]\s*/i,"").trim();
+function writePool(ch){const ids=new Set(ch.doc_ids||[]);const js=new Set((S.judgeSave&&S.judgeSave.ids)||[]);
+  return papers().filter(p=>p.decision!=="제외"&&(ids.has(p.id)||js.has(p.id)||p.decision==="채택"||p.in_topic))
+   .sort((a,b)=>(b.in_topic?1:0)-(a.in_topic?1:0)||(b.relevance||0)-(a.relevance||0));}
+function docScore(p,q){const toks=String(q||"").replace(/[^\w가-힣一-鿿 ]/g," ").split(/\s+/).filter(t=>t.length>=2);const hay=(p.title+" "+(p.abstract||"")+" "+((p.keywords||[]).join(" "))+" "+(p.ft&&p.ft.text?p.ft.text.slice(0,1500):"")+" "+tpName(p));let s=0;toks.forEach(t=>{if(hay.includes(t))s++;});return s+(p.in_topic?1.5:0)+(p.relevance||0)*0.3;}
+const firstAu=p=>String(p.authors||"").split(/[,;·]/)[0].trim()||"미상";
+writeChapterAI=async function(chId){const ch=dsChapter(chId),w=S.writing[chId],D=S.design,i=chIndex(chId),n=D.chapters.length,T=chTarget(ch);
+  const pool=writePool(ch);
+  try{wProg(`참고 문헌 ${pool.length}편의 서지 정보 확인 중…`);await ensureBib(pool,wProg);}catch(e){}
+  const list=pool.map(p=>`${p.id} | ${firstAu(p)}${String(p.authors||"").split(/[,;·]/).filter(Boolean).length>1?" 외":""} | ${p.year||"연도 미상"} | ${String(p.title||"").slice(0,70)}${p.in_topic?` | 토픽: ${tpName(p)||"지정"}`:""}`).join("\n");
+  const detail=q=>pool.map(p=>[docScore(p,q),p]).sort((a,b)=>b[0]-a[0]).slice(0,10).map(([s,p])=>{const c=cardOf(p)||{};return {id:p.id,author:p.authors||"미상",year:p.year||"",title:String(p.title||"").slice(0,90),abstract:String(p.abstract||"").slice(0,300),fulltext:p.ft&&p.ft.text?p.ft.text.slice(0,500):"",claims:c.claims||""};});
+  const outline=D.chapters.map((c,k)=>`${k+1}. ${c.title}`).join(" / ");const role=i===0?"서론(들어가는 말)":i===n-1?"결론(나가는 말)":"본론";
+  const base=`${projectContext()}\n연구 목적: ${D.fields.purpose.value}\n연구 질문: ${D.fields.questions.value}\n핵심 관점: ${D.fields.view.value}\n예측 결론: ${pw().conclusion||"(없음)"}\n전체 목차: ${outline}\n\n지금 쓸 장: ${i+1}장 「${ch.title}」 — ${role}. 이 장의 분량은 아래한글 ${T.pages}장(공백 포함 ${T.chars}자)으로 정해져 있다.\n저자가 정한 이 장의 관점·내용(반드시 따름):\n${ch.points||"(없음)"}\n\n인용할 수 있는 문헌 전체 목록(${pool.length}편, id | 저자 | 연도 | 제목 | 토픽 자료 여부) — 토픽 자료를 핵심 근거로, 나머지 참고문헌 자료도 배경·선행연구·비교 근거로 폭넓게 인용할 것:\n${list}`;
+  const rules=`규칙: ${S.settings.lang} 학술 문체(~이다). 문헌을 근거로 쓸 때는 [@문헌id] 표시만 붙이세요(위 목록의 id만. 저자·연도를 괄호로 직접 쓰지 말 것). 쪽수·직접 인용문 금지. 문헌에 없는 내용을 문헌이 말한 것처럼 쓰지 말 것. 근거가 정말 없는 주장에만 [검증 필요]. 장·절 제목과 번호를 본문에 쓰지 말 것. 마크다운(굵게·목록 기호·#) 금지, 문단은 빈 줄로 구분. 보충 설명은 [^각주 내용] 각주로(각주 안에 대괄호 금지). 설명이나 머리말 없이 본문만 출력하세요.`;
+  const nSec=Math.max(1,Math.min(10,Math.round(T.chars/2200)||1));let plan=null;
+  wProg(`절 구성 짜는 중… (반드시 ${T.pages}장 · ${T.chars.toLocaleString()}자)`);
+  try{plan=parseJSON(await callClaude(`${base}\n\n이 장을 정확히 공백 포함 ${T.chars}자로 쓴다. ${nSec===1?"절을 나누지 말고 sections를 1개로":`${nSec}개 안팎의 절로 나누고`}, 절마다 제목(번호 없이), 다룰 내용, 목표 글자 수, 주로 인용할 문헌 id를 정하세요. 목표 글자 수의 합은 반드시 ${T.chars}자. 저자가 정한 관점·내용을 빠짐없이 배치하세요.\n반드시 JSON만: {"sections":[{"heading":"","points":"","chars":0,"docs":["문헌id"]}],"relation_to_purpose":"이 장이 연구 목적과 어떻게 연결되는지 2문장"}`,3000));}catch(e){plan=null;}
+  let secs=((plan&&plan.sections)||[]).filter(s=>s&&(s.heading||s.points));if(!secs.length)secs=[{heading:"",points:ch.points||"",chars:T.chars}];
+  const sum=secs.reduce((a,s)=>a+(+s.chars||0),0);secs.forEach(s=>s.chars=Math.max(300,Math.round(sum?(+s.chars||0)*T.chars/sum:T.chars/secs.length)));
+  const fix=T.chars-secs.reduce((a,s)=>a+s.chars,0);secs[secs.length-1].chars+=fix;
+  const single=secs.length===1;const texts=[];
+  const gen=async(s,k,soFar,need)=>{const hd=String(s.heading||"").replace(NUM_PREFIX,"").trim();const prev=(soFar||texts.join("\n\n")).slice(-1500);const ask=Math.min(need,CHUNK);
+    const docs=detail(`${ch.title} ${hd} ${s.points||""}`).concat(pool.filter(p=>(s.docs||[]).includes(p.id)).map(p=>({id:p.id,author:p.authors||"미상",year:p.year||"",title:String(p.title||"").slice(0,90)})));
+    const t=await callClaude(`${base}\n\n이 부분과 관련이 큰 문헌의 상세 정보(fulltext는 AI가 읽은 원문 앞부분):\n${JSON.stringify(docs)}\n\n이 장의 절 구성: ${secs.map((x,j)=>`${i+1}.${j+1} ${x.heading}(${x.chars}자)`).join(" / ")}\n지금 쓸 부분: ${single?"이 장 전체":`${i+1}.${k+1} 「${hd}」`} — 다룰 내용: ${s.points||"(위 관점에 따름)"}\n${prev?`바로 앞까지 쓴 글(이어서 쓰고 되풀이하지 말 것):\n…${prev}\n`:""}\n${rules}\n분량: 이번에는 공백 포함 ${ask}자를 쓰세요(${Math.round(ask*0.95)}자 미만 금지). ${need>ask?"이 부분은 다음 요청에서 이어지므로 이번 글을 결론으로 마무리하지 마세요.":"이 부분을 마무리하세요."}`,Math.min(8000,Math.round(ask*2.2)+800));
+    return stripTxt(t);};
+  for(const [k,s] of secs.entries()){const hd=String(s.heading||"").replace(NUM_PREFIX,"").trim();let t="",tries=0;
+    while(bodyChars(t)<s.chars*0.97&&tries<8){tries++;const need=s.chars-bodyChars(t);wProg(`${k+1}/${secs.length}절${hd?` 「${hd}」`:""} 쓰는 중… ${bodyChars(t).toLocaleString()} / ${s.chars.toLocaleString()}자`);
+      const add=await gen(s,k,texts.join("\n\n")+(t?"\n\n"+t:""),need);if(bodyChars(add)<30)break;t=t?t+"\n\n"+add:add;}
+    if(bodyChars(t)>s.chars*1.15){wProg(`${k+1}/${secs.length}절 분량 맞추는 중(줄이기)…`);try{const r=stripTxt(await callClaude(`다음 글을 공백 포함 ${s.chars}자(±5%)로 줄이세요. 논지·[@문헌id] 인용 표시·[^각주]는 유지하고, 설명 없이 고친 글만 출력하세요.\n\n${t}`,Math.min(8000,Math.round(s.chars*2.2)+800)));if(bodyChars(r)>=s.chars*0.9)t=r;}catch(e){}}
+    texts.push(t);}
+  // 장 전체가 목표보다 모자라면 끝까지 채운다
+  let tot=texts.reduce((a,t)=>a+bodyChars(t),0),guard=0;
+  while(tot<T.chars*0.97&&guard<5){guard++;const k=texts.length-1,s=secs[k];wProg(`장 분량 채우는 중… ${tot.toLocaleString()} / ${T.chars.toLocaleString()}자`);
+    const add=await gen(Object.assign({},s,{points:(s.points||"")+" — 논의를 더 깊게(근거·사례·해석·소결)"}),k,texts.join("\n\n"),T.chars-tot);if(bodyChars(add)<30)break;texts[k]+="\n\n"+add;tot=texts.reduce((a,t)=>a+bodyChars(t),0);}
+  const okIds=new Set(pool.map(p=>p.id).concat(ch.doc_ids||[]));let bad=0;
+  let text=texts.map((t,k)=>single||!secs[k].heading?t:`### ${i+1}.${k+1} ${String(secs[k].heading).replace(NUM_PREFIX,"").trim()}\n\n${t}`).join("\n\n")
+    .replace(CITE_RE,(m,id)=>{if(!okIds.has(id)&&!litById(id)){bad++;return "[검증 필요: 확인되지 않은 문헌]";}return m;}).replace(/\n{3,}/g,"\n\n");
+  saveVersion(chId,"AI 작성 전");w.text=text;w.ai_note=(plan&&plan.relation_to_purpose)||"";w.offtrack=[];w.ai_by=G.model;const got=bodyChars(text);w.ai_target={pages:T.pages,chars:T.chars,got,at:now()};
+  const used=[...new Set(parseCites(text).map(x=>x.doc_id))];ch.doc_ids=[...new Set([...(ch.doc_ids||[]),...used])];
+  syncCitations(w);reviewChapter(chId);saveVersion(chId,"AI 초안");logSync("write","분량 맞춤 집필","ok",`「${ch.title}」 ${got.toLocaleString()}자 · 약 ${pgOf(got)}장 / 목표 ${T.pages}장 · 인용 ${used.length}편`);
+  if(got<T.chars*0.95)toast(`목표 ${T.pages}장 중 약 ${pgOf(got)}장까지 썼습니다. 한 번 더 누르면 처음부터 다시 씁니다.`);else toast(`「${ch.title}」 ${got.toLocaleString()}자 · 약 ${pgOf(got)}장(목표 ${T.pages}장) · 문헌 ${used.length}편 인용`);
+  return bad;};
+
+/* ---------- 단계별 초기화 ---------- */
+const RESET_LABEL={prep:"준비 초기화",abs:"초록 초기화",body:"이 장 초기화",refs:"참고문헌 초기화",form:"양식 초기화"};
+const _wsBar44=wsBar;wsBar=function(){let h=_wsBar44();const k=WST;if(!RESET_LABEL[k])return h;
+  const b=`<button class="btn danger" id="wsb_reset" title="지우기 전 상태는 히스토리에 자동 저장됩니다">${RESET_LABEL[k]}</button>${k==="body"?'<button class="btn danger" id="wsb_reset_all">전체 장 초기화</button>':""}`;
+  return h.replace('<span class="row"><button class="btn" id="wsb_temp">',`<span class="row">${b}<button class="btn" id="wsb_temp">`);};
+function clearChapter(c){const w=S.writing[c.ch_id];if(!w)return;saveVersion(c.ch_id,"초기화 전");Object.assign(w,{text:"",citations:[],flags:[],ai_note:"",offtrack:[],ai_target:null,reviewed_at:""});w.updated=now();}
+async function resetStage(k,all){const D=S.design;const what={prep:"목차별 관점·예측 결론·분량 설정",abs:"국문·영문 초록과 주제어",body:all?"모든 장의 본문":`「${(dsChapter(DS.ch)||{}).title||""}」 본문`,refs:"AI로 정리한 참고문헌 양식과 서지 확인 기록",form:"올린 양식 파일과 직접 입력한 양식"}[k];
+  if(!confirm(`${what}을(를) 지울까요?\n지우기 전 상태는 히스토리에 "초기화 전 자동 저장"으로 남아 언제든 되돌릴 수 있습니다.`))return false;
+  try{takeSnapshot(`${all?"전체 장 초기화":RESET_LABEL[k]} 전 자동 저장`,true,"write:"+k);}catch(e){}
+  if(k==="prep"){D.chapters.forEach(c=>{c.points="";c.pages=0;});const P=pw();P.conclusion="";P.conclusion_at="";S.lenCfg={absKo:600,absEn:250,absEnUnit:"단어"};}
+  else if(k==="abs"){S.front=S.front||{};Object.assign(S.front,{abstract_ko:"",keywords_ko:"",abstract_en:"",keywords_en:"",title_en:"",abstract_by:""});}
+  else if(k==="body"){(all?D.chapters:[dsChapter(DS.ch)].filter(Boolean)).forEach(clearChapter);}
+  else if(k==="refs"){S.refsAI=null;allPapers().forEach(p=>{p.bib_at="";});}
+  else if(k==="form"){try{await dbDel("data","hwpx:"+S.id);await dbDel("data","tpl:"+S.id);}catch(e){}S.format=Object.assign({},fmtPre(),{required:undefined});}
+  S.wsSaved=S.wsSaved||{};S.wsSaved[k]={state:"editing",at:now()};logSync("write","단계 초기화","ok",what);await flush();toast(`${what}을(를) 지웠습니다. 되돌리려면 히스토리에서 "초기화 전 자동 저장"을 불러오세요.`);return true;}
+const _bwrite44=BIND.write;BIND.write=()=>{_bwrite44();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const r=$("#wsb_reset");if(r)r.onclick=async()=>{if(await resetStage(WST,false))rer();};
+  const ra=$("#wsb_reset_all");if(ra)ra.onclick=async()=>{if(await resetStage("body",true))rer();};
+  const ai=$("#w_ai");if(ai&&G.apiKey&&!ai.dataset.p44){ai.dataset.p44=1;const c=dsChapter(DS.ch);if(c){const T=chTarget(c);ai.textContent=`AI로 이 장 쓰기 (${T.pages}장)`;}
+    const orig=ai.onclick;ai.onclick=async e=>{const c=dsChapter(DS.ch),w=c&&S.writing[c.ch_id];if(w&&String(w.text||"").trim()&&!confirm("지금 본문을 지우고 정한 분량대로 처음부터 다시 씁니다. 지금 본문은 버전 기록에 남습니다. 계속할까요?"))return;return orig&&orig.call(ai,e);};}};
+
 /* ---------- 시작 ---------- */
 (async()=>{
   $("#view").innerHTML=`<p class="hint">불러오는 중…</p>`;
