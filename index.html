@@ -2841,6 +2841,9 @@ table{border-collapse:collapse;width:100%;margin:.4em 0 1em;font-size:${f.size-1
 .cap{text-align:center;font-weight:bold;font-size:${f.size-1}pt;margin:.8em 0 .3em;break-after:avoid}.fig{border:1px dashed #999;height:30mm;display:flex;align-items:center;justify-content:center;color:#888;margin-top:.8em}
 .ref{padding-left:2em;text-indent:-2em;margin-bottom:.4em}.notes{font-size:${f.size-2}pt;border-top:1px solid #999;margin-top:1.2em;padding-top:.4em;line-height:1.35}.nh{font-weight:bold}.fn{font-size:.7em}
 @media screen{body{max-width:${w}mm;margin:20px auto;padding:0 ${f.ml}mm;box-shadow:0 0 0 1px #ddd}.pb{border-top:1px dashed #ccc;margin:2em 0}}
+.ws-len{margin-top:16px}.wstage:not(.st-prep) .ws-len{display:none!important}.wstage.st-prep .ws-len{display:block!important}
+.ws-len .typecards{margin:12px 0}.lentable .absrow td{background:#F7F9FF}.lentable .unit select{width:84px;margin-left:4px}.lentable input{width:80px}
+.lenc{margin:4px 0 8px;font-size:12px;color:var(--ink3,#5b6478)}.lenc .tag{margin-left:4px}
 </style></head><body>${out.join("\n")}</body></html>`;}
 function markdownOut(model){const f=S.format,L=[];
   for(const b of model.blocks){
@@ -4672,6 +4675,177 @@ const ftChip=p=>p.ft?(p.ft.chars?`<span class="ftchip" title="${esc(p.ft.by)} ·
 const _bmanage42=BIND.manage;BIND.manage=()=>{_bmanage42();document.querySelectorAll("#view tr[data-mg]").forEach(tr=>{const p=S.items.find(i=>i.id===tr.dataset.mg);const b=tr.querySelector("b.t");if(p&&p.ft&&b&&!tr.querySelector(".ftchip"))b.insertAdjacentHTML("afterend"," "+ftChip(p));});};
 const _oi42=openItem;openItem=function(id){_oi42(id);const it=S.items.find(i=>i.id===id);const box=document.querySelector("#dlgBody .origbox");if(!it||!it.ft||!box||document.querySelector("#dlgBody .ftbox"))return;
   box.insertAdjacentHTML("afterend",`<details class="sub ftbox"><summary>AI가 읽은 원문 앞부분 <span class="hint">${esc(it.ft.by)}${it.ft.pages?` · ${it.ft.pages}쪽`:""} · ${it.ft.chars.toLocaleString()}자 · ${fmtTime(it.ft.at)}</span></summary><pre class="notepre">${esc(it.ft.text.slice(0,2500))}${it.ft.text.length>2500?"\n…":""}</pre></details>`);};
+
+/* ===== p43: 준비 단계 분량 설정 · 분량 맞춤 집필 · 원문 기반 서지 보완 · 한글 실제 각주 ===== */
+const HWP_CPP=1700; // 아래한글 기본(A4·바탕 10pt·줄 간격 160%·기본 여백) 1장 ≈ 1,700자(공백 포함)
+const TYPE_PAGES={"학위논문":80,"학술지 논문":15,"연구보고서":30,"일반 연구자료":5};
+Object.entries(TYPE_PAGES).forEach(([k,v])=>{if(DOC_TYPES[k]){DOC_TYPES[k].pages=v;DOC_TYPES[k].length=v*HWP_CPP;}});
+charsPerPage=function(){return HWP_CPP;};
+function bodyChars(t){return String(t||"").replace(FN_RE,"").replace(CITE_RE,"").replace(/^#{1,4}\s.*$/gm,"").replace(/\s+/g," ").trim().length;}
+chChars=function(c){return bodyChars((S.writing[c.ch_id]||{}).text);};
+const pgOf=n=>Math.round(n/HWP_CPP*10)/10;
+const enWords=t=>String(t||"").trim().split(/\s+/).filter(Boolean).length;
+function LC(){S.lenCfg=S.lenCfg||{absKo:600,absEn:250,absEnUnit:"단어"};return S.lenCfg;}
+if(typeof SNAP_KEYS!=="undefined"&&!SNAP_KEYS.includes("lenCfg"))SNAP_KEYS.push("lenCfg");
+function typePages(){return (dt()&&dt().pages)||15;}
+function autoPages(total){const ch=S.design.chapters,n=ch.length;if(!n)return [];if(n===1)return [total];if(n===2)return [total/2,total/2];
+  const edge=Math.max(1,Math.round(total*0.12*2)/2),mid=Math.max(0.5,Math.round((total-edge*2)/(n-2)*2)/2);return ch.map((c,i)=>i===0||i===n-1?edge:mid);}
+function chIndex(id){return S.design.chapters.findIndex(c=>c.ch_id===id);}
+function chTarget(c){const i=chIndex(c.ch_id);const set=+c.pages||0;const p=set||autoPages(typePages())[i]||2;return {pages:p,chars:Math.round(p*HWP_CPP),auto:!set};}
+function totPages(){const D=S.design;return D.chapters.reduce((a,c)=>a+chTarget(c).pages,0);}
+const _pc43=projectContext;projectContext=function(){let t=_pc43();try{if(S.design&&S.design.chapters)t+=`\n글 형태 기준 분량: ${S.settings.docType}은(는) 보통 아래한글 기준 약 ${typePages()}장. 이 원고의 목표는 본문 약 ${totPages()}장(1장 ≈ ${HWP_CPP.toLocaleString()}자, 공백 포함)이다.`;}catch(e){}return t;};
+{const p=WSTAGES.find(s=>s[0]==="prep");if(p)p[2]="관점·예측 결론·글 형태·분량";const ti=WSTAGES.findIndex(s=>s[0]==="type");if(ti>=0)WSTAGES.splice(ti,1);}
+
+/* ---------- 준비 단계: 글 형태 + 분량 설정 ---------- */
+function lenSection(){ensure6();if(typeof syncOutline==="function")syncOutline();const s=S.settings,L=LC(),F=S.front||{},D=S.design,tp=typePages();
+  const ko=bodyChars(F.abstract_ko),en=L.absEnUnit==="단어"?enWords(F.abstract_en):bodyChars(F.abstract_en);
+  const anySet=D.chapters.some(c=>+c.pages);const tot=totPages();const curAll=D.chapters.reduce((a,c)=>a+chChars(c),0);
+  const bar=(cur,goal)=>goal?`<span class="pgbar"><i style="width:${Math.min(100,Math.round(cur/goal*100))}%"></i></span> ${Math.round(cur/goal*100)}%`:"";
+  return `<section class="card ws-len" aria-labelledby="len_h">
+   <div class="row" style="justify-content:space-between"><h2 id="len_h" style="margin:0">3. 글 형태 · 분량 설정</h2><span class="hint">여기서 정한 분량대로 AI가 초록과 장을 씁니다 · 1장 = 아래한글 기본(A4·바탕 10pt·줄 간격 160%) 약 ${HWP_CPP.toLocaleString()}자(공백 포함)</span></div>
+   <div class="typecards">${DOC_TYPE_LIST.map(t=>`<label class="${t===s.docType?"on":""}"><input type="radio" name="wr_type" value="${t}" ${t===s.docType?"checked":""}><b>${t}</b><small>본문 약 ${TYPE_PAGES[t]||"-"}장 · ${DOC_TYPES[t].cite==="apa"?"본문 괄호 인용":"각주·국문식"}</small></label>`).join("")}</div>
+   <table class="pgtable lentable"><thead><tr><th>항목</th><th>희망 분량</th><th>목표</th><th>지금 쓴 분량</th></tr></thead><tbody>
+    <tr class="absrow"><td><b>국문초록</b></td><td><span class="unit"><input type="number" min="100" step="50" id="len_ko" value="${L.absKo||""}" aria-label="국문초록 글자 수"><span>자</span></span></td><td class="hint">공백 포함 ${Number(L.absKo||0).toLocaleString()}자</td><td>${ko.toLocaleString()}자 ${bar(ko,+L.absKo)}</td></tr>
+    <tr class="absrow"><td><b>영문초록</b></td><td><span class="unit"><input type="number" min="50" step="10" id="len_en" value="${L.absEn||""}" aria-label="영문초록 분량"><select id="len_enu" aria-label="영문초록 단위"><option ${L.absEnUnit==="단어"?"selected":""}>단어</option><option ${L.absEnUnit==="자"?"selected":""}>자</option></select></span></td><td class="hint">${Number(L.absEn||0).toLocaleString()} ${L.absEnUnit==="단어"?"words":"자(공백 포함)"}</td><td>${en.toLocaleString()}${L.absEnUnit==="단어"?" words":"자"} ${bar(en,+L.absEn)}</td></tr>
+    ${D.chapters.map((c,i)=>{const T=chTarget(c),cur=chChars(c);return `<tr><td>${i+1}. ${esc(c.title.replace(NUM_PREFIX,""))}</td><td><span class="unit"><input type="number" min="0" step="0.5" class="pg_in" data-pg="${c.ch_id}" value="${+c.pages||""}" placeholder="${T.pages}" aria-label="${esc(c.title)} 희망 장 수"><span>장</span></span>${T.auto?'<div class="hint" style="margin:2px 0 0">비우면 자동</div>':""}</td><td class="hint">약 ${T.chars.toLocaleString()}자</td><td>${cur.toLocaleString()}자 · 약 ${pgOf(cur)}장 ${bar(cur,T.chars)}</td></tr>`;}).join("")}
+   </tbody><tfoot><tr><td><b>본문 합계</b></td><td><b>${tot}장</b>${anySet?"":' <span class="hint">(자동)</span>'}</td><td class="hint">약 ${(tot*HWP_CPP).toLocaleString()}자</td><td>${curAll.toLocaleString()}자 · 약 ${pgOf(curAll)}장</td></tr></tfoot></table>
+   <div class="row" style="justify-content:space-between;margin-top:10px"><span class="hint">${esc(s.docType)} 기준 본문은 보통 약 <b>${tp}장</b>입니다. 장 수를 비워 두면 이 기준을 서론·결론은 짧게, 본론은 길게 나눠 씁니다.</span>
+    <span class="row"><button class="btn sm" id="len_auto">${esc(s.docType)} 기준(${tp}장)으로 채우기</button><button class="btn sm" id="len_clear">장 수 비우기</button></span></div></section>`;}
+
+const _write43=VIEWS.write;VIEWS.write=()=>{if(WST==="type")WST="prep";let h=_write43();h=h.replace("참고문헌 → 글 형태 → 양식 적용","참고문헌 → 양식 적용").replace("준비 → 초록","준비(관점·결론·분량) → 초록");
+  h=h.replace(/<section class="card ws-type">[\s\S]*?<\/section>/,"").replace(/<section class="card ws-pages">[\s\S]*?<\/section>/,"");
+  if(WST==="prep"){if(/<section class="prep"/.test(h))h=h.replace(/(<section class="prep"[\s\S]*?<\/section>)/,"$1"+lenSection());else h=h.replace(/(<div class="wsbar)/,lenSection()+"$1");}
+  if(WST==="abs"){const L=LC();h=h.replace('placeholder="연구 목적 → 방법 → 결과 → 결론 순서로 씁니다.">',`placeholder="연구 목적 → 방법 → 결과 → 결론 순서로 씁니다. 목표 ${L.absKo}자">`);
+    h=h.replace(/(<textarea id="ab_ko"[\s\S]*?<\/textarea>)/,'$1<p class="lenc" id="ab_ko_n"></p>').replace(/(<textarea id="ab_en"[\s\S]*?<\/textarea>)/,'$1<p class="lenc" id="ab_en_n"></p>');}
+  if(WST==="body"&&DS.ch){const c=dsChapter(DS.ch);if(c){const T=chTarget(c),cur=chChars(c);h=h.replace(/<p class="pgtarget">[\s\S]*?<\/p>/,"");
+    h=h.replace(/(<textarea id="w_text")/,`<p class="pgtarget">이 장 목표 <b>${T.pages}장</b>${T.auto?" (자동)":""} · 약 ${T.chars.toLocaleString()}자 · 지금 <b id="pg_cur">${cur.toLocaleString()}자 · 약 ${pgOf(cur)}장</b> <span class="pgbar"><i id="pg_bar" style="width:${Math.min(100,Math.round(cur/T.chars*100))}%"></i></span> <span class="hint">분량은 준비 단계에서 바꿉니다</span></p>$1`);}}
+  return h;};
+const _bwrite43=BIND.write;BIND.write=()=>{_bwrite43();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};const L=LC();
+  const num=(id,k)=>{const el=$("#"+id);if(el)el.onchange=async()=>{const v=parseInt(el.value);L[k]=isFinite(v)&&v>0?v:L[k];logSync("write","분량 설정","ok",`${k}: ${L[k]}`);await flush();rer();};};num("len_ko","absKo");num("len_en","absEn");
+  const u=$("#len_enu");if(u)u.onchange=async()=>{L.absEnUnit=u.value;if(u.value==="자"&&L.absEn<600)L.absEn=1500;if(u.value==="단어"&&L.absEn>600)L.absEn=250;await flush();rer();};
+  const au=$("#len_auto");if(au)au.onclick=async()=>{const D=S.design;if(D.chapters.some(c=>+c.pages)&&!confirm("지금 적은 장 수를 글 형태 기준으로 바꿀까요?"))return;const a=autoPages(typePages());D.chapters.forEach((c,i)=>c.pages=a[i]);logSync("write","분량 설정","ok",`${S.settings.docType} 기준 ${typePages()}장`);await flush();rer();};
+  const cl=$("#len_clear");if(cl)cl.onclick=async()=>{S.design.chapters.forEach(c=>c.pages=0);await flush();rer();};
+  const cnt=(ta,out,goal,unit)=>{const t=$("#"+ta),o=$("#"+out);if(!t||!o)return;const f=()=>{const n=unit==="단어"?enWords(t.value):bodyChars(t.value);const ok=n>=goal*0.9&&n<=goal*1.1;o.innerHTML=`지금 <b>${n.toLocaleString()}${unit==="단어"?" words":"자"}</b> / 목표 ${goal.toLocaleString()}${unit==="단어"?" words":"자"}${unit==="단어"?"":` · 아래한글 약 ${pgOf(n)}장`} ${n?(ok?'<span class="tag">분량 맞음</span>':`<span class="tag warn">${n<goal?"부족":"초과"}</span>`):""}`;};t.addEventListener("input",f);f();};
+  cnt("ab_ko","ab_ko_n",+L.absKo||600,"자");cnt("ab_en","ab_en_n",+L.absEn||250,L.absEnUnit);
+  document.querySelectorAll("[data-chsel]").forEach(b=>{const c=dsChapter(b.dataset.chsel);const sp=b.querySelector("span");if(!c||!sp)return;const T=chTarget(c),cur=chChars(c);sp.innerHTML=`${cur.toLocaleString()}자 · 약 ${pgOf(cur)}장 / 목표 ${T.pages}장`;});
+  const ta=$("#w_text");if(ta&&$("#pg_cur")){const c=dsChapter(DS.ch);ta.addEventListener("input",()=>{const n=bodyChars(ta.value),T=chTarget(c);$("#pg_cur").textContent=`${n.toLocaleString()}자 · 약 ${pgOf(n)}장`;$("#pg_bar").style.width=Math.min(100,Math.round(n/T.chars*100))+"%";});}
+  const ra=$("#rx_ai");if(ra&&!ra.dataset.p43){ra.dataset.p43=1;const orig=ra.onclick;ra.onclick=async e=>{ra.disabled=true;ra.textContent="원문으로 서지 확인 중…";try{await ensureBib(refsList().pool,t=>{ra.textContent=t;});S.refsAI=null;}catch(er){}ra.disabled=false;ra.textContent="AI로 양식 다듬기";return orig&&orig.call(ra,e);};}
+  const rb=$("#rx_bib");if(rb)rb.onclick=async()=>{rb.disabled=true;try{const n=await ensureBib(refsList().pool,t=>{rb.textContent=t;},true);S.refsAI=null;await flush();toast(n?`서지 정보 ${n}편을 채웠습니다.`:"새로 채울 서지 정보가 없습니다.");}catch(e){toast("오류: "+e.message);}rer();};
+  const hi=$("#hw_inl");if(hi)hi.onchange=async()=>{S.format.hwpxInlineNotes=hi.checked;await flush();};};
+
+/* 초록 분량: 저자가 정한 값으로 */
+const _cc43=callClaude;callClaude=function(p,...a){if(typeof p==="string"){const L=LC();
+  p=p.replace(/국문초록을 600~900자로 쓰세요\./,`국문초록을 공백 포함 약 ${L.absKo}자(±10%, ${Math.round(L.absKo*0.9)}~${Math.round(L.absKo*1.1)}자)로 쓰세요. 이 분량을 꼭 지키세요.`);
+  if(/^다음 국문초록과 제목을 학술 영어로 옮기세요/.test(p))p=p.replace("의미를 더하거나 빼지 말고,",`의미를 바꾸지 말고 분량은 ${L.absEnUnit==="단어"?`약 ${L.absEn} words(±10%)`:`공백 포함 약 ${L.absEn}자(±10%)`}에 맞추며,`);}
+  return _cc43(p,...a);};
+
+/* ---------- 분량대로 장 쓰기: 절 구성 → 절마다 목표 분량 → 모자라면 이어 쓰기 ---------- */
+function wProg(t){const p=$("#w_prog");if(p)p.textContent=t;}
+writeChapterAI=async function(chId){const ch=dsChapter(chId),w=S.writing[chId],D=S.design,i=chIndex(chId),n=D.chapters.length,T=chTarget(ch);
+  try{wProg("활용 문헌의 서지 정보 확인 중…");await ensureBib(ch.doc_ids.map(litById).filter(Boolean),wProg);}catch(e){}
+  const docs=ch.doc_ids.map(litById).filter(Boolean).slice(0,20).map(d=>{const c=cardOf(d)||{};return {id:d.id,author:d.authors||"미확인",year:d.year||"미확인",title:String(d.title||"").slice(0,90),journal:d.journal||"",abstract:String(d.abstract||"").slice(0,300),fulltext:d.ft&&d.ft.text?d.ft.text.slice(0,700):"",purpose:c.purpose,claims:c.claims,conclusion:c.conclusion};});
+  const claims=ch.claim_ids.map(claimById).filter(Boolean).map(c=>({text:c.text,evidence:c.evidence.filter(e=>litById(e.doc_id)).map(e=>({id:e.doc_id,stance:e.stance,gist:e.gist})),interpretation:c.interpretation}));
+  const outline=D.chapters.map((c,k)=>`${k+1}. ${c.title}`).join(" / ");const role=i===0?"서론(들어가는 말)":i===n-1?"결론(나가는 말)":"본론";
+  const base=`${projectContext()}\n연구 목적: ${D.fields.purpose.value}\n연구 질문: ${D.fields.questions.value}\n핵심 관점: ${D.fields.view.value}\n예측 결론: ${pw().conclusion||"(없음)"}\n전체 목차: ${outline}\n\n지금 쓸 장: ${i+1}장 「${ch.title}」 — ${role}, 목표 아래한글 ${T.pages}장(공백 포함 약 ${T.chars}자)\n저자가 정한 이 장의 관점·내용(반드시 따름):\n${ch.points||"(없음)"}\n이 장의 주장과 근거:\n${JSON.stringify(claims)}\n활용 문헌(fulltext는 AI가 읽은 원문 앞부분):\n${JSON.stringify(docs)}`;
+  const rules=`규칙: ${S.settings.lang}로 쓰고 학술 문체(~이다)를 씁니다. 문헌을 근거로 쓸 때는 [@문헌id] 표시만 붙이세요(위 목록의 id만 쓰고, 저자·연도를 괄호로 직접 쓰지 마세요). 쪽수와 직접 인용문은 쓰지 마세요. 문헌에 없는 내용을 문헌이 말한 것처럼 쓰지 마세요. 근거가 정말 없는 주장에만 [검증 필요]를 붙이고 남발하지 마세요. 장 제목·절 제목·절 번호를 본문에 쓰지 마세요. 굵게·목록 기호 같은 마크다운을 쓰지 말고 문단은 빈 줄로 나누세요. 용어 설명·보충 설명은 본문 괄호에 길게 넣지 말고 [^각주 내용] 형식의 각주로 다세요(각주 안에 대괄호 금지).`;
+  const nSec=Math.max(1,Math.min(8,Math.ceil(T.chars/3000)));let plan=null;
+  wProg(`절 구성 짜는 중… (목표 ${T.pages}장 · 약 ${T.chars.toLocaleString()}자)`);
+  try{plan=parseJSON(await callClaude(`${base}\n\n이 장을 공백 포함 약 ${T.chars}자로 쓰려 합니다. ${nSec===1?"절을 나누지 말고 sections를 1개로 하세요":`${Math.max(2,nSec-1)}~${nSec+1}개 절로 나누세요`}. 절마다 제목(번호 없이), 다룰 내용, 목표 글자 수를 정하세요. 목표 글자 수의 합은 ${T.chars}자, 한 절은 3,500자 이하. 저자가 정한 관점·내용을 빠짐없이 배치하세요.\n반드시 JSON만: {"sections":[{"heading":"","points":"","chars":0}],"relation_to_purpose":"이 장이 연구 목적과 어떻게 연결되는지 2문장"}`,2500));}catch(e){plan=null;}
+  let secs=((plan&&plan.sections)||[]).filter(s=>s&&(s.heading||s.points));if(!secs.length)secs=[{heading:"",points:ch.points||"",chars:T.chars}];
+  const sum=secs.reduce((a,s)=>a+(+s.chars||0),0);secs.forEach(s=>s.chars=Math.max(300,Math.round(sum?(+s.chars||0)*T.chars/sum:T.chars/secs.length)));
+  const single=secs.length===1;const parts=[];
+  for(const [k,s] of secs.entries()){const hd=String(s.heading||"").replace(NUM_PREFIX,"").trim();wProg(`${k+1}/${secs.length}절 쓰는 중…${hd?` 「${hd}」`:""} 목표 ${s.chars.toLocaleString()}자`);
+    const prev=parts.join("\n\n").replace(/^###.*$/gm,"").slice(-1200);
+    const r=parseJSON(await callClaude(`${base}\n\n이 장의 절 구성: ${secs.map((x,j)=>`${i+1}.${j+1} ${x.heading}(${x.chars}자)`).join(" / ")}\n지금 쓸 부분: ${single?"이 장 전체":`${i+1}.${k+1} 「${hd}」`}\n이 부분에서 다룰 내용: ${s.points||"(위 관점에 따름)"}\n${prev?`바로 앞 내용(자연스럽게 이어 쓰고 반복하지 말 것):\n…${prev}\n`:""}\n${rules}\n분량: 공백 포함 ${s.chars}자 안팎(${Math.round(s.chars*0.9)}~${Math.round(s.chars*1.1)}자). 반드시 이 분량을 채우세요.\n반드시 JSON만: {"text":"본문"}`,Math.min(8000,Math.round(s.chars*1.6)+1200)));
+    let t=String((r&&r.text)||"").trim();
+    for(let tries=0;tries<3&&bodyChars(t)<s.chars*0.88;tries++){const need=s.chars-bodyChars(t);wProg(`${k+1}/${secs.length}절 분량 채우는 중… ${bodyChars(t).toLocaleString()} / ${s.chars.toLocaleString()}자`);
+      const r2=parseJSON(await callClaude(`${base}\n\n지금 쓰는 부분: 「${hd||ch.title}」 (다룰 내용: ${s.points||"위 관점"})\n지금까지 쓴 본문:\n${t.slice(-3000)}\n\n목표보다 ${need}자 짧습니다. 위 본문 바로 뒤에 이어질 문단을 공백 포함 약 ${need}자 더 쓰세요. 앞 내용을 되풀이하지 말고 근거·사례·해석·소결로 논의를 깊게 하세요.\n${rules}\n반드시 JSON만: {"text":"이어질 본문"}`,Math.min(8000,Math.round(need*1.6)+1000)));
+      const add=String((r2&&r2.text)||"").trim();if(!add)break;t+="\n\n"+add;}
+    parts.push(single||!hd?t:`### ${i+1}.${k+1} ${hd}\n\n${t}`);}
+  let bad=0;const okIds=new Set(ch.doc_ids);
+  let text=parts.join("\n\n").replace(CITE_RE,(m,id)=>{if(!okIds.has(id)&&!litById(id)){bad++;return "[검증 필요: 확인되지 않은 문헌]";}return m;}).replace(/\n{3,}/g,"\n\n");
+  saveVersion(chId,"AI 작성 전");w.text=text;w.ai_note=(plan&&plan.relation_to_purpose)||"";w.offtrack=[];w.ai_by=G.model;const got=bodyChars(text);w.ai_target={pages:T.pages,chars:T.chars,got,at:now()};
+  syncCitations(w);reviewChapter(chId);saveVersion(chId,"AI 초안");logSync("write","분량 맞춤 집필","ok",`「${ch.title}」 ${got.toLocaleString()}자 · 약 ${pgOf(got)}장 / 목표 ${T.pages}장`);return bad;};
+
+/* ---------- 원문·파일 이름으로 서지 정보 채우기 ---------- */
+const NOT_NAME=new Set("한국 베트남 중국 일본 근대 현대 국내 국외 해외 동아시아 동남아 월남 한중 한일 한베 남북 북한 조선 대한 세계 국제 미국 영국 프랑스 독일 서양 동양 고전 문학 역사 소설 번역 연구 분석 고찰 시론 서론 개관 초기 후기 전기".split(" "));
+function parseFileTitle(t){let s=String(t||"").replace(/\.(pdf|docx?|hwpx?)$/i,"").replace(/[_]+/g," ").replace(/\s+/g," ").trim();const r={};
+  let m=s.match(/^\(?((?:19|20)\d{2})\)?[\s.\-]+(.+)$/);if(m){r.year=m[1];s=m[2];}else{m=s.match(/^(.+?)[\s(]+((?:19|20)\d{2})\)?$/);if(m){r.year=m[2];s=m[1];}}
+  const tk=s.split(" ");if(r.year&&tk.length>=2&&!NOT_NAME.has(tk[0])&&(/^[가-힣]{2,4}$/.test(tk[0])||/^[一-鿿々぀-ヿ]{2,4}$/.test(tk[0]))){r.authors=tk[0];s=tk.slice(1).join(" ");}
+  r.title=s.trim();return r;}
+const bibIncomplete=it=>!it.authors||!it.year||!it.journal||looksFileTitle(it.title||"")||it.authors_guess;
+async function ensureBib(list,onProg,force){const need=(list||[]).filter(it=>it&&!it.deleted&&(force||!it.bib_at)&&bibIncomplete(it));if(!need.length)return 0;let changed=0;
+  for(const it of need){if(!it.ft&&originals(it).some(o=>o.kind==="vault"||o.kind==="drive")){onProg&&onProg(`원문 읽는 중… ${String(it.title).slice(0,18)}`);try{await readFulltext(it);}catch(e){}}}
+  for(const it of need){if(!looksFileTitle(it.title||""))continue;const f=parseFileTitle(it.title);it.file_title=it.file_title||it.title;if(f.year&&!it.year){it.year=f.year;it.year_guess=true;}if(f.authors&&!it.authors){it.authors=f.authors;it.authors_guess=true;}if(f.title)it.title=f.title;it.title_from_name=true;it.bib_by="파일 이름";changed++;}
+  const ai=need.filter(it=>it.ft&&it.ft.text);
+  if(G.apiKey&&ai.length){for(let b=0;b<ai.length;b+=6){const batch=ai.slice(b,b+6);onProg&&onProg(`원문 첫 쪽에서 서지 정보 찾는 중… ${Math.min(b+6,ai.length)} / ${ai.length}`);
+      try{const out=parseJSON(await callClaude(`다음은 학술 자료의 원문 앞부분입니다. 각 자료의 서지 정보를 원문에 적힌 그대로 찾으세요. 제목은 논문 제목 전체(부제 포함), 저자는 쉼표로 구분, 연도는 발행 연도 4자리, journal은 학술지·학위수여 대학·출판사 이름, volume은 권·호(예: 29, 제48집). 원문에 없으면 빈칸으로 두고 절대 지어내지 마세요. 파일 이름(file_name)은 참고만 하세요.\n${JSON.stringify(batch.map((it,i)=>({i,file_name:it.file_title||it.title,text:it.ft.text.slice(0,2500)})))}\n반드시 JSON만: {"bib":[{"i":0,"title":"","authors":"","year":"","journal":"","volume":"","publisher":""}]}`,3000));
+        for(const x of (out.bib||[])){const it=batch[x&&x.i];if(!it)continue;const v=k=>String(x[k]||"").trim();let ch=false;
+          if(v("title")&&(it.title_from_name||looksFileTitle(it.title))){it.file_title=it.file_title||it.title;it.title=v("title");it.title_from_name=false;ch=true;}
+          if(v("authors")&&(!it.authors||it.authors_guess)){it.authors=v("authors");it.authors_guess=false;ch=true;}
+          if(/^(19|20)\d{2}$/.test(v("year").slice(0,4))&&(!it.year||it.year_guess)){it.year=v("year").slice(0,4);it.year_guess=false;ch=true;}
+          if(v("journal")&&!it.journal){it.journal=v("journal");ch=true;}if(v("volume")&&!it.volume){it.volume=v("volume");ch=true;}if(v("publisher")&&!it.publisher){it.publisher=v("publisher");ch=true;}
+          if(ch){it.bib_by="원문";changed++;}}}catch(e){}}}
+  need.forEach(it=>it.bib_at=now());if(changed){logSync("classify","서지 정보 채우기","ok",`${changed}건`);save();}return changed;}
+const _rc43=runClassification;runClassification=async function(list,onProg){try{await ensureBib(list,onProg);}catch(e){}return _rc43(list,onProg);};
+
+/* 인용·참고문헌: 저자·연도가 없으면 '저자 미상' 대신 제목으로 */
+const shortT=t=>{const s=String(t||"").replace(/\s+/g," ").trim();return s.length>18?s.slice(0,18)+"…":s;};
+cite=function(p,style){const a=String(p.authors||"").trim(),y=String(p.year||"").trim(),t=String(p.title||"").trim(),j=String(p.journal||"").trim(),v=String(p.volume||"").trim();
+  if(style==="apa")return [a?`${a} (${y||"n.d."}).`:"",a?`${t}.`:`${t}. (${y||"n.d."}).`,j?`${j}${v?", "+v:""}.`:""].filter(Boolean).join(" ");
+  return [a,`「${t}」`,j?`『${j}』${v?" "+v:""}`:"",y].filter(Boolean).join(", ")+".";};
+inlineCite=function(d,pg){const A=String(d.authors||"").split(/[,;·]/).map(x=>x.trim()).filter(Boolean);const y=String(d.year||"").trim();
+  const who=A.length?A[0]+(A.length>1?" 외":""):`「${shortT(d.title)}」`;return `(${[who,y,pg].filter(Boolean).join(", ")})`;};
+renderCites=function(text){return esc(text).replace(/\[@([A-Za-z0-9_\-]+)(?:,\s*(?:p\.?|pp\.?|쪽)\s*([0-9\-–]+))?\]/g,(m,id,pg)=>{const d=litById(id);if(!d)return `(문헌 확인 필요)`;return esc(inlineCite(d,pg?pg+"쪽†":""));});};
+
+/* 참고문헌 단계: 서지 보완 버튼 */
+const _rs43=refsSection;refsSection=function(){let h=_rs43();const r=refsList();const inc=r.pool.filter(bibIncomplete).length;
+  h=h.replace('<button class="btn" id="rx_copy">',`<button class="btn" id="rx_bib" ${G.apiKey?"":"title=\"API 키가 없으면 파일 이름에서만 찾습니다\""}>원문으로 서지 정보 채우기${inc?` (${inc})`:""}</button><button class="btn" id="rx_copy">`);
+  if(inc)h=h.replace(/(<ol class="reflist">)/,`<div class="notice">서지 정보(저자·연도·게재지)가 부족한 문헌이 <b>${inc}편</b> 있습니다. <b>원문으로 서지 정보 채우기</b>를 누르면 AI가 원문 첫 쪽에서 제목·저자·연도·학술지를 찾아 채웁니다. 본문 인용 (저자, 연도)도 함께 바뀝니다.</div>$1`);
+  return h;};
+
+/* 출력 전에 장 제목 중복·붙어 버린 절 제목 정리 */
+function normChapterText(t,title){let L=String(t||"").replace(/\r/g,"").split("\n");const nt=x=>String(x).replace(/^#+\s*/,"").replace(NUM_PREFIX,"").replace(/\s+/g,"").trim();const tt=nt(title);
+  while(L.length&&(!L[0].trim()||(nt(L[0])===tt&&L[0].trim().length<60)))L.shift();
+  const START=new Set(["본","이","이를","이러한","여기서","먼저","우선","한편","그러나","이에","따라서"]);
+  L=L.map(ln=>{const tr=ln.trim();if(!tr||/^#/.test(tr))return ln;let m=tr.match(/^(\d+\.\d+)\.?\s+(.{2,40})$/);if(m&&!/[.。!?]$/.test(m[2])&&!/(이다|한다|된다|있다)$/.test(m[2]))return `### ${m[2]}`;
+    m=tr.match(/^(\d+\.\d+)\.?\s+(.+)$/);if(m&&m[2].length>40){const tk=m[2].split(" ");for(let k=1;k<Math.min(9,tk.length-1);k++){const x=tk[k];if((k>=2&&x.startsWith(tk[0]))||START.has(x)||/^[『「“"]/.test(x)){const hd=tk.slice(0,k).join(" ");if(hd.length>=2&&hd.length<=40)return `### ${hd}\n\n${tk.slice(k).join(" ")}`;break;}}}
+    return ln;});
+  return L.join("\n");}
+const _bd43=buildDoc;buildDoc=function(){const keep=[];try{S.design.chapters.forEach(c=>{const w=S.writing[c.ch_id];if(w&&w.text){keep.push([w,w.text]);w.text=normChapterText(w.text,c.title);}});return _bd43();}finally{keep.forEach(([w,t])=>w.text=t);}};
+
+/* ---------- 한글(HWPX): 각주를 본문 괄호가 아닌 실제 각주로 ---------- */
+async function hwpxCore(model){const buf=await dbGet("data","hwpx:"+S.id);if(!buf)throw new Error("HWPX 서식 파일이 없습니다.");const files=await unzip(buf);const info=await analyzeHwpx(buf);
+  let sec=td.decode(files["Contents/section0.xml"]);const fp=sec.match(/<hp:p\b[\s\S]*?<\/hp:p>/);if(!fp)throw new Error("서식의 첫 문단을 찾지 못했습니다.");
+  const hd=files["Contents/header.xml"]?td.decode(files["Contents/header.xml"]):"";const fnSty=(()=>{for(const m of hd.matchAll(/<hh:style\b([^>]*)>/g)){const a=m[1],g=k=>(a.match(new RegExp(k+'="([^"]*)"'))||[])[1]||"";if(g("name")==="각주"||g("engName").toLowerCase()==="footnote")return {id:g("id"),para:g("paraPrIDRef"),char:g("charPrIDRef")};}return null;})();
+  const pa=(s,k)=>(s.match(new RegExp(k+'="([^"]*)"'))||[])[1];const bodyP=info.body||{id:pa(fp[0],"styleIDRef")||"0",para:pa(fp[0],"paraPrIDRef")||"0",char:(fp[0].match(/<hp:run[^>]*charPrIDRef="([^"]*)"/)||[])[1]||"0"};
+  const sty=lv=>lv===1&&info.h1?info.h1:lv===2&&info.h2?info.h2:bodyP;let pid=Date.now()%2000000000;const f=S.format;const inl=!!f.hwpxInlineNotes;const fs=fnSty||bodyP;let fnN=0,enN=0;
+  const P=(text,lv,pb)=>{const s=sty(lv);pid++;return `<hp:p id="${pid}" paraPrIDRef="${s.para}" styleIDRef="${s.id}" pageBreak="${pb?1:0}" columnBreak="0" merged="0"><hp:run charPrIDRef="${s.char}"><hp:t>${xesc(text)}</hp:t></hp:run></hp:p>`;};
+  const NOTE=(txt,kind)=>{const en=kind==="endnote";const n=en?++enN:++fnN;pid++;const inner=`<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="TOP" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0"><hp:p id="${pid}" paraPrIDRef="${fs.para}" styleIDRef="${fs.id}" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${fs.char}"><hp:ctrl><hp:autoNum num="${n}" numType="${en?"ENDNOTE":"FOOTNOTE"}"><hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/></hp:autoNum></hp:ctrl><hp:t> ${xesc(txt)}</hp:t></hp:run></hp:p></hp:subList>`;
+    return en?`<hp:ctrl><hp:endNote number="${n}" suffixChar="41" instId="${(pid*7)%2000000000}">${inner}</hp:endNote></hp:ctrl>`:`<hp:ctrl><hp:footNote number="${n}" suffixChar="41" instId="${(pid*7)%2000000000}">${inner}</hp:footNote></hp:ctrl>`;};
+  const PR=(runs)=>{const s=bodyP;pid++;const id=pid;let x="";let buf2="";const flushT=()=>{if(buf2){x+=`<hp:run charPrIDRef="${s.char}"><hp:t>${xesc(buf2)}</hp:t></hp:run>`;buf2="";}};
+    for(const r of runs){if(r.note){const nt=model.notes[r.note-1];if(!nt)continue;if(inl){buf2+=`(${String(nt.text).replace(/\.$/,"")})`;continue;}flushT();x+=`<hp:run charPrIDRef="${s.char}">${NOTE(nt.text,nt.kind==="endnote"?"endnote":"footnote")}<hp:t></hp:t></hp:run>`;}else buf2+=r.t;}
+    flushT();if(!x)x=`<hp:run charPrIDRef="${s.char}"><hp:t></hp:t></hp:run>`;return `<hp:p id="${id}" paraPrIDRef="${s.para}" styleIDRef="${s.id}" pageBreak="0" columnBreak="0" merged="0">${x}</hp:p>`;};
+  const out=[];const B=model.blocks;
+  for(let i=0;i<B.length;i++){const b=B[i];
+    if(b.type==="title"){out.push(P(b.text,1,false));if(b.sub)out.push(P(b.sub,0));[b.en,b.author,b.aff,b.date].filter(Boolean).forEach(x=>out.push(P(x,0)));}
+    else if(b.type==="toc"){out.push(P("목차",1,true));model.blocks.filter(x=>x.type==="heading"&&x.level<=2).forEach(x=>out.push(P((x.level===2?"    ":"")+(x.num||"")+x.text,0)));}
+    else if(b.type==="fronthead")out.push(P(b.text,1,true));
+    else if(b.type==="heading")out.push(P((b.num||"")+b.text,b.level,b.level===1&&f.chapterBreak));
+    else if(b.type==="para")out.push(PR(b.runs));
+    else if(b.type==="table"){out.push(P(f.capTable.replace("{n}",b.n).replace("{t}",b.caption||""),0));b.rows.forEach(r=>out.push(P(r.join("  |  "),0)));}
+    else if(b.type==="figure")out.push(P(f.capFigure.replace("{n}",b.n).replace("{t}",b.caption||"")+" [그림 자리]",0));
+    else if(b.type==="ref")out.push(P(b.text,0));}
+  const first=fp[0].replace(/<hp:t>[\s\S]*?<\/hp:t>/g,"<hp:t></hp:t>").replace(/<hp:t\/>/g,"<hp:t></hp:t>");
+  const head=sec.slice(0,fp.index),end=sec.lastIndexOf("</hs:sec>");if(end<0)throw new Error("서식 구조(hs:sec)를 찾지 못했습니다.");
+  sec=head+first+out.join("")+sec.slice(end);
+  const doc=new DOMParser().parseFromString(sec,"application/xml");if(doc.getElementsByTagName("parsererror").length)throw new Error("만든 HWPX 본문 XML이 올바르지 않아 출력을 멈췄습니다.");
+  files["Contents/section0.xml"]=te.encode(sec);const order=["mimetype",...Object.keys(files).filter(n=>n!=="mimetype"&&!n.endsWith("/"))];
+  return zipStore(order.map(n=>({name:n,data:files[n]})),"application/hwp+zip");}
+buildHwpx=async function(m){const f=S.format;let tmp=false;
+  if(!f.hwpx){const buf=await makeBaseHwpx();const info=await analyzeHwpx(buf);await dbPut("data","hwpx:"+S.id,buf);f.hwpx={name:"AI WIKI 기본 한글 서식",info,builtin:true,at:now()};tmp=true;}
+  try{const b=await hwpxCore(m);try{await saveOutputToVault(b,"hwpx");}catch(e){}return b;}finally{if(tmp){f.hwpx=null;await dbDel("data","hwpx:"+S.id);}}};
+const _out43=outSection;outSection=function(){return _out43().replace(/(<\/div>\s*<p class="hint">)/,`</div><label class="radio" style="margin-top:8px"><input type="checkbox" id="hw_inl" ${S.format&&S.format.hwpxInlineNotes?"checked":""}> 한글(HWPX) 각주를 본문 괄호로 넣기 <span class="hint">— 기본은 페이지 아래 실제 각주. 한글에서 파일이 열리지 않을 때만 켜세요</span></label><p class="hint">`);};
 
 /* ---------- 시작 ---------- */
 (async()=>{
