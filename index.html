@@ -825,6 +825,10 @@ body:not(.homemode) .app{zoom:.9}
 .scopeline{margin:8px 0 0;padding:9px 12px;border-radius:12px;background:#FFF8EC;border:1px solid #F7E2BD;font-size:13.5px;color:#7A4B0E}.scopeline.ok{background:#EEFBF3;border-color:#CDEFD9;color:#167A45}.fpath{font-size:12px;color:#6B8BD6;margin-top:2px}.subnote{margin:0 0 8px}
 .dtools{gap:8px;margin:10px 0 0}.dlocked .dck,.dlocked .dlink,.dlocked #dg_link,.dlocked #dg_all,.dlocked #dg_none{pointer-events:none;opacity:.45}#drv_files .dck{width:19px;height:19px;accent-color:#2F6BFF;cursor:pointer}
 .ftchip{display:inline-block;margin-left:4px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:700;background:#DCFCE7;color:#15803D;vertical-align:middle}.ftchip.no{background:#FEF3C7;color:#B45309}.ftbox{margin:0 0 12px}
+.ws-len{margin-top:16px}.wstage:not(.st-prep) .ws-len{display:none!important}.wstage.st-prep .ws-len{display:block!important}
+.ws-len .typecards{margin:12px 0}.lentable .absrow td{background:#F7F9FF}.lentable .unit select{width:84px;margin-left:4px}.lentable input{width:80px}
+.lenc{margin:4px 0 8px;font-size:12px;color:var(--ink3,#5b6478)}.lenc .tag{margin-left:4px}
+.rolechip{display:inline-block;border:0!important;margin-top:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}.rolechip.rc-topic{background:#E3F6EA;color:#1F7A45}.rolechip.rc-ref{background:#EEF2FA;color:#4A5875}
 </style>
 </head>
 <body>
@@ -2841,9 +2845,6 @@ table{border-collapse:collapse;width:100%;margin:.4em 0 1em;font-size:${f.size-1
 .cap{text-align:center;font-weight:bold;font-size:${f.size-1}pt;margin:.8em 0 .3em;break-after:avoid}.fig{border:1px dashed #999;height:30mm;display:flex;align-items:center;justify-content:center;color:#888;margin-top:.8em}
 .ref{padding-left:2em;text-indent:-2em;margin-bottom:.4em}.notes{font-size:${f.size-2}pt;border-top:1px solid #999;margin-top:1.2em;padding-top:.4em;line-height:1.35}.nh{font-weight:bold}.fn{font-size:.7em}
 @media screen{body{max-width:${w}mm;margin:20px auto;padding:0 ${f.ml}mm;box-shadow:0 0 0 1px #ddd}.pb{border-top:1px dashed #ccc;margin:2em 0}}
-.ws-len{margin-top:16px}.wstage:not(.st-prep) .ws-len{display:none!important}.wstage.st-prep .ws-len{display:block!important}
-.ws-len .typecards{margin:12px 0}.lentable .absrow td{background:#F7F9FF}.lentable .unit select{width:84px;margin-left:4px}.lentable input{width:80px}
-.lenc{margin:4px 0 8px;font-size:12px;color:var(--ink3,#5b6478)}.lenc .tag{margin-left:4px}
 </style></head><body>${out.join("\n")}</body></html>`;}
 function markdownOut(model){const f=S.format,L=[];
   for(const b of model.blocks){
@@ -4383,16 +4384,17 @@ classifyPapersAI=async function(batch){const topics=S.topics.map(t=>t.name),kwCo
 2) topic: 이 문헌이 실제로 다루는 주제를 제목·초록·KCI 키워드에 근거해 8~25자로 직접 쓰세요(예: "한국 소설 속 베트남 심상지리·전쟁 관광"). 기존 토픽 이름은 이 문헌의 핵심 주제와 정확히 같을 때만 그대로 쓰고, 단어 몇 개가 겹친다는 이유로 고르지 마세요.
 3) reason: 관련도와 토픽을 그렇게 정한 이유를 두 문장 이내로. 제목·초록·키워드 중 무엇을 근거로 했는지 밝히세요.
 4) keywords: KCI 키워드를 먼저 그대로 넣고, 필요하면 보충 키워드를 더해 최대 8개.
+5) role: "topic" 또는 "ref". ${typeof ROLE_RULE!=="undefined"?ROLE_RULE:""} role_reason에 한 문장으로 이유를 쓰세요.
 fulltext(원문 앞부분)가 있으면 제목·초록보다 우선하는 가장 중요한 근거로 쓰고, evidence에 "원문"을 넣고 reason에 원문 내용을 근거로 들었음을 밝히세요. needs_bib가 true면 fulltext에서 bib(title·authors·year·journal)를 찾아 채우고, 없으면 빈칸으로 두세요.
 주어진 정보만 근거로 쓰고, 정보가 부족하면 confidence를 low로 하세요. 제외 키워드에 해당하면 relevance를 1~2로 하세요. 문헌 유형은 ["학술지 논문","학위논문","연구보고서","단행본","학술대회 발표","기사·기타"] 중 하나.
 반드시 JSON 배열만 출력하세요:
-[{"i":번호,"relevance":1~5,"topic":"","reason":"","evidence":["제목","초록","KCI 키워드"],"confidence":"high|mid|low","keywords":[""],"doc_type":"","doc_type_confidence":"high|mid|low","summary":"두 문장 요약","bib":{"title":"","authors":"","year":"","journal":""}}]
+[{"i":번호,"relevance":1~5,"topic":"","reason":"","evidence":["제목","초록","KCI 키워드"],"confidence":"high|mid|low","keywords":[""],"doc_type":"","doc_type_confidence":"high|mid|low","summary":"두 문장 요약","role":"topic|ref","role_reason":"","bib":{"title":"","authors":"","year":"","journal":""}}]
 
 문헌:
 ${JSON.stringify(items)}`;
   const res=parseJSON(await callClaude(prompt,5000));const newKw=[];
   for(const r of res){const it=batch[r.i];if(!it)continue;const v=parseInt(r.relevance);const reason=String(r.reason||"").trim();
-    if(v>=1&&v<=5&&it.cls_by!=="연구자"){it.relevance=v;it.relevance_reason=reason||it.relevance_reason;}if(r.summary&&!it.summary)it.summary=r.summary;if(r.bib&&typeof applyBib==="function")applyBib(it,r.bib);
+    if(v>=1&&v<=5&&it.cls_by!=="연구자"){it.relevance=v;it.relevance_reason=reason||it.relevance_reason;}if(r.summary&&!it.summary)it.summary=r.summary;if(r.bib&&typeof applyBib==="function")applyBib(it,r.bib);if(r.role){it.role_ai=r.role==="topic"?"topic":"ref";it.role_reason=String(r.role_reason||"");}
     const conf=["high","mid","low"].includes(r.confidence)?r.confidence:"low";const topic=String(r.topic||"").trim().slice(0,40);
     const kws=[...new Set([...(it.keywords||[]),...(r.keywords||[])].map(x=>String(x).trim()).filter(Boolean))].slice(0,8);
     applyTopic(it,{topic,keywords:kws,reason,evidence:Array.isArray(r.evidence)?r.evidence:[],confidence:conf},"AI");it.kw_ai=kws;newKw.push(...(r.keywords||[]));
@@ -4912,6 +4914,33 @@ const _bwrite44=BIND.write;BIND.write=()=>{_bwrite44();const rer=()=>{const y=wi
   const ra=$("#wsb_reset_all");if(ra)ra.onclick=async()=>{if(await resetStage("body",true))rer();};
   const ai=$("#w_ai");if(ai&&G.apiKey&&!ai.dataset.p44){ai.dataset.p44=1;const c=dsChapter(DS.ch);if(c){const T=chTarget(c);ai.textContent=`AI로 이 장 쓰기 (${T.pages}장)`;}
     const orig=ai.onclick;ai.onclick=async e=>{const c=dsChapter(DS.ch),w=c&&S.writing[c.ch_id];if(w&&String(w.text||"").trim()&&!confirm("지금 본문을 지우고 정한 분량대로 처음부터 다시 씁니다. 지금 본문은 버전 기록에 남습니다. 계속할까요?"))return;return orig&&orig.call(ai,e);};}};
+
+/* ===== p45: 토픽 자료 / 참고문헌 자료를 AI가 나눠 추천 ===== */
+const ROLE_RULE=`역할(role) 기준 — "topic"(토픽 자료): 이 논문의 연구 질문·나의 관점에 직접 답하는 핵심 근거로, 본론 분석에서 직접 논의·비교할 자료(같은 대상·같은 분석 시각을 다룬 연구). "ref"(참고문헌 자료): 배경 지식, 연구사·선행연구 정리, 작가·시대·번역·수용 등 맥락, 방법론 참고에 쓰는 자료. 관련도가 높아도 맥락·배경이면 ref입니다. 보통 topic은 전체의 20~40% 정도입니다.`;
+async function roleAI(list,onProg){if(!G.apiKey)throw new Error("Claude 연결이 필요합니다.");let n=0;
+  for(let b=0;b<list.length;b+=15){const batch=list.slice(b,b+15);onProg&&onProg(`AI가 토픽·참고문헌 나누는 중… ${Math.min(b+15,list.length)} / ${list.length}`);
+    const out=parseJSON(await callClaude(`${projectContext()}\n연구 목적: ${(S.design&&S.design.fields&&S.design.fields.purpose.value)||""}\n연구 질문: ${(S.design&&S.design.fields&&S.design.fields.questions.value)||""}\n\n${ROLE_RULE}\n각 문헌의 role과 그 이유(role_reason, 한 문장)를 정하세요.\n${JSON.stringify(batch.map((p,i)=>({i,title:p.title,authors:p.authors,year:p.year,ai_topic:tpName(p),abstract:String(p.abstract||p.summary||"").slice(0,400),fulltext:p.ft&&p.ft.text?p.ft.text.slice(0,600):""})))}\n반드시 JSON 배열만: [{"i":0,"role":"topic|ref","role_reason":""}]`,3000));
+    (out||[]).forEach(r=>{const p=batch[r&&r.i];if(!p)return;p.role_ai=r.role==="topic"?"topic":"ref";p.role_reason=String(r.role_reason||"");n++;});}
+  save();return n;}
+function applyRoles(list){let t=0,f=0;list.forEach(p=>{if(p.role_ai==="topic"){if(!p.topic_set){p.topic_final=p.topic_final||tpName(p)||"미지정";addHistory(p,"역할","","토픽 자료","AI 추천");}p.topic_set=true;p.in_topic=true;t++;}else if(p.role_ai==="ref"){if(p.topic_set||p.in_topic)addHistory(p,"역할","토픽 자료","참고문헌 자료","AI 추천");p.topic_set=false;p.in_topic=false;f++;}});return {t,f};}
+async function splitByRole(btn){const list=papers().filter(p=>p.decision!=="제외"&&p.relevance);if(!list.length)return toast("먼저 AI 분류하기를 하세요.");
+  const need=list.filter(p=>!p.role_ai);const lbl=btn&&btn.textContent;
+  try{if(need.length){if(btn)btn.disabled=true;await roleAI(need,t=>{if(btn)btn.textContent=t;});}}catch(e){if(btn){btn.disabled=false;btn.textContent=lbl;}return toast("오류: "+e.message);}
+  if(btn){btn.disabled=false;btn.textContent=lbl;}
+  const tN=list.filter(p=>p.role_ai==="topic").length,fN=list.filter(p=>p.role_ai==="ref").length;
+  if(!confirm(`AI 추천: 토픽 자료 ${tN}편 · 참고문헌 자료 ${fN}편\n이대로 나눌까요? 지금 지정한 토픽은 이 추천으로 바뀝니다(나중에 끌어서 옮길 수 있음).`))return;
+  const r=applyRoles(list);if(S.judgeSave)S.judgeSave.state="editing";if(TS().state==="saved")TS().state="editing";logSync("classify","AI 추천대로 나누기","ok",`토픽 ${r.t}편 · 참고문헌 ${r.f}편`);await flush();toast(`토픽 자료 ${r.t}편 · 참고문헌 자료 ${r.f}편으로 나눴습니다.`);}
+const _man45=VIEWS.manage;VIEWS.manage=()=>{let h=_man45();
+  h=h.replace('<button class="btn" id="mg_topic">토픽 지정</button>','<button class="btn primary" id="mg_role" title="AI가 핵심 근거(토픽 자료)와 배경·선행연구(참고문헌 자료)를 나눠 추천합니다">AI 추천대로 나누기</button><button class="btn" id="mg_topic">토픽 지정</button>');
+  h=h.replace('<b>토픽을 지정한 자료는 저장할 때 토픽·방향의 토픽 자료로 자동으로 들어갑니다.</b>','<b>토픽을 지정한 자료만 토픽 자료</b>(논문의 핵심 근거)가 되고, 나머지는 참고문헌 자료(배경·선행연구)가 됩니다. 전체 선택 후 토픽 지정을 하면 모두 토픽 자료가 되니, <b>AI 추천대로 나누기</b>를 써 보세요.');return h;};
+const _bman45=BIND.manage;BIND.manage=()=>{_bman45();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const rb=$("#mg_role");if(rb)rb.onclick=async()=>{await splitByRole(rb);rer();};
+  document.querySelectorAll("tr[data-mg]").forEach(tr=>{const p=litById(tr.dataset.mg);if(!p||!p.role_ai)return;const td=tr.children[4];if(!td)return;const d=document.createElement("div");d.className="rolechip rc-"+p.role_ai;d.textContent="AI 추천: "+(p.role_ai==="topic"?"토픽 자료":"참고문헌 자료");d.title=p.role_reason||"";td.appendChild(d);
+    const rc=tr.querySelector("td.reason");if(rc&&p.role_reason){const e=document.createElement("div");e.className="hint";e.textContent="역할: "+p.role_reason;rc.appendChild(e);}});
+  const sv=$("#mg_save");if(sv&&!sv.dataset.p45){sv.dataset.p45=1;const orig=sv.onclick;sv.onclick=async e=>{const pool=papers().filter(p=>p.decision!=="제외");const t=pool.filter(p=>p.topic_set||p.in_topic).length;
+    if(pool.length>=6&&t/pool.length>0.7&&!confirm(`저장할 ${pool.length}편 중 ${t}편이 토픽 자료입니다.\n토픽 자료는 논문의 핵심 근거, 나머지는 참고문헌 자료(배경·선행연구)로 나누는 것이 좋습니다.\n그대로 저장할까요? (취소하고 'AI 추천대로 나누기'를 쓸 수 있습니다)`))return;return orig&&orig.call(sv,e);};}};
+const _top45=VIEWS.topics;VIEWS.topics=()=>{const h=_top45();const B='<div class="row" style="margin:-4px 0 10px"><button class="btn sm" id="tp_role">AI 추천대로 다시 나누기</button><span class="hint">AI가 핵심 근거(토픽)와 배경·선행연구(참고문헌)를 나눕니다. 끌어서 직접 옮길 수도 있습니다.</span></div>';if(/<p class="tpsum2">/.test(h))return h.replace(/(<p class="tpsum2">[\s\S]*?<\/p>)/,"$1"+B);return h.replace('<div class="tpcols">',B+'<div class="tpcols">');};
+const _btop45=BIND.topics;BIND.topics=()=>{_btop45();const b=$("#tp_role");if(b)b.onclick=async()=>{await splitByRole(b);render();};};
 
 /* ---------- 시작 ---------- */
 (async()=>{
