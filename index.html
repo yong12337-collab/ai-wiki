@@ -858,6 +858,8 @@ body:not(.homemode) .app{zoom:.9}
 .msprev iframe{width:100%;min-height:900px;border:0;background:#fff;border-radius:10px}.mserr{margin-top:10px}.seclist li{margin:4px 0}
 @media(max-width:900px){.rvgrid,.evtotal,.evcols,.diff{grid-template-columns:1fr}.rvtoc{position:static;max-height:none}}
 .aurow{display:grid;grid-template-columns:64px 1fr 1.2fr 1.6fr 110px 1.2fr 36px;gap:8px;align-items:center;margin:8px 0}.aulab{font-weight:700;color:#1E3A8A;font-size:13px}@media(max-width:900px){.aurow{grid-template-columns:1fr 1fr}.aulab{grid-column:1/-1}}
+.aifbox{grid-column:1/-1;margin-bottom:14px;border:1px solid #CFE0FF;background:#FAFCFF}.aifres{margin-top:12px;padding-top:12px;border-top:1px dashed #CFE0FF}.aiftable th{white-space:nowrap;width:170px}.aiftable td{vertical-align:top}
+#aif_overlay{position:fixed;inset:0;z-index:160;background:rgba(20,30,55,.45);padding:24px 16px;overflow:auto}.aifwrap{max-width:900px;margin:0 auto;background:#F3F6FC;border-radius:18px;padding:16px}#aifp_fr{width:100%;height:80vh;border:0;background:#fff;border-radius:10px}
 </style>
 </head>
 <body>
@@ -5373,7 +5375,7 @@ const spaced=n=>/^[가-힣]{2,4}$/.test(n)?n.split("").join(" "):n;
 const _cite50=cite;cite=function(p,style){if(style!=="journal")return _cite50(p,style);const a=String(p.authors||"").trim(),y=String(p.year||"").trim(),t=String(p.title||"").trim(),j=String(p.journal||"").trim(),v=String(p.volume||"").trim(),pub=String(p.publisher||"").trim();
   return [`${a||t}(${y||"연도 미상"}).`,a?`${t}${j?",":"."}`:"",j?`<${j}>${v?" "+v:""}${pub?", "+pub:""}.`:pub?`${pub}.`:""].filter(Boolean).join(" ");};
 const _fr50=fmtRef;fmtRef=function(p){return S.format&&S.format.refStyle==="journal"?cite(p,"journal"):_fr50(p);};
-function ensurePaper(){const f=S&&S.format;if(f&&f.paperMM&&!PAPERS[f.paper])PAPERS[f.paper]=f.paperMM;if(S&&S.settings&&S.settings.docType==="학술지 논문"&&f&&f.layout===undefined&&!f.manual&&!f.template&&!f.hwpx){Object.assign(f,JOURNAL_FMT);}}
+function ensurePaper(){const f=S&&S.format;if(f&&f.paperMM&&!PAPERS[f.paper])PAPERS[f.paper]=f.paperMM;if(S&&S.settings&&S.settings.docType==="학술지 논문"&&f&&f.layout===undefined){if(!f.manual&&!f.template&&!f.hwpx)Object.assign(f,JOURNAL_FMT);else Object.assign(f,{layout:"journal",numbering:"decimal",toc:false,citeMode:f.citeMode||"inline",refStyle:f.refStyle==="custom"?"custom":"journal"});}}
 const _bd50=buildDoc;buildDoc=function(){ensurePaper();const m=_bd50();const f=S.format||{};if(f.layout!=="journal")return m;try{journalize(m);}catch(e){console.warn(e);}return m;};
 function journalize(m){const B=m.blocks,F=S.front||{},A=authorsOf().filter(a=>a.name.trim());const s=S.settings;
   // 제목 블록: 저자 줄(자간)·역할 표시
@@ -5416,6 +5418,103 @@ const _ph50=printHtml;printHtml=function(model){ensurePaper();let h=_ph50(model)
 const _htf50=handleTemplateFile;handleTemplateFile=async function(file){S.formPrev=JSON.parse(JSON.stringify(S.format));await _htf50(file);const t=S.format.template;if(t&&t.info&&t.info.page){const [w,h]=t.info.page;const key=`양식 파일 용지 (${w}×${h})`;PAPERS[key]=[w,h];S.format.paper=key;S.format.paperMM=[w,h];const mg=t.info.margin||{};["t","b","l","r"].forEach((k,i)=>{if(mg[k]!=null&&mg[k]>0)S.format[["mt","mb","ml","mr"][i]]=mg[k];});}};
 /* 다시 연 프로젝트에서도 양식 파일 용지 이름이 살아 있게 */
 if(!SNAP_KEYS.includes("formPrev"))SNAP_KEYS.push("formPrev");
+
+/* ===== p51: 출력 화면 단계 바 없앰 · 출력 메뉴 체크 표시 없앰 ===== */
+{const _v=VIEWS.write;VIEWS.write=()=>{let h=_v();if(current==="output")h=h.replace(/<div class="hubtabs wstabs"[\s\S]*?<\/div>/,"");return h;};}
+renderMenu=(_r=>function(){_r();document.querySelectorAll('#menu button[data-v="output"] .flowno').forEach(x=>x.remove());})(renderMenu);
+/* ===== p52: 최종 원고 — 버튼을 오른쪽 아래로(초기화·임시저장·수정하기·저장·출력) ===== */
+if(!SNAP_KEYS.includes("msBase"))SNAP_KEYS.push("msBase");
+function msSnap(){const D=S.design,F=S.front||{};return {at:now(),abs:F.abstract_ko||"",absen:F.abstract_en||"",ch:Object.fromEntries(D.chapters.map(c=>[c.ch_id,(S.writing[c.ch_id]||{}).text||""]))};}
+function msSaveEdits(){if(!$("#ms_abs"))return false;if(!S.msBase)S.msBase=msSnap();S.front=S.front||{};S.front.abstract_ko=$("#ms_abs").value;S.front.abstract_en=$("#ms_absen").value;
+  document.querySelectorAll("[data-msch]").forEach(t=>{const w=S.writing[t.dataset.msch];if(w&&w.text!==t.value){saveVersion(t.dataset.msch,"최종 원고 편집 전");w.text=t.value;w.updated=now();syncCitations(w);reviewChapter(t.dataset.msch);}});return true;}
+{const _v=VIEWS.manuscript;VIEWS.manuscript=()=>{let h=_v();const L=S.finalMs&&S.finalMs.locked;
+  h=h.replace(/<span class="row">(?:<span class="tag good">최종본 확정[\s\S]*?<button class="btn" id="ms_unlock">확정 풀기<\/button>|<button class="btn primary" id="ms_lock">최종본 확정<\/button>)<button class="btn primary" id="ms_out">출력으로 →<\/button><\/span>/,L?`<span class="tag good">저장됨 · ${fmtTime(S.finalMs.at)}</span>`:"");
+  h=h.replace('<div class="row" style="justify-content:flex-end"><button class="btn primary" id="ms_save">편집 내용 저장</button></div>',"");
+  h=h.replace("최종본이 확정되어 잠겨 있습니다. 고치려면 <b>확정 풀기</b>를 누르세요.","최종 원고가 저장되어 잠겨 있습니다. 고치려면 아래 <b>수정하기</b>를 누르세요.");
+  return h+`<div class="wsbar ${L?"saved":""}"><span class="hint">${L?`✓ <b>최종 원고 저장됨</b> · ${fmtTime(S.finalMs.at)} — 고치려면 <b>수정하기</b>`:"원고를 확인·편집한 뒤 <b>저장</b>하면 최종 원고로 확정됩니다. <b>임시저장</b>은 히스토리에 남습니다."}</span>
+   <span class="row"><button class="btn danger" id="ms_reset" ${S.msBase?"":'disabled title="최종 원고에서 고친 내용이 없습니다"'}>초기화</button><button class="btn" id="ms_temp">임시저장</button><button class="btn" id="ms_edit" ${L?"":"disabled"}>수정하기</button><button class="btn primary" id="ms_save2" ${L?"disabled":""}>저장</button><button class="btn primary" id="ms_out2">출력 →</button></span></div>`;};}
+{const _b=BIND.manuscript;BIND.manuscript=()=>{_b();const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const sv=$("#ms_save2");if(sv)sv.onclick=async()=>{msSaveEdits();S.finalMs={locked:true,at:now()};try{takeSnapshot("최종 원고 저장",true,"manuscript");}catch(e){}logSync("write","최종 원고 저장","ok","");await flush();toast("최종 원고를 저장했습니다. 히스토리에 남았습니다.");rer();};
+  const ed=$("#ms_edit");if(ed)ed.onclick=async()=>{S.finalMs={locked:false,at:now()};MSV.tab="edit";await flush();rer();};
+  const tp=$("#ms_temp");if(tp)tp.onclick=async()=>{msSaveEdits();const note=(prompt("임시저장 메모(선택)","")||"").trim();const sn=takeSnapshot(note,false,"manuscript");await flush();toast(`${fmtKDate(sn.t)}에 임시저장했습니다.`);rer();};
+  const rs=$("#ms_reset");if(rs)rs.onclick=async()=>{if(!S.msBase)return;if(!confirm(`최종 원고에서 고친 내용을 모두 되돌릴까요?\n(${fmtTime(S.msBase.at)} 최종 원고 편집 전 상태로 돌아갑니다. 지금 상태는 히스토리에 자동 저장됩니다)`))return;
+    try{takeSnapshot("최종 원고 초기화 전 자동 저장",true,"manuscript");}catch(e){}const B=S.msBase;S.front=S.front||{};S.front.abstract_ko=B.abs;S.front.abstract_en=B.absen;
+    Object.entries(B.ch).forEach(([id,t])=>{const w=S.writing[id];if(w&&w.text!==t){saveVersion(id,"최종 원고 초기화 전");w.text=t;w.updated=now();syncCitations(w);}});S.msBase=null;S.finalMs={locked:false,at:now()};logSync("write","최종 원고 초기화","ok","");await flush();toast("최종 원고 편집 전으로 되돌렸습니다.");rer();};
+  const o=$("#ms_out2");if(o)o.onclick=()=>{msSaveEdits();flush();WST="out";go("output");};}}
+/* ===== p53: AI로 양식 파악하기 — 학회지 논문·투고 규정을 읽고 → 미리보기 → 적용 ===== */
+if(!SNAP_KEYS.includes("aiFmt"))SNAP_KEYS.push("aiFmt");
+const AIF_FIELDS=[["paper","용지"],["margins","여백(위·아래·왼쪽·오른쪽 mm)"],["font","본문 글꼴"],["size","글자 크기(pt)"],["line","줄 간격(%)"],["indent","첫 줄 들여쓰기(글자)"],["first","첫 장 배치"],["author","저자 표시"],["abstract","초록 위치"],["keywords","주제어 표시"],["numbering","장·절 번호"],["cite","인용 방식"],["refs","참고문헌 형식"],["end","끝부분 구성"]];
+let AIF={busy:false,files:[],rules:"",msg:""};
+async function pdfPageMM(buf){try{const raw=new TextDecoder("latin1").decode(new Uint8Array(buf.slice(0,Math.min(buf.byteLength,400000))));const mb=[...raw.matchAll(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/g)].map(m=>[m[3]-m[1],m[4]-m[2]]).filter(x=>x[0]>200);if(mb.length){const [w,h]=mb[Math.min(1,mb.length-1)];return [Math.round(w/72*25.4),Math.round(h/72*25.4)];}}catch(e){}try{const lib=await loadPdfJs();const doc=await lib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;const p=await doc.getPage(Math.min(2,doc.numPages));const v=p.getViewport({scale:1});return [Math.round(v.width/72*25.4),Math.round(v.height/72*25.4)];}catch(e){return null;}}
+const AIF_PROMPT=`당신은 학술지 편집 담당자입니다. 주어진 자료(그 학회지에 실린 논문 또는 투고 규정)를 보고, 이 학회지의 논문 서식을 최대한 정확히 파악하세요. 자료에 근거가 없는 항목은 null로 두고 지어내지 마세요.
+반드시 JSON만:
+{"journal":"학회지 이름","paper_mm":[가로,세로] 또는 null,"margins_mm":{"t":0,"b":0,"l":0,"r":0} 또는 null,
+"font":"바탕|함초롬바탕|나눔명조|맑은 고딕 중 가장 가까운 것","size":본문 pt,"line":줄 간격 %,"indent":첫 줄 들여쓰기 글자 수,
+"layout":"journal(첫 장에 제목·저자·초록이 바로 나오는 학술지형) 또는 thesis(표지·목차가 있는 학위논문형)",
+"title_align":"center|left","author_align":"right|center|left","author_spaced":이름 글자 사이를 띄우는지 true/false,
+"abstract_front":"en|ko|none (첫 장에 오는 초록)","abstract_end":"ko|en|none (끝에 오는 초록)","keywords_label":"예: 【Key words】 또는 주제어:",
+"numbering":"decimal(1. / 1.1.)|roman(Ⅰ. / 1.)|chapter_kr(제1장 / 제1절)","sub_dot":절 번호 끝에 점을 찍는지(2.1.) true/false,
+"cite_mode":"inline|footnote","inline_example":"본문 인용 예시 그대로",
+"ref_heading":"참고문헌 제목 그대로(예: <참고문헌>)","ref_pattern":"{저자}{연도}{제목}{학술지}{권호}{발행기관} 자리표시로 만든 국문 학술지 논문 참고문헌 형식(예: {저자}({연도}). {제목}, <{학술지}> {권호}, {발행기관}.)","ref_examples":["자료에 실린 참고문헌 예시 2개 그대로"],
+"author_info_end":끝에 저자 정보(소속·주소·이메일)가 있는지 true/false,
+"evidence":{"항목":"근거가 된 자료 속 모습 한 줄"},"notes":["논문 한 편으로는 알 수 없어 확인이 필요한 점"]}`;
+async function aiReadFormat(){if(!G.apiKey)throw new Error("AI 양식 파악은 Claude API 키가 있어야 합니다.");if(!AIF.files.length&&!AIF.rules.trim())throw new Error("학회지 논문 파일을 올리거나 투고 규정을 붙여 넣으세요.");
+  let res=null,paper=null;const texts=[];
+  for(const f of AIF.files){const buf=await f.arrayBuffer(),n=f.name.toLowerCase();
+    if(/\.pdf$/.test(n)){paper=paper||await pdfPageMM(buf);if(buf.byteLength>25*1024*1024)throw new Error("PDF가 25MB를 넘습니다.");AIF.msg=`「${f.name}」 읽는 중…`;admRefreshAIF();
+      res=parseJSON(await callClaudeDoc(AIF_PROMPT+(AIF.rules.trim()?`\n\n함께 받은 투고 규정(우선 적용):\n${AIF.rules.slice(0,8000)}`:"")+(paper?`\n(참고: 이 PDF의 실제 용지는 ${paper[0]}×${paper[1]}mm)`:""),buf,4000));}
+    else if(/\.(docx|dotx)$/.test(n))texts.push(`[${f.name}]\n`+(await docxText(buf)).text.slice(0,12000));
+    else if(/\.hwpx$/.test(n))texts.push(`[${f.name}]\n`+(await hwpxText(buf)).text.slice(0,12000));
+    else throw new Error("PDF·DOCX·HWPX만 읽을 수 있습니다.");}
+  if(!res){AIF.msg="AI가 양식을 파악하는 중…";admRefreshAIF();res=parseJSON(await callClaude(`${AIF_PROMPT}\n\n${AIF.rules.trim()?`투고 규정:\n${AIF.rules.slice(0,10000)}\n\n`:""}${texts.length?`학회지 논문 본문(글자만 — 글꼴·여백은 알 수 없으면 null):\n${texts.join("\n\n").slice(0,16000)}`:""}`,4000));}
+  if(paper)res.paper_mm=paper;res.at=now();res.src=[...AIF.files.map(f=>f.name),AIF.rules.trim()?"투고 규정":""].filter(Boolean).join(", ");return res;}
+function aifToFormat(r){const f={};const fontOk=k=>Object.keys(FONTS).includes(k);
+  if(Array.isArray(r.paper_mm)&&r.paper_mm[0]>80){const [w,h]=r.paper_mm.map(Math.round);const known=Object.entries(PAPERS).find(([k,v])=>Math.abs(v[0]-w)<=2&&Math.abs(v[1]-h)<=2);if(known)f.paper=known[0];else{const key=`학회지 용지 (${w}×${h})`;PAPERS[key]=[w,h];f.paper=key;f.paperMM=[w,h];}}
+  const m=r.margins_mm||{};[["t","mt"],["b","mb"],["l","ml"],["r","mr"]].forEach(([a,b])=>{if(+m[a]>3&&+m[a]<60)f[b]=Math.round(+m[a]);});
+  if(fontOk(r.font))f.font=r.font;if(+r.size>=7&&+r.size<=16)f.size=+r.size;if(+r.line>=100&&+r.line<=300)f.line=Math.round(+r.line);if(r.indent!=null&&+r.indent>=0&&+r.indent<=4)f.indent=+r.indent;
+  f.layout=r.layout==="thesis"?"":"journal";if(["decimal","roman","chapter_kr"].includes(r.numbering))f.numbering=r.numbering;if(["inline","footnote"].includes(r.cite_mode))f.citeMode=r.cite_mode;
+  if(r.ref_pattern&&/\{저자\}/.test(r.ref_pattern)){f.refStyle="custom";f.refPattern=String(r.ref_pattern);}else if(f.layout==="journal")f.refStyle="journal";
+  if(f.layout==="journal"){f.toc=false;f.chapterBreak=false;}
+  f.ai={title_align:r.title_align||"center",author_align:r.author_align||"right",author_spaced:r.author_spaced!==false,abstract_front:r.abstract_front||"en",abstract_end:r.abstract_end||"ko",keywords_label:r.keywords_label||"",sub_dot:r.sub_dot!==false,ref_heading:r.ref_heading||"",author_info_end:r.author_info_end!==false,journal:r.journal||""};
+  f.manual={at:now(),by:"AI 양식 파악"};return f;}
+function aifRows(r){const fm=aifToFormat(r),mg=r.margins_mm;const v={paper:fm.paper||"(알 수 없음 — 지금 값 유지)",margins:mg?`${mg.t}·${mg.b}·${mg.l}·${mg.r}`:"(알 수 없음)",font:r.font||"-",size:r.size||"-",line:r.line||"-",indent:r.indent??"-",
+  first:`${r.layout==="thesis"?"표지·목차가 있는 학위논문형":"학술지형(첫 장에 제목·저자·초록)"} · 제목 ${r.title_align==="left"?"왼쪽":"가운데"}${r.journal?` · 첫 줄 『${r.journal}』`:""}`,author:`${{right:"오른쪽",center:"가운데",left:"왼쪽"}[r.author_align]||"-"} 정렬${r.author_spaced?" · 이름 자간 띄움(장 용 철)":""}`,
+  abstract:`앞: ${{en:"영문 Abstract",ko:"국문초록",none:"없음"}[r.abstract_front]||"-"} / 끝: ${{en:"영문 Abstract",ko:"국문초록",none:"없음"}[r.abstract_end]||"-"}`,keywords:r.keywords_label||"-",
+  numbering:`${{decimal:"1. / 2.1",roman:"Ⅰ. / 1.",chapter_kr:"제1장 / 제1절"}[r.numbering]||"-"}${r.sub_dot&&r.numbering==="decimal"?".":""}`,cite:`${r.cite_mode==="footnote"?"각주":"본문 괄호"}${r.inline_example?` — 예: ${r.inline_example}`:""}`,
+  refs:`${r.ref_heading||""} ${r.ref_pattern||""}${(r.ref_examples||[]).length?`<br><span class="hint">예: ${(r.ref_examples||[]).map(esc).join("<br>")}</span>`:""}`,end:`${r.abstract_end&&r.abstract_end!=="none"?"초록 → ":""}${r.author_info_end?"저자 정보(소속·이메일)":"저자 정보 없음"}`};
+  const ev=r.evidence||{};return AIF_FIELDS.map(([k,l])=>`<tr><th>${l}</th><td>${k==="refs"?v[k]:esc(String(v[k]))}</td><td class="hint">${esc(String(ev[k]||ev[l]||""))}</td></tr>`).join("");}
+function aifBox(){const r=S.aiFmt;return `<div class="fxbox aifbox"><h3>AI로 양식 파악하기 <span class="tag">추천</span></h3><p class="hint">그 학회지에 실린 <b>논문 PDF 한두 편</b>(또는 한글·워드 파일)을 올리고, 있으면 <b>투고 규정</b>을 붙여 넣으세요. AI가 용지·글꼴·첫 장 배치·장절 번호·인용·참고문헌 형식을 파악합니다. 결과를 <b>미리보기</b>로 확인한 뒤 적용합니다.</p>
+  <div class="row" style="gap:10px;flex-wrap:wrap"><input type="file" id="aif_files" accept=".pdf,.docx,.dotx,.hwpx" multiple aria-label="학회지 논문 파일"><span class="hint" id="aif_fn">${AIF.files.length?AIF.files.map(f=>esc(f.name)).join(", "):""}</span></div>
+  <label for="aif_rules">투고 규정(선택)</label><textarea id="aif_rules" rows="3" placeholder="예: 원고는 신국판, 신명조 10pt, 줄 간격 170%. 참고문헌은 저자(연도). 제목, <학술지> 권호, 발행기관. 순서…">${esc(AIF.rules)}</textarea>
+  <div class="row" style="justify-content:space-between;margin-top:8px"><span class="hint" id="aif_msg" role="status">${esc(AIF.msg)}</span><button class="btn primary" id="aif_run" ${AIF.busy?"disabled":""}>AI로 양식 파악하기</button></div>
+  ${r?`<div class="aifres"><div class="row" style="justify-content:space-between"><b>AI가 읽은 양식${r.journal?` — 『${esc(r.journal)}』`:""}</b><span class="hint">${esc(r.src||"")} · ${fmtTime(r.at)}${r.applied?` · <span class="tag good">적용됨</span>`:""}</span></div>
+   <table class="kv aiftable"><tbody>${aifRows(r)}</tbody></table>${(r.notes||[]).length?`<p class="hint">확인이 필요한 점: ${(r.notes||[]).map(esc).join(" / ")}</p>`:""}
+   <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" id="aif_drop">버리기</button><button class="btn" id="aif_prev">미리보기</button><button class="btn primary" id="aif_apply">이 양식 적용</button></div></div>`:""}</div>`;}
+function admRefreshAIF(){const m=$("#aif_msg");if(m)m.textContent=AIF.msg;}
+/* 미리보기: 적용하지 않고 이 원고에 입혀서 보기 */
+function aifPreview(){const r=S.aiFmt;if(!r)return;const keep=JSON.parse(JSON.stringify(S.format));let html="";
+  try{S.format=Object.assign({},S.format,aifToFormat(r));html=printHtml(finalModel()).replace(/<script[\s\S]*?<\/script>/gi,"");}finally{S.format=keep;}
+  let o=$("#aif_overlay");if(!o){o=document.createElement("div");o.id="aif_overlay";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","양식 미리보기");document.body.appendChild(o);}
+  o.innerHTML=`<div class="aifwrap"><div class="row" style="justify-content:space-between;margin-bottom:10px"><div><b>양식 미리보기</b> <span class="hint">— 아직 적용하지 않았습니다. 지금 원고에 AI가 읽은 양식을 입힌 모습입니다.</span></div><span class="row"><button class="btn" id="aifp_x">닫기</button><button class="btn primary" id="aifp_ok">이 양식 적용</button></span></div><iframe id="aifp_fr" title="양식 미리보기" sandbox="allow-same-origin"></iframe></div>`;
+  const fr=$("#aifp_fr");fr.srcdoc=html;const close=()=>{o.remove();document.removeEventListener("keydown",esc1);};const esc1=e=>{if(e.key==="Escape")close();};document.addEventListener("keydown",esc1);
+  $("#aifp_x").onclick=close;$("#aifp_ok").onclick=async()=>{close();await aifApply();};$("#aifp_x").focus();}
+async function aifApply(){const r=S.aiFmt;if(!r)return;S.formPrev=JSON.parse(JSON.stringify(S.format));Object.assign(S.format,aifToFormat(r));r.applied=now();logSync("export","AI 양식 적용","ok",`${r.journal||""} ${S.format.paper} · ${S.format.font} ${S.format.size}pt`);await flush();toast("AI가 파악한 양식을 적용했습니다. 되돌리려면 '양식 바꾸기 전으로 되돌리기'를 누르세요.");const y=window.scrollY;render();window.scrollTo(0,y);}
+{const _v=VIEWS.write;VIEWS.write=()=>{let h=_v();if(WST==="form"&&WMODE==="write")h=h.replace('<div class="formgrid">',aifBox()+'<div class="formgrid">');return h;};}
+{const _b=BIND.write;BIND.write=()=>{_b();if(WST!=="form")return;const rer=()=>{const y=window.scrollY;render();window.scrollTo(0,y);};
+  const fi=$("#aif_files");if(fi)fi.onchange=()=>{AIF.files=[...fi.files].slice(0,3);const n=$("#aif_fn");if(n)n.textContent=AIF.files.map(f=>f.name).join(", ");};
+  const ru=$("#aif_rules");if(ru)ru.oninput=()=>{AIF.rules=ru.value;};
+  const go2=$("#aif_run");if(go2)go2.onclick=async()=>{AIF.busy=true;go2.disabled=true;AIF.msg="읽는 중…";admRefreshAIF();try{S.aiFmt=await aiReadFormat();AIF.msg="파악했습니다. 아래 표와 미리보기로 확인하세요.";await flush();}catch(e){AIF.msg="실패: "+e.message;logSync("export","AI 양식 파악","error",e.message);}AIF.busy=false;rer();};
+  const pv=$("#aif_prev");if(pv)pv.onclick=aifPreview;const ap=$("#aif_apply");if(ap)ap.onclick=aifApply;const dr=$("#aif_drop");if(dr)dr.onclick=async()=>{S.aiFmt=null;await flush();rer();};}}
+/* AI가 읽은 세부 배치를 학술지형 틀에 반영 */
+{const _j=journalize;journalize=function(m){_j(m);const a=(S.format||{}).ai;if(!a)return;const B=m.blocks;
+  B.forEach(b=>{if(b.type==="heading"&&b.level===2&&b.num&&a.sub_dot===false)b.num=b.num.replace(/\.\s*$/," ");
+    if(b.type==="fronthead"&&b.refsHead&&a.ref_heading)b.text=a.ref_heading;
+    if(b.type==="para"&&b.cls==="kw"&&a.keywords_label){b.runs=b.runs.map(r=>r.t!==undefined?{t:r.t.replace(/^(【Key words】|주제어:)\s*/,a.keywords_label+" ")}:r);}});
+  const t=B.find(b=>b.type==="title");if(t&&a.author_spaced===false){const A=authorsOf().filter(x=>x.name.trim());if(A.length)t.author=A.map(x=>x.name.trim()+(x.role==="교신저자"?"**":"")).join(" · ");}
+  if(t&&a.journal&&!t.journal)t.journal=`『${a.journal}』`;
+  if(a.author_info_end===false){for(let i=B.length-1;i>=0;i--)if(B[i].cls&&/^auinfo|^gap$/.test(B[i].cls))B.splice(i,1);}};}
+{const _p=printHtml;printHtml=function(model){let h=_p(model);const f=S.format||{},a=f.ai;if(f.layout!=="journal"||!a)return h;
+  return h.replace("</style>",`.tp .meta p{text-align:${a.author_align||"right"}}.tp .title{text-align:${a.title_align||"center"}}</style>`);};}
 
 /* ---------- 시작 ---------- */
 (async()=>{
