@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/health", "destination": "/api/kci?route=health" },
-    { "source": "/api/kci/:action", "destination": "/api/kci?route=:action" }
+    { "source": "/api/kci/:action", "destination": "/api/kci?route=:action" },
+    { "source": "/api/admin/:action", "destination": "/api/admin?route=:action" }
   ]
 }

@@ -829,6 +829,13 @@ body:not(.homemode) .app{zoom:.9}
 .ws-len .typecards{margin:12px 0}.lentable .absrow td{background:#F7F9FF}.lentable .unit select{width:84px;margin-left:4px}.lentable input{width:80px}
 .lenc{margin:4px 0 8px;font-size:12px;color:var(--ink3,#5b6478)}.lenc .tag{margin-left:4px}
 .rolechip{display:inline-block;border:0!important;margin-top:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}.rolechip.rc-topic{background:#E3F6EA;color:#1F7A45}.rolechip.rc-ref{background:#EEF2FA;color:#4A5875}
+.admnotice{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;padding:10px 18px;background:#E8F0FF;color:#1E3A8A;font-size:14px;border-bottom:1px solid #cfdcf7}.admnotice span{flex:1}.admnotice.warn{background:#FFF1E0;color:#8A4B08;border-color:#f3d3a8}.admnotice.inline{position:static;border:1px solid #cfdcf7;border-radius:12px;margin:8px 0 14px}.admnotice small{opacity:.7}
+#adm_block{position:fixed;inset:0;z-index:200;background:rgba(236,241,250,.96);display:grid;place-items:center;padding:16px}.admblock-card{background:#fff;border-radius:20px;padding:32px;max-width:460px;text-align:center;box-shadow:0 20px 50px rgba(30,50,90,.15)}
+#adm_panel{position:fixed;inset:0;z-index:150;background:rgba(20,30,55,.35);overflow:auto;padding:28px 16px}.admwrap{max-width:1180px;margin:0 auto;background:var(--bg,#F3F6FC);border-radius:22px;padding:24px;box-shadow:0 24px 60px rgba(20,30,60,.25)}
+.admtabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}.admtabs button{border:0;background:#fff;border-radius:999px;padding:8px 16px;font:inherit;cursor:pointer;color:#475569}.admtabs button.on{background:#2350C8;color:#fff;font-weight:600}
+.admbody{background:#fff;border-radius:16px;padding:18px}.admstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.admstats div{background:#F5F8FF;border-radius:14px;padding:12px 14px}.admstats b{display:block;font-size:22px;color:#1E3A8A}.admstats span{font-size:12px;color:#64748b}
+.admtable{overflow-x:auto}.admu{display:flex;gap:10px;align-items:center;min-width:200px}.admu img,.admu i{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;background:#E2ECFF;font-style:normal;font-weight:700;color:#2350C8}.admu span{display:block;font-size:12px;color:#64748b}
+.admact{white-space:nowrap}.admtable th,.admtable .tag,.admtable td:nth-child(2),.admtable td:nth-child(3){white-space:nowrap}.admact .btn{margin:2px}.admmode{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:8px 0}.tag.bad{background:#FDE8E8;color:#B42318}.tag.good{background:#E3F6EA;color:#1F7A45}.pm-admin{color:#2350C8!important;font-weight:600}
 </style>
 </head>
 <body>
@@ -3555,7 +3562,7 @@ function profileMenu(anchor){document.querySelectorAll(".pmenu").forEach(e=>e.re
   m.querySelector('[data-pm="profile"]').onclick=()=>{m.remove();profileDialog();};
   m.querySelector('[data-pm="backup"]').onclick=async()=>{m.remove();const all=[];for(const x of INDEX){const d=await dbGet("data","prj:"+x.id);if(d)all.push(d);}download(`AI-WIKI_전체백업_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({app:"AI WIKI",version:17,exported:now(),global:{model:G.model,seq:G.seq,driveClientId:G.driveClientId,driveBrowse:G.driveBrowse},projects:all},null,1),"application/json");};
   m.querySelector("#pm_restore").onchange=async e=>{const f=e.target.files[0];m.remove();if(!f)return;try{const d=JSON.parse(await f.text());const list=Array.isArray(d.projects)?d.projects:Array.isArray(d.items)?[{legacy:true,d}]:null;if(!list)throw new Error("AI WIKI 백업 파일이 아닙니다.");if(!confirm(`프로젝트 ${list.length}개를 불러올까요?`))return;for(const x of list){if(x.legacy){await migrateLegacy(JSON.stringify(x.d));continue;}await dbPut("data","prj:"+x.id,x);upsertIndex(x);}await dbPut("data","index",INDEX);toast("백업을 불러왔습니다.");goHome();}catch(err){toast("불러오지 못했습니다: "+err.message);}};
-  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}DRIVE.token=null;DRIVE.exp=0;DRIVE.user=null;AUTH=null;try{localStorage.removeItem("aiwiki_dtok");localStorage.removeItem("aiwiki_atok")}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
+  m.querySelector('[data-pm="logout"]').onclick=async()=>{m.remove();if(!confirm("로그아웃할까요? 이 브라우저의 자료는 지워지지 않습니다."))return;try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}DRIVE.token=null;DRIVE.exp=0;DRIVE.user=null;AUTH=null;try{localStorage.removeItem("aiwiki_dtok");localStorage.removeItem("aiwiki_atok");localStorage.removeItem("aiwiki_itok")}catch(e){}try{IDT=null;ADM={checked:false,pinging:false,admin:false,access:null,notice:null,store:false,email:""};["#adm_notice","#adm_block","#adm_panel"].forEach(x=>{const e=$(x);if(e)e.remove();});}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}current="home";HOME_MODE="";render();};}
 function profileDialog(){const p=G.profile||{};$("#dlgBody").innerHTML=`<h2>내 정보</h2><p class="hint">새 프로젝트를 만들 때 표지의 저자·소속과 목표 학회지에 자동으로 들어갑니다.</p>
   <label for="pf2_name">이름</label><input type="text" id="pf2_name" value="${esc(p.name||"")}"><label>이메일</label><input type="text" value="${esc(p.email||"(로그인 없이 사용 중)")}" disabled>
   <label for="pf2_affil">소속</label><input type="text" id="pf2_affil" value="${esc(p.affil||"")}" placeholder="예: 한국외국어대학교 대학원 ○○학과"><label for="pf2_journal">목표 학회지·학교</label><input type="text" id="pf2_journal" value="${esc(p.journal||"")}" placeholder="예: 한국동남아학회 『동남아시아연구』">
@@ -3594,7 +3601,7 @@ async function googleLogin(btn){
   if(btn){btn.disabled=true;btn.classList.add("busy");}
   try{await loadGIS();
     const r=await new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:"openid email profile",callback:x=>x&&x.error?rej(new Error(x.error)):res(x),error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"로그인 창을 닫았습니다.":"로그인 오류: "+((e&&(e.message||e.type))||"알 수 없음")))});tc.requestAccessToken({prompt:"select_account"});});
-    const u=await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+r.access_token}})).json();
+    const u=await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+r.access_token}})).json();try{saveAuth(r.access_token,r.expires_in);ADM.checked=false;}catch(e){}
     if(!u||!u.email)throw new Error("구글 계정 정보를 받지 못했습니다.");
     G.profile=Object.assign({},G.profile||{},{name:u.name||u.email,email:u.email,picture:u.picture||"",sub:u.sub,login:"google",at:now()});await dbPut("data","global",G);
     toast(`${G.profile.name}님, 환영합니다.`);current="home";HOME_MODE="";render();}
@@ -3817,7 +3824,7 @@ googleLogin=async function(btn){
   if(btn){btn.disabled=true;btn.classList.add("busy");}
   try{await loadGIS();G.driveClientId=G.driveClientId||cid;
     const r=await new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:"openid email profile "+SCOPE_FILE+(G.driveBrowse?" "+SCOPE_READ:""),callback:x=>x&&x.error?rej(new Error(x.error)):res(x),error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"로그인 창을 닫았습니다.":"로그인 오류: "+((e&&(e.message||e.type))||"알 수 없음")))});tc.requestAccessToken({prompt:"select_account"});});
-    const u=await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+r.access_token}})).json();
+    const u=await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+r.access_token}})).json();try{saveAuth(r.access_token,r.expires_in);ADM.checked=false;}catch(e){}
     if(!u||!u.email)throw new Error("구글 계정 정보를 받지 못했습니다.");
     G.profile=Object.assign({},G.profile||{},{name:u.name||u.email,email:u.email,picture:u.picture||"",sub:u.sub,login:"google",at:now()});
     const granted=!window.google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(r,SCOPE_FILE);
@@ -4954,6 +4961,104 @@ const _pj46=parseJSON;parseJSON=function(t){try{return _pj46(t);}catch(e){const 
     if(ch==='"')inS=true;else if(ch==="{"||ch==="[")st.push(ch);else if(ch==="}"||ch==="]"){st.pop();out+=ch;if(!st.length)break;continue;}out+=ch;}
   if(esc)out=out.slice(0,-1);if(inS)out+='"';out=out.replace(/,\s*$/,"").replace(/:\s*$/,':""');while(st.length)out+=st.pop()==="{"?"}":"]";
   try{return JSON.parse(out.replace(/,\s*([}\]])/g,"$1"));}catch(e2){throw new Error("AI 응답이 중간에 끊겼습니다. 다시 눌러 주세요.");}}};
+/* ===== p47: 관리자 모드 · 로그인 기록 · 공지 · 접근 제한 ===== */
+const ITK="aiwiki_itok";let IDT=(()=>{try{const d=JSON.parse(localStorage.getItem(ITK)||"null");return d&&d.exp>Date.now()+30000?d:null;}catch(e){return null;}})();
+const _ogc47=onGoogleCredential;onGoogleCredential=async function(resp){try{const c=parseJwt(resp.credential);IDT={t:resp.credential,exp:(c.exp||0)*1000};localStorage.setItem(ITK,JSON.stringify(IDT));}catch(e){}ADM.checked=false;return _ogc47(resp);};
+let ADM={checked:false,pinging:false,admin:false,access:null,notice:null,store:false,email:""};
+async function admFetch(route,{method="GET",body,interactive=false}={}){
+  const h={"X-AIWIKI":"1","Content-Type":"application/json"};
+  if(AUTH&&AUTH.exp>Date.now()+30000)h.Authorization="Bearer "+AUTH.t;
+  else if(IDT&&IDT.exp>Date.now()+30000)h["X-Id-Token"]=IDT.t;
+  else if(interactive)h.Authorization="Bearer "+await ensureAuthToken();
+  else throw Object.assign(new Error("로그인 확인이 필요합니다."),{kind:"notoken"});
+  let r;try{r=await fetch("/api/admin/"+route,{method,headers:h,body:body?JSON.stringify(body):undefined,cache:"no-store"});}catch(e){throw new Error("서버에 연결하지 못했습니다.");}
+  const d=await r.json().catch(()=>({ok:false,error:r.status===404?"관리자 서버 기능이 아직 배포되지 않았습니다(api/admin.js, vercel.json).":"서버 응답 오류 "+r.status}));
+  if(!r.ok||!d.ok){const e=new Error(d.error||("오류 "+r.status));e.kind=d.kind;e.status=r.status;if(r.status===401&&AUTH&&h.Authorization){AUTH=null;try{localStorage.removeItem(ATK);}catch(x){}}throw e;}
+  return d;}
+async function admPing(interactive){if(!IS_DEPLOY||!(G.profile&&G.profile.login==="google")||ADM.pinging)return;ADM.pinging=true;
+  try{const p=G.profile;const d=await admFetch("ping",{method:"POST",body:{name:p.name||"",picture:p.picture||""},interactive});
+    ADM=Object.assign(ADM,{checked:true,admin:!!d.admin,access:d.access,notice:d.notice,store:d.store,email:d.email});admApply();}
+  catch(e){if(interactive)throw e;}finally{ADM.pinging=false;}}
+function admApply(){
+  let n=$("#adm_notice");const N=ADM.notice;let seen="";try{seen=localStorage.getItem("aiwiki_notice_seen")||"";}catch(e){}
+  if(N&&N.text&&seen!==N.at){if(!n){n=document.createElement("div");n.id="adm_notice";n.setAttribute("role","status");document.body.prepend(n);}
+    n.className="admnotice "+(N.level==="warn"?"warn":"");n.innerHTML=`<b>${N.level==="warn"?"중요 공지":"공지"}</b><span>${esc(N.text)}</span><button class="btn sm" id="adm_nx" aria-label="공지 닫기">닫기</button>`;
+    $("#adm_nx").onclick=()=>{try{localStorage.setItem("aiwiki_notice_seen",N.at);}catch(e){}n.remove();};}
+  else if(n)n.remove();
+  let b=$("#adm_block");const A=ADM.access;
+  if(A&&!A.ok&&!ADM.admin){if(!b){b=document.createElement("div");b.id="adm_block";document.body.appendChild(b);}
+    b.innerHTML=`<div class="admblock-card" role="alertdialog" aria-labelledby="adm_bh"><h2 id="adm_bh">${A.reason==="blocked"?"사용이 제한된 계정입니다":"관리자 승인을 기다리고 있습니다"}</h2>
+      <p>${esc(G.profile.email||"")}</p><p class="hint">${A.reason==="blocked"?"관리자가 이 계정의 AI WIKI 사용을 제한했습니다.":"이 앱은 관리자가 허용한 계정만 쓸 수 있습니다. 관리자가 허용하면 새로 고침 후 바로 쓸 수 있습니다."} 문의: long98@hufs.ac.kr</p>
+      <div class="row" style="justify-content:center;gap:8px"><button class="btn" id="adm_bre">다시 확인</button><button class="btn" id="adm_bout">다른 계정으로 로그인</button></div></div>`;
+    $("#adm_bre").onclick=async()=>{ADM.checked=false;try{await admPing(true);}catch(e){toast(e.message);}if(!ADM.access||ADM.access.ok)toast("사용할 수 있습니다.");};
+    $("#adm_bout").onclick=async()=>{AUTH=null;IDT=null;try{localStorage.removeItem(ATK);localStorage.removeItem(ITK);localStorage.removeItem("aiwiki_dtok");}catch(e){}G.profile=null;await dbPut("data","global",G);if(S){await flush();S=null;}b.remove();ADM={checked:false,pinging:false,admin:false,access:null,notice:null,store:false,email:""};current="home";HOME_MODE="";render();};}
+  else if(b)b.remove();}
+const _render47=render;render=function(){const r=_render47.apply(this,arguments);try{if(IS_DEPLOY&&G.profile&&G.profile.login==="google"&&(!ADM.checked||ADM.email!==String(G.profile.email||"").toLowerCase()))setTimeout(()=>admPing(false),0);}catch(e){}return r;};
+
+/* 프로필 메뉴에 관리자 모드 */
+const _pm47=profileMenu;profileMenu=function(anchor){_pm47(anchor);const m=document.querySelector(".pmenu");if(!m||!IS_DEPLOY||!(G.profile&&G.profile.login==="google"))return;if(ADM.checked&&!ADM.admin)return;
+  const btn=document.createElement("button");btn.setAttribute("role","menuitem");btn.className="pm-admin";btn.textContent=ADM.admin?"관리자 모드":"관리자 모드(계정 확인)";
+  const out=m.querySelector('[data-pm="logout"]');m.insertBefore(btn,out);
+  btn.onclick=async()=>{m.remove();if(!ADM.checked){try{await admPing(true);}catch(e){return toast("확인하지 못했습니다: "+e.message);}}if(!ADM.admin)return toast("관리자 계정이 아닙니다.");openAdmin();};};
+
+/* ---------- 관리자 화면 ---------- */
+const AD={tab:"users",q:"",users:null,mode:"open",notice:{},status:null,log:null,err:""};
+const fdt=s=>{if(!s)return "-";const d=new Date(s);return isNaN(d)?"-":d.toLocaleString("ko-KR",{year:"2-digit",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});};
+function admStatusTag(u){if(u.admin)return '<span class="tag">관리자</span>';if(u.blocked==="1")return '<span class="tag bad">차단</span>';if(u.allowed)return '<span class="tag good">허용</span>';if(u.status==="pending"||(AD.mode==="allow"))return '<span class="tag warn">승인 대기</span>';return '<span class="tag">사용 중</span>';}
+async function admLoad(which){AD.err="";try{
+  if(which==="users"||which==="notice"||which==="access"){const d=await admFetch("users",{interactive:true});AD.users=d.users;AD.mode=d.mode;AD.notice=d.notice||{};}
+  if(which==="status"){AD.status=await admFetch("status",{interactive:true});}
+  if(which==="log"){AD.log=(await admFetch("log",{interactive:true})).log;}}catch(e){AD.err=e.message;}}
+function admBody(){if(AD.err)return `<div class="notice">${esc(AD.err)}</div>${/저장소/.test(AD.err)?admStoreHelp():""}`;
+  if(AD.tab==="users"){if(!AD.users)return '<p class="hint">불러오는 중…</p>';const q=AD.q.trim().toLowerCase();const L=AD.users.filter(u=>!q||(u.email+" "+(u.name||"")+" "+(u.note||"")).toLowerCase().includes(q));
+    const tot=AD.users.length,wk=AD.users.filter(u=>u.last&&Date.now()-Date.parse(u.last)<7*864e5).length,bl=AD.users.filter(u=>u.blocked==="1").length,kci=AD.users.reduce((a,u)=>a+u.kci,0);
+    return `<div class="admstats"><div><b>${tot}</b><span>전체 사용자</span></div><div><b>${wk}</b><span>최근 7일 사용</span></div><div><b>${bl}</b><span>차단</span></div><div><b>${kci.toLocaleString()}</b><span>KCI 검색 합계</span></div></div>
+    <div class="row" style="justify-content:space-between;margin:12px 0"><input type="search" id="ad_q" placeholder="이름·이메일·메모 검색" value="${esc(AD.q)}" style="max-width:280px" aria-label="사용자 검색">
+      <span class="row"><input type="text" inputmode="email" autocomplete="off" id="ad_new" placeholder="허용할 구글 계정 이메일" style="width:240px" aria-label="허용할 계정"><button class="btn sm" id="ad_add">허용 목록에 추가</button></span></div>
+    <div class="admtable"><table class="ptable"><thead><tr><th>사용자</th><th>처음 로그인</th><th>마지막 로그인</th><th>로그인</th><th>KCI 검색</th><th>상태</th><th>메모</th><th>관리</th></tr></thead><tbody>
+    ${L.map(u=>`<tr><td><div class="admu">${u.picture?`<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`:`<i>${esc((u.name||u.email).slice(0,1))}</i>`}<div><b>${esc(u.name||"(이름 없음)")}</b><span>${esc(u.email)}</span></div></div></td><td>${fdt(u.first)}</td><td>${fdt(u.last)}</td><td>${u.logins}</td><td>${u.kci}</td><td>${admStatusTag(u)}</td><td class="hint">${esc(u.note||"")}</td>
+      <td class="admact">${u.admin?'<span class="hint">-</span>':`${u.blocked==="1"?`<button class="btn sm" data-ua="unblock" data-ue="${esc(u.email)}">차단 해제</button>`:`<button class="btn sm danger" data-ua="block" data-ue="${esc(u.email)}">차단</button>`}${u.allowed?`<button class="btn sm" data-ua="disallow" data-ue="${esc(u.email)}">허용 취소</button>`:`<button class="btn sm" data-ua="allow" data-ue="${esc(u.email)}">허용</button>`}<button class="btn sm" data-ua="note" data-ue="${esc(u.email)}">메모</button><button class="btn sm" data-ua="remove" data-ue="${esc(u.email)}" title="기록만 지웁니다. 다시 로그인하면 새로 기록됩니다">기록 삭제</button>`}</td></tr>`).join("")||`<tr><td colspan="8" class="hint">${tot?"검색 결과가 없습니다.":"아직 로그인 기록이 없습니다."}</td></tr>`}</tbody></table></div>
+    <p class="hint">연구 자료(논문·원고·초록)는 관리자에게 보이지 않습니다. 각 사용자의 브라우저와 구글 드라이브에만 저장됩니다.</p>`;}
+  if(AD.tab==="notice"){const N=AD.notice||{};return `<p class="hint">모든 사용자의 화면 위쪽에 공지가 뜹니다. 사용자가 닫으면 새 공지를 올릴 때까지 다시 뜨지 않습니다.</p>
+    ${N.text?`<div class="admnotice inline ${N.level==="warn"?"warn":""}"><b>지금 공지</b><span>${esc(N.text)}</span><small>${fdt(N.at)}</small></div>`:'<p class="hint">지금 올라간 공지가 없습니다.</p>'}
+    <label for="ad_nt">공지 내용 (300자 이내)</label><textarea id="ad_nt" rows="3" maxlength="300" placeholder="예: 11월 30일 오후 10시~11시 점검이 있습니다.">${esc(N.text||"")}</textarea>
+    <div class="row" style="margin-top:8px"><label class="radio"><input type="radio" name="ad_lv" value="info" ${N.level!=="warn"?"checked":""}> 일반</label><label class="radio"><input type="radio" name="ad_lv" value="warn" ${N.level==="warn"?"checked":""}> 중요(주황색)</label>
+      <span style="flex:1"></span><button class="btn" id="ad_noff" ${N.text?"":"disabled"}>공지 내리기</button><button class="btn primary" id="ad_non">공지 올리기</button></div>`;}
+  if(AD.tab==="access"){const al=(AD.users||[]).filter(u=>u.allowed).length;return `<p class="hint">누가 AI WIKI를 쓸 수 있는지 정합니다. 관리자 계정은 항상 쓸 수 있습니다.</p>
+    <label class="radio admmode"><input type="radio" name="ad_mode" value="open" ${AD.mode!=="allow"?"checked":""}><span><b>누구나</b> — 구글 로그인한 사람은 모두 씁니다. 차단한 계정만 막습니다.</span></label>
+    <label class="radio admmode"><input type="radio" name="ad_mode" value="allow" ${AD.mode==="allow"?"checked":""}><span><b>허용한 계정만</b> — 사용자 탭에서 <b>허용</b>한 계정(지금 ${al}명)만 씁니다. 처음 로그인한 사람은 '승인 대기'로 보이고, 관리자가 허용하면 쓸 수 있습니다.</span></label>
+    <div class="row" style="margin-top:10px"><button class="btn primary" id="ad_msave">저장</button></div>
+    <p class="hint" style="margin-top:12px">막힌 계정은 앱 화면이 잠기고, 서버를 쓰는 KCI 검색이 거절됩니다. Vercel 환경변수 ALLOWED_EMAILS에 적은 계정도 허용 계정으로 봅니다.</p>`;}
+  if(AD.tab==="status"){const s=AD.status;if(!s)return '<p class="hint">불러오는 중…</p>';const ok=(v,t)=>`<tr><th>${t}</th><td>${v?'<span class="tag good">정상</span>':'<span class="tag bad">없음</span>'}</td></tr>`;
+    return `<table class="kv">${ok(s.env.KCI_KEY,"KCI 인증키 (KCI_KEY)")}${ok(s.env.GOOGLE_CLIENT_ID,"구글 로그인 ID (GOOGLE_CLIENT_ID)")}<tr><th>관리자 계정 (ADMIN_EMAILS)</th><td>${s.env.ADMIN_EMAILS}개 · 지금 ${esc(s.me)}</td></tr><tr><th>허용 계정 (ALLOWED_EMAILS)</th><td>${s.env.ALLOWED_EMAILS?s.env.ALLOWED_EMAILS+"개":"설정 안 함"}</td></tr>
+      <tr><th>사용자 기록 저장소</th><td>${s.store.ok?'<span class="tag good">연결됨</span>':s.store.set?`<span class="tag bad">오류</span> ${esc(s.store.error)}`:'<span class="tag bad">연결 안 됨</span>'} · 기록된 사용자 ${s.users}명</td></tr>
+      <tr><th>배포 버전</th><td>${esc(s.commit||"-")} ${s.region?"· "+esc(s.region):""}</td></tr><tr><th>KCI 실제 검색</th><td><button class="btn sm" id="ad_kci">지금 시험</button> <span id="ad_kcir" class="hint"></span></td></tr></table>${s.store.ok?"":admStoreHelp()}`;}
+  if(AD.tab==="log"){if(!AD.log)return '<p class="hint">불러오는 중…</p>';return AD.log.length?`<table class="ptable"><thead><tr><th>시각</th><th>내용</th><th>대상</th><th>한 사람</th><th>비고</th></tr></thead><tbody>${AD.log.map(x=>`<tr><td>${fdt(x.at)}</td><td>${esc(x.type)}</td><td>${esc(x.target)}</td><td>${esc(x.by)}</td><td class="hint">${esc(x.detail)}</td></tr>`).join("")}</tbody></table>`:'<p class="hint">기록이 없습니다.</p>';}
+  return "";}
+function admStoreHelp(){return `<div class="notice" style="margin-top:10px"><b>저장소 연결 방법</b><ol class="steps"><li>Vercel → ai-wiki 프로젝트 → <b>Storage</b> → <b>Create Database</b> → <b>Upstash for Redis</b>(무료 플랜) 선택</li><li>이 프로젝트에 연결(Connect) — 환경변수 KV_REST_API_URL·KV_REST_API_TOKEN이 자동으로 들어갑니다</li><li><b>Deployments → 최신 배포 … → Redeploy</b></li></ol></div>`;}
+async function openAdmin(tab){AD.tab=tab||AD.tab;let o=$("#adm_panel");if(!o){o=document.createElement("div");o.id="adm_panel";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-labelledby","adm_h");document.body.appendChild(o);document.addEventListener("keydown",admEsc);}
+  const T=[["users","사용자"],["notice","공지"],["access","접근 방식"],["status","상태 점검"],["log","기록"]];
+  const draw=()=>{o.innerHTML=`<div class="admwrap"><div class="row" style="justify-content:space-between"><div><h2 id="adm_h" style="margin:0">관리자 모드</h2><p class="hint" style="margin:4px 0 0">${esc(ADM.email)} · 사용자·공지·접근을 관리합니다</p></div><span class="row"><button class="btn sm" id="ad_re">새로 고침</button><button class="btn sm" id="ad_x">닫기</button></span></div>
+    <div class="admtabs" role="tablist">${T.map(([k,v])=>`<button role="tab" aria-selected="${AD.tab===k}" class="${AD.tab===k?"on":""}" data-adt="${k}">${v}</button>`).join("")}</div><div class="admbody">${admBody()}</div></div>`;bind();};
+  const reload=async()=>{AD.err="";if(AD.tab==="users"||AD.tab==="notice"||AD.tab==="access")AD.users=AD.users||null;draw();await admLoad(AD.tab);draw();};
+  const act=async(route,body,msg)=>{try{await admFetch(route,{method:"POST",body,interactive:true});if(msg)toast(msg);await admLoad(route==="user"?"users":AD.tab);}catch(e){toast("실패: "+e.message);}draw();};
+  const bind=()=>{$("#ad_x").onclick=closeAdmin;$("#ad_re").onclick=reload;o.querySelectorAll("[data-adt]").forEach(b=>b.onclick=async()=>{AD.tab=b.dataset.adt;draw();await admLoad(AD.tab);draw();});
+    const q=$("#ad_q");if(q)q.oninput=()=>{AD.q=q.value;const p=q.selectionStart;draw();const n=$("#ad_q");n.focus();n.setSelectionRange(p,p);};
+    const ad=$("#ad_add");if(ad)ad.onclick=()=>{const e=$("#ad_new").value.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))return toast("이메일 형식이 아닙니다.");act("user",{email:e,action:"allow"},`${e}을(를) 허용했습니다.`);};
+    o.querySelectorAll("[data-ua]").forEach(b=>b.onclick=()=>{const a=b.dataset.ua,e=b.dataset.ue;
+      if(a==="note"){const u=AD.users.find(x=>x.email===e)||{};const v=prompt(`${e} 메모`,u.note||"");if(v===null)return;return act("user",{email:e,action:"note",note:v},"메모를 저장했습니다.");}
+      if(a==="block"&&!confirm(`${e} 계정을 차단할까요?\n앱 화면이 잠기고 KCI 검색이 막힙니다.`))return;
+      if(a==="remove"&&!confirm(`${e}의 로그인 기록을 지울까요? (차단·허용 상태도 지워집니다)`))return;
+      act("user",{email:e,action:a},{block:"차단했습니다.",unblock:"차단을 풀었습니다.",allow:"허용했습니다.",disallow:"허용을 취소했습니다.",remove:"기록을 지웠습니다."}[a]);});
+    const on=$("#ad_non");if(on)on.onclick=()=>{const t=$("#ad_nt").value.trim();if(!t)return toast("공지 내용을 쓰세요.");const lv=(o.querySelector('[name="ad_lv"]:checked')||{}).value||"info";act("notice",{text:t,level:lv},"공지를 올렸습니다.").then(()=>{ADM.notice={text:t,level:lv,at:new Date().toISOString()};});};
+    const off=$("#ad_noff");if(off)off.onclick=()=>{if(confirm("공지를 내릴까요?"))act("notice",{text:""},"공지를 내렸습니다.").then(()=>{ADM.notice=null;admApply();});};
+    const ms=$("#ad_msave");if(ms)ms.onclick=()=>{const v=(o.querySelector('[name="ad_mode"]:checked')||{}).value;if(v==="allow"&&!confirm("허용한 계정만 쓰게 할까요? 허용하지 않은 사용자는 다음 접속부터 화면이 잠깁니다."))return;act("settings",{mode:v},v==="allow"?"허용한 계정만 쓰도록 바꿨습니다.":"누구나 쓰도록 바꿨습니다.");};
+    const kc=$("#ad_kci");if(kc)kc.onclick=async()=>{const r=$("#ad_kcir");r.textContent="시험 중…";try{const d=await api("/api/kci/test");r.textContent=`정상 — '베트남' 검색 ${Number(d.total||0).toLocaleString()}건`;}catch(e){r.textContent="실패: "+e.message;}};
+    const f=o.querySelector("[data-adt].on");if(f&&!o.contains(document.activeElement))f.focus();};
+  draw();await admLoad(AD.tab);draw();}
+function admEsc(e){if(e.key==="Escape"&&$("#adm_panel"))closeAdmin();}
+function closeAdmin(){const o=$("#adm_panel");if(o)o.remove();document.removeEventListener("keydown",admEsc);admApply();}
+
 /* ---------- 시작 ---------- */
 (async()=>{
   $("#view").innerHTML=`<p class="hint">불러오는 중…</p>`;
