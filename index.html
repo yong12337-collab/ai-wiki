@@ -836,6 +836,7 @@ body:not(.homemode) .app{zoom:.9}
 .admbody{background:#fff;border-radius:16px;padding:18px}.admstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.admstats div{background:#F5F8FF;border-radius:14px;padding:12px 14px}.admstats b{display:block;font-size:22px;color:#1E3A8A}.admstats span{font-size:12px;color:#64748b}
 .admtable{overflow-x:auto}.admu{display:flex;gap:10px;align-items:center;min-width:200px}.admu img,.admu i{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;background:#E2ECFF;font-style:normal;font-weight:700;color:#2350C8}.admu span{display:block;font-size:12px;color:#64748b}
 .admact{white-space:nowrap}.admtable th,.admtable .tag,.admtable td:nth-child(2),.admtable td:nth-child(3){white-space:nowrap}.admact .btn{margin:2px}.admmode{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #e2e8f0;border-radius:12px;margin:8px 0}.tag.bad{background:#FDE8E8;color:#B42318}.tag.good{background:#E3F6EA;color:#1F7A45}.pm-admin{color:#2350C8!important;font-weight:600}
+.sharebox{margin-top:14px;padding:14px 16px;border-radius:14px;background:#F5F8FF;border:1px solid #DCE6FA}.sharebox label{display:block;margin-bottom:8px}.sharebox .hint{margin:8px 0 0}.linkbtn{border:0;background:none;padding:0;color:#2350C8;font:inherit;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -5058,6 +5059,46 @@ async function openAdmin(tab){AD.tab=tab||AD.tab;let o=$("#adm_panel");if(!o){o=
   draw();await admLoad(AD.tab);draw();}
 function admEsc(e){if(e.key==="Escape"&&$("#adm_panel"))closeAdmin();}
 function closeAdmin(){const o=$("#adm_panel");if(o)o.remove();document.removeEventListener("keydown",admEsc);admApply();}
+
+/* ===== p48: 구글 드라이브 공유 링크로 불러오기 ===== */
+function parseDriveLink(s){s=String(s||"").trim();if(!s)return null;let u;try{u=new URL(s);}catch(e){return /^[\w-]{20,}$/.test(s)?{id:s,kind:"any"}:null;}
+  if(!/(^|\.)google\.com$/.test(u.hostname))return null;const rk=u.searchParams.get("resourcekey")||"";let m;
+  if((m=u.pathname.match(/\/folders\/([\w-]{10,})/)))return {id:m[1],kind:"folder",rk};
+  if((m=u.pathname.match(/\/(document|spreadsheets|presentation|forms)\/d\/([\w-]{10,})/)))return {id:m[2],kind:m[1],rk};
+  if((m=u.pathname.match(/\/file\/d\/([\w-]{10,})/)))return {id:m[1],kind:"file",rk};
+  const q=u.searchParams.get("id");if(q&&/^[\w-]{10,}$/.test(q))return {id:q,kind:"any",rk};return null;}
+let DRV_SRC=null; // {name, link, kind}
+const SHARE_HELP="링크를 연 계정에 공유되어 있거나, 공유 설정이 '링크가 있는 모든 사용자'여야 합니다.";
+async function driveFromLink(raw,prog){const p=parseDriveLink(raw);if(!p)throw new Error("구글 드라이브 링크가 아닙니다. 드라이브에서 '공유 → 링크 복사'한 주소를 붙여 넣으세요.");
+  if(!driveOn()){prog("구글 드라이브에 연결하는 중…");G.driveBrowse=true;await dbPut("data","global",G);await driveConnect();}
+  if(!hasRead()){prog("드라이브 읽기 권한을 받는 중…");G.driveBrowse=true;await dbPut("data","global",G);if(!(await ensureReadScope()))throw new Error("드라이브 읽기 권한이 있어야 공유 링크를 열 수 있습니다.");}
+  prog("링크 확인 중…");const H=p.rk?{headers:{"X-Goog-Drive-Resource-Keys":`${p.id}/${p.rk}`}}:{};
+  let meta;try{meta=await dfetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(p.id)}?fields=${encodeURIComponent(DFIELDS+",resourceKey,owners(displayName)")}&supportsAllDrives=true`,H);}
+  catch(e){throw new Error(/HTTP 404|HTTP 403/.test(e.message)?`이 링크의 파일·폴더를 열 수 없습니다. ${SHARE_HELP}`:e.message);}
+  if(meta.mimeType===FOLDER_MIME){prog(`「${meta.name}」 폴더의 파일을 찾는 중…`);DRV_FILES=await driveListDeep(meta.id);DRV_SRC={name:meta.name,link:meta.webViewLink||raw,kind:"folder",id:meta.id};S.driveSel=[];
+    logSync("drive","공유 링크","ok",`폴더 「${meta.name}」 ${DRV_FILES.length}개 파일`);return {folder:true,meta,n:DRV_FILES.length};}
+  DRV_FILES=[meta];DRV_SRC={name:meta.name,link:meta.webViewLink||raw,kind:"file",id:meta.id};S.driveSel=[meta.id];logSync("drive","공유 링크","ok",`파일 「${meta.name}」`);return {folder:false,meta,n:1};}
+/* 하위 폴더 목록도 공유 드라이브까지 */
+driveList=async function(q,fields="files("+DFIELDS+"),nextPageToken"){let out=[],pt="";do{const d=await dfetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&pageSize=200&orderBy=folder,name&supportsAllDrives=true&includeItemsFromAllDrives=true${pt?"&pageToken="+pt:""}`);out=out.concat(d.files||[]);pt=d.nextPageToken||"";}while(pt&&out.length<1000);return out;};
+/* 구글 문서·슬라이드는 PDF로, 스프레드시트는 CSV로 받아 원문을 읽음 */
+const _df48=driveFile;driveFile=async function(rec){const mt=rec.mime||"";
+  if(/^application\/vnd\.google-apps\.(document|presentation|drawing)$/.test(mt)){const r=await dfetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(rec.drive_id)}/export?mimeType=application%2Fpdf`,{raw:true});return new File([await r.blob()],String(rec.name).replace(/\.pdf$/i,"")+".pdf",{type:"application/pdf"});}
+  if(mt==="application/vnd.google-apps.spreadsheet"){const r=await dfetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(rec.drive_id)}/export?mimeType=text%2Fcsv`,{raw:true});return new File([await r.blob()],String(rec.name)+".csv",{type:"text/csv"});}
+  return _df48(rec);};
+function linkBox(){const has=DRV_SRC;return `<div class="sharebox"><label for="dg_share"><b>공유 링크로 불러오기</b> <span class="hint">— 드라이브에서 <b>공유 → 링크 복사</b>한 파일·폴더 주소를 붙여 넣으세요. 다른 사람이 공유한 자료도 됩니다.</span></label>
+  <div class="row"><input type="text" id="dg_share" placeholder="https://drive.google.com/drive/folders/…  또는  …/file/d/…" style="flex:1;min-width:260px" aria-describedby="dg_shp"><button class="btn primary" id="dg_shgo">불러오기</button></div>
+  <p class="hint" id="dg_shp">${has?`지금 보는 목록: ${has.kind==="folder"?"폴더":"파일"} <a href="${esc(has.link)}" target="_blank" rel="noopener">「${esc(has.name)}」</a>${has.kind==="folder"?` · <button class="linkbtn" id="dg_shset">이 폴더를 프로젝트 폴더로 연결</button>`:""} · <button class="linkbtn" id="dg_shclr">목록 닫기</button>`:"폴더 링크는 하위 폴더 안 파일까지 보여 줍니다. 구글 문서·슬라이드는 PDF로 바꿔 원문을 읽습니다."}</p></div>`;}
+const _drvBind48=PANES.drive.bind;PANES.drive.bind=()=>{_drvBind48();const top=$("#drv_top");if(!top||!ON_HTTP||!G.driveClientId)return;
+  top.insertAdjacentHTML("beforeend",linkBox());const inp=$("#dg_share"),go2=$("#dg_shgo"),pr=$("#dg_shp");
+  const run=async()=>{const v=inp.value.trim();if(!v)return toast("공유 링크를 붙여 넣으세요.");go2.disabled=true;try{const r=await driveFromLink(v,t=>{pr.textContent=t;});
+      toast(r.folder?`「${r.meta.name}」 폴더에서 파일 ${r.n}개를 찾았습니다. 연결할 파일을 고르고 저장하세요.`:`「${r.meta.name}」 파일을 찾았습니다. 저장하면 문헌으로 등록됩니다.`);if(S.driveSave&&S.driveSave.state==="saved")S.driveSave.state="editing";}
+    catch(e){logSync("drive","공유 링크","error",e.message);toast(e.message);}go2.disabled=false;render();};
+  go2.onclick=run;inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();run();}});
+  inp.addEventListener("paste",()=>setTimeout(()=>{if(parseDriveLink(inp.value))run();},50));
+  const st=$("#dg_shset");if(st)st.onclick=async()=>{const s=S.settings;if(s.driveFolderId&&s.driveFolderId!==DRV_SRC.id&&!confirm(`프로젝트 폴더를 「${DRV_SRC.name}」(으)로 바꿀까요?\nAI 원고·자동 저장 파일이 이 폴더에 저장됩니다.`))return;
+    s.driveFolderId=DRV_SRC.id;s.driveFolderName=DRV_SRC.name;s.driveFolderLink=DRV_SRC.link;logSync("drive","프로젝트 폴더","ok",`공유 링크 폴더 "${DRV_SRC.name}" 연결`);await flush();toast("프로젝트 폴더로 연결했습니다.");render();};
+  const cl=$("#dg_shclr");if(cl)cl.onclick=()=>{DRV_SRC=null;DRV_FILES=null;render();};};
+const _dfp48=driveFilesPane;driveFilesPane=function(){_dfp48();if(!DRV_SRC)return;const b=$("#drv_files .panel b");if(b&&/프로젝트 폴더 파일/.test(b.textContent))b.textContent=`${DRV_SRC.kind==="folder"?"공유 폴더":"공유 파일"} 「${DRV_SRC.name}」 · 파일 ${DRV_FILES.filter(f=>f.mimeType!==FOLDER_MIME).length}개`;};
 
 /* ---------- 시작 ---------- */
 (async()=>{
