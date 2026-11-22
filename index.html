@@ -857,6 +857,7 @@ body:not(.homemode) .app{zoom:.9}
 .segtabs{display:inline-flex;background:#EEF2FA;border-radius:999px;padding:3px}.segtabs button{border:0;background:none;border-radius:999px;padding:6px 16px;font:inherit;cursor:pointer}.segtabs button.on{background:#2350C8;color:#fff}
 .msprev iframe{width:100%;min-height:900px;border:0;background:#fff;border-radius:10px}.mserr{margin-top:10px}.seclist li{margin:4px 0}
 @media(max-width:900px){.rvgrid,.evtotal,.evcols,.diff{grid-template-columns:1fr}.rvtoc{position:static;max-height:none}}
+.aurow{display:grid;grid-template-columns:64px 1fr 1.2fr 1.6fr 110px 1.2fr 36px;gap:8px;align-items:center;margin:8px 0}.aulab{font-weight:700;color:#1E3A8A;font-size:13px}@media(max-width:900px){.aurow{grid-template-columns:1fr 1fr}.aulab{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -2853,9 +2854,9 @@ function printHtml(model){const f=S.format,[w,h]=PAPERS[f.paper]||PAPERS.A4,[,ko
     if(b.type==="title")out.push(`<section class="tp"><h1 class="title">${esc(b.text)}</h1>${b.sub?`<p class="c">${esc(b.sub)}</p>`:""}${b.en?`<p class="c">${esc(b.en)}</p>`:""}<div class="meta">${[b.author,b.aff,b.date].filter(Boolean).map(x=>`<p class="c">${esc(x)}</p>`).join("")}</div></section>`);
     else if(b.type==="pagebreak")out.push(`<div class="pb"></div>`);
     else if(b.type==="toc")out.push(`<h2 class="front">목차</h2><ol class="toc">${heads.map(x=>`<li class="l${x.level||1}">${esc((x.num||"")+x.text)}</li>`).join("")}</ol>`);
-    else if(b.type==="fronthead"){if(b.refsHead)flushNotes();out.push(`<h2 class="front${b.refsHead?" refs":""}">${esc(b.text)}</h2>`);}
+    else if(b.type==="fronthead"){if(b.refsHead)flushNotes();out.push(`<h2 class="front${b.refsHead?" refs":""}${b.cls?" "+b.cls:""}">${esc(b.text)}</h2>`);}
     else if(b.type==="heading"){if(b.level===1)flushNotes();out.push(`<h${b.level+1} class="h${b.level}${b.level===1&&f.chapterBreak?" brk":""}">${esc((b.num||"")+b.text)}</h${b.level+1}>`);}
-    else if(b.type==="para"){b.runs.forEach(r=>{if(r.note)chNotes.push(model.notes[r.note-1]);});out.push(`<p class="${b.plain||b.bullet?"plain":"body"}${b.center?" c":""}">${runsH(b.runs)}</p>`);}
+    else if(b.type==="para"){b.runs.forEach(r=>{if(r.note)chNotes.push(model.notes[r.note-1]);});out.push(`<p class="${b.plain||b.bullet?"plain":"body"}${b.center?" c":""}${b.cls?" "+b.cls:""}">${runsH(b.runs)}</p>`);}
     else if(b.type==="table"){const cap=`<p class="cap">${esc(f.capTable.replace("{n}",b.n).replace("{t}",b.caption||""))}</p>`,tb=`<table>${b.rows.map((r,i)=>`<tr>${r.map(c=>i?`<td>${esc(c)}</td>`:`<th>${esc(c)}</th>`).join("")}</tr>`).join("")}</table>`;out.push(f.capTablePos==="below"?tb+cap:cap+tb);}
     else if(b.type==="figure")out.push(`<div class="fig">[그림 자리]</div><p class="cap">${esc(f.capFigure.replace("{n}",b.n).replace("{t}",b.caption||""))}</p>`);
     else if(b.type==="ref")out.push(`<p class="ref">${esc(b.text)}</p>`);}
@@ -5332,6 +5333,89 @@ BIND.manuscript=()=>{const rer=()=>{const y=window.scrollY;render();window.scrol
   const lk=$("#ms_lock");if(lk)lk.onclick=async()=>{S.finalMs={locked:true,at:now()};try{takeSnapshot("최종본 확정",true,"manuscript");}catch(e){}logSync("write","최종본 확정","ok","");await flush();toast("최종본을 확정했습니다. 히스토리에 남았습니다.");rer();};
   const ul=$("#ms_unlock");if(ul)ul.onclick=async()=>{S.finalMs={locked:false,at:now()};await flush();rer();};
   const o=$("#ms_out");if(o)o.onclick=()=>{WST=G.formInWrite?"out":"form";go("output");};};
+
+/* ===== p50: 양식 적용은 AI 집필 안에 고정 · 메뉴 번호 없앰 · 저자(여러 명) · 학술지형 기본 틀 ===== */
+stagesFor=function(mode){return mode==="output"?["out"]:["prep","abs","body","refs","form","final"];};
+/* 메뉴: 번호 없이 완료 표시(✓)만 */
+renderMenu=(_r=>function(){_r();document.querySelectorAll("#menu .flowno:not(.done)").forEach(x=>x.remove());})(renderMenu);
+/* 양식 적용: 옮기기 버튼 없애고 되돌리기만 */
+{const _v=VIEWS.write;VIEWS.write=()=>{try{ensurePaper();}catch(e){}let h=_v();h=h.replace(/<div class="formmove">[\s\S]*?<\/div>/,m=>{const u=/id="fm_undo"/.test(m);return u?'<div class="formmove"><span class="hint">양식을 잘못 바꿨다면 되돌릴 수 있습니다.</span><button class="btn sm" id="fm_undo">양식 바꾸기 전으로 되돌리기</button></div>':"";});
+  if(current==="output")h=h.replace(/<h1>출력<\/h1><p class="lead">[\s\S]*?<\/p>/,'<h1>출력</h1><p class="lead">최종 원고를 한글·워드·PDF·HTML로 내려받습니다. 양식은 <b>AI 집필 → 양식 적용</b>에서 정합니다.</p>');
+  else h=h.replace(/(<h1>AI 집필<\/h1>)<p class="lead">[\s\S]*?<\/p>/,'$1<p class="lead">준비 → 초록 → 전체 집필 → 참고문헌 → 양식 적용 → 논문 확인 순서로 AI 초안을 만듭니다. 다 쓰면 <b>AI 평가</b> → <b>수정·보완</b> → <b>최종 원고</b> → <b>출력</b>으로 넘어갑니다.</p>');
+  return h;};}
+G.formInWrite=true;
+
+/* ---------- 저자(여러 명) ---------- */
+const ROLES_AU=["제1저자","공동저자","교신저자","단독저자"];
+function authorsOf(){const s=S.settings;if(!Array.isArray(s.authors)||!s.authors.length){const p=G.profile||{},F=S.front||{};s.authors=[{name:F.author||p.name||"",en:"",aff:F.affiliation||p.affil||"",role:"제1저자",email:""},{name:"",en:"",aff:"",role:"교신저자",email:""}];}return s.authors;}
+function syncAuthors(){const A=authorsOf().filter(a=>a.name.trim());S.front=S.front||{};S.front.author=A.map(a=>a.name.trim()).join(" · ");S.front.affiliation=[...new Set(A.map(a=>a.aff.trim()).filter(Boolean))].join(" · ");}
+function authorsCard(){const A=authorsOf();return `<section class="card aucard"><div class="row" style="justify-content:space-between"><h2 style="margin:0">저자</h2><span class="hint">논문 첫 장의 저자 줄, 영문 초록, 맨 끝 저자 정보에 들어갑니다</span></div>
+  <div class="aulist">${A.map((a,i)=>`<div class="aurow" data-ai="${i}"><span class="aulab">저자 ${i+1}</span>
+   <input type="text" data-af="name" value="${esc(a.name)}" placeholder="이름 (예: 장용철)" aria-label="저자 ${i+1} 이름">
+   <input type="text" data-af="en" value="${esc(a.en)}" placeholder="영문 이름 (예: Jang Yongcheol)" aria-label="저자 ${i+1} 영문 이름">
+   <input type="text" data-af="aff" value="${esc(a.aff)}" placeholder="소속 (예: 한국외국어대학교 ○○학과 석사과정)" aria-label="저자 ${i+1} 소속">
+   <select data-af="role" aria-label="저자 ${i+1} 역할">${ROLES_AU.map(r=>`<option ${a.role===r?"selected":""}>${r}</option>`).join("")}</select>
+   <input type="text" data-af="email" value="${esc(a.email)}" placeholder="이메일(선택)" aria-label="저자 ${i+1} 이메일">
+   ${i>=2?`<button class="btn sm" data-audel="${i}" aria-label="저자 ${i+1} 지우기">✕</button>`:"<span></span>"}</div>`).join("")}</div>
+  <button class="btn sm" id="au_add">＋ 저자 추가</button></section>`;}
+const _setup50=VIEWS.setup;VIEWS.setup=()=>{let h=_setup50();const c=authorsCard();return /<section class="card"><h2>주제와 키워드<\/h2>/.test(h)?h.replace(/(<section class="card"><h2>주제와 키워드<\/h2>[\s\S]*?<\/section>)/,"$1"+c):h.replace(/(<p class="lead">[\s\S]*?<\/p>)/,"$1"+c);};
+const _bsetup50=BIND.setup;BIND.setup=()=>{_bsetup50();let tm;const A=authorsOf();
+  document.querySelectorAll(".aurow [data-af]").forEach(el=>{const i=+el.closest(".aurow").dataset.ai,k=el.dataset.af;el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{A[i][k]=el.value;syncAuthors();clearTimeout(tm);tm=setTimeout(()=>flush(),400);});});
+  const ad=$("#au_add");if(ad)ad.onclick=async()=>{A.push({name:"",en:"",aff:"",role:"공동저자",email:""});await flush();const y=window.scrollY;render();window.scrollTo(0,y);};
+  document.querySelectorAll("[data-audel]").forEach(b=>b.onclick=async()=>{A.splice(+b.dataset.audel,1);syncAuthors();await flush();const y=window.scrollY;render();window.scrollTo(0,y);});};
+
+/* ---------- 학술지형 기본 틀(보낸 논문 형식) ---------- */
+PAPERS["신국판 (153×225)"]=[153,225];
+const JOURNAL_FMT={paper:"신국판 (153×225)",mt:25,mb:20,ml:22,mr:22,font:"바탕",latin:"Times New Roman",size:10,line:170,indent:1,numbering:"decimal",chapterBreak:false,headCenter:false,citeMode:"inline",refStyle:"journal",toc:false,pageNum:"center",layout:"journal"};
+Object.assign(FMT_PRESETS["학술지 논문"],JOURNAL_FMT);
+function journalLine(){const s=S.settings;const j=String(s.target||(G.profile&&G.profile.journal)||"").trim();return j?`『${j.replace(/^『|』$/g,"")}』`:"";}
+const spaced=n=>/^[가-힣]{2,4}$/.test(n)?n.split("").join(" "):n;
+const _cite50=cite;cite=function(p,style){if(style!=="journal")return _cite50(p,style);const a=String(p.authors||"").trim(),y=String(p.year||"").trim(),t=String(p.title||"").trim(),j=String(p.journal||"").trim(),v=String(p.volume||"").trim(),pub=String(p.publisher||"").trim();
+  return [`${a||t}(${y||"연도 미상"}).`,a?`${t}${j?",":"."}`:"",j?`<${j}>${v?" "+v:""}${pub?", "+pub:""}.`:pub?`${pub}.`:""].filter(Boolean).join(" ");};
+const _fr50=fmtRef;fmtRef=function(p){return S.format&&S.format.refStyle==="journal"?cite(p,"journal"):_fr50(p);};
+function ensurePaper(){const f=S&&S.format;if(f&&f.paperMM&&!PAPERS[f.paper])PAPERS[f.paper]=f.paperMM;if(S&&S.settings&&S.settings.docType==="학술지 논문"&&f&&f.layout===undefined&&!f.manual&&!f.template&&!f.hwpx){Object.assign(f,JOURNAL_FMT);}}
+const _bd50=buildDoc;buildDoc=function(){ensurePaper();const m=_bd50();const f=S.format||{};if(f.layout!=="journal")return m;try{journalize(m);}catch(e){console.warn(e);}return m;};
+function journalize(m){const B=m.blocks,F=S.front||{},A=authorsOf().filter(a=>a.name.trim());const s=S.settings;
+  // 제목 블록: 저자 줄(자간)·역할 표시
+  const ti=B.findIndex(b=>b.type==="title");const roleMark=a=>a.role==="교신저자"?"**":"";
+  if(ti>=0){const t=B[ti];t.sub=s.subtitle?`−${String(s.subtitle).replace(/^[−-]+|[−-]+$/g,"").trim()}−`:"";t.en="";t.aff="";t.date="";t.author=A.length?A.map(a=>spaced(a.name.trim())+roleMark(a)).join(" · "):(F.author||"");t.journal=journalLine();}
+  // 앞쪽 국문초록 빼기
+  let fi=B.findIndex(b=>b.type==="fronthead"&&/^(국문)?초록$/.test(b.text));const koParas=[];
+  if(fi>=0){let j=fi+1;while(j<B.length&&B[j].type==="para"&&B[j].plain){koParas.push(B[j]);j++;}if(B[j]&&B[j].type==="pagebreak")j++;B.splice(fi,j-fi);}
+  // 앞: 영문 Abstract(없으면 국문초록) + Key words + 저자 주
+  const front=[];const en=String(F.abstract_en||"").trim();const enNames=A.map(a=>a.en.trim()).filter(Boolean).join(" · ");const yr=new Date().getFullYear();
+  if(en){front.push({type:"fronthead",text:"Abstract",cls:"abs"});const lead=[enNames,String(yr),F.title_en?F.title_en.trim()+".":""].filter(Boolean).join(". ");
+    en.split(/\n{2,}/).forEach((p,i)=>front.push({type:"para",runs:[{t:(i===0&&lead?lead+" ":"")+p}],plain:true,cls:"abs"}));
+    if(String(F.keywords_en||"").trim())front.push({type:"para",runs:[{t:"【Key words】 "+F.keywords_en.trim()}],plain:true,cls:"kw"});}
+  else if(koParas.length){front.push({type:"fronthead",text:"초록",cls:"abs"});koParas.forEach(p=>front.push(Object.assign({},p,{cls:p.keywords?"kw":"abs"})));}
+  const roles=A.filter(a=>a.role&&a.role!=="단독저자");if(roles.length>1)front.push({type:"para",runs:[{t:"** "+roles.map(a=>`${a.name.trim()}: ${a.role}`).join(", ")}],plain:true,cls:"aunote"});
+  const firstH=B.findIndex(b=>b.type==="heading");B.splice(firstH>=0?firstH:B.length,0,...front);
+  // 장·절 제목: 1. / 2.1.
+  B.forEach(b=>{if(b.type==="heading"){b.text=String(b.text).replace(/^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+\.\s*/,"");if(b.level===2&&b.num)b.num=b.num.trim().replace(/\.?$/,".")+" ";}});
+  // 참고문헌 제목
+  const ri=B.findIndex(b=>b.type==="fronthead"&&b.refsHead);if(ri>=0)B[ri].text="<참고문헌>";
+  // 목차 없음 · 끝에 따로 붙던 영문 초록은 앞으로 옮겼으므로 지움
+  for(let i=B.length-1;i>=0;i--){if(B[i].type==="toc")B.splice(i,1);}
+  if(en){const ai=B.findIndex(b=>b.type==="fronthead"&&!b.cls&&/^abstract$/i.test(String(b.text).trim()));if(ai>=0){let j=ai+1;while(j<B.length&&B[j].type!=="fronthead"&&B[j].type!=="heading")j++;B.splice(ai,j-ai);if(B[ai-1]&&B[ai-1].type==="pagebreak")B.splice(ai-1,1);}}
+  // 끝: 국문초록(영문 초록을 앞에 썼을 때) + 저자 정보
+  const tail=[];if(en&&koParas.length){tail.push({type:"fronthead",text:"<국문초록>",cls:"abs"});koParas.forEach(p=>tail.push(Object.assign({},p,{cls:p.keywords?"kw":"abs"})));}
+  if(A.length){tail.push({type:"para",runs:[{t:""}],plain:true,cls:"gap"});A.forEach(a=>{[`${a.name.trim()}${a.en.trim()?`(${a.en.trim()})`:""}${a.role?`(${a.role})`:""}`,a.aff.trim(),a.email.trim()?`전자우편: ${a.email.trim()}`:""].filter(Boolean).forEach((t,i)=>tail.push({type:"para",runs:[{t}],plain:true,cls:i===0?"auinfo first":"auinfo"}));});}
+  B.push(...tail);}
+/* 미리보기·PDF·HTML 모양 */
+const _ph50=printHtml;printHtml=function(model){ensurePaper();let h=_ph50(model);const f=S.format||{};if(f.layout!=="journal")return h;const sz=f.size||10;const t=model.blocks.find(b=>b.type==="title")||{};
+  h=h.replace(/<section class="tp">/,`<section class="tp">${t.journal?`<p class="jline">${esc(t.journal)}</p>`:""}`);
+  return h.replace("</style>",`.tp{padding-top:0;text-align:center;margin-bottom:1.4em}.tp .title{font-size:${sz+7}pt;font-weight:700;line-height:1.45;margin:.8em 3em .3em}.tp .meta{margin-top:1.4em}.tp .meta p{text-align:right;letter-spacing:.05em}
+.jline{text-align:left;font-size:${sz-1}pt;margin-bottom:2.2em}h2.front.abs{font-size:${sz+1}pt;font-family:Arial,sans-serif;margin:1.2em 0 .8em;text-align:center}p.abs{margin:0 2.2em .4em;font-size:${sz-1}pt;text-align:justify;line-height:1.45}p.kw{margin:1em 2.2em 1.2em;font-size:${sz-1}pt}
+.aunote{font-size:${sz-2}pt;border-top:1px solid #000;width:40%;padding-top:.3em;margin:1.4em 0}.h1{font-size:${sz+3}pt;font-weight:700;margin:2em 0 .9em}.h2{font-size:${sz+1}pt;font-weight:400;margin:1.2em 0 .6em 1em}
+.front.refs{font-size:${sz+2}pt;margin:2em 0 1em}.ref{padding-left:2.5em;text-indent:-2.5em;margin:0 0 .15em}.auinfo{font-size:${sz-1}pt}.auinfo.first{margin-top:1.2em}.gap{height:2em}</style>`);};
+/* 직접 입력한 양식은 고칠 때마다 바로 적용 · 워드 양식의 용지·여백도 미리보기에 */
+{const _b=BIND.write;BIND.write=()=>{_b();if(WST!=="form")return;let tm;document.querySelectorAll('[id^="wm_"]').forEach(el=>el.addEventListener("change",()=>{clearTimeout(tm);tm=setTimeout(async()=>{S.formPrev=S.formPrev||JSON.parse(JSON.stringify(S.format));if(applyManual(true)){await flush();toast("양식 값을 바로 적용했습니다. 미리보기·출력에 반영됩니다.");const y=window.scrollY;render();window.scrollTo(0,y);}},150);}));
+  const wr=$("#wm_ref");if(wr&&!wr.querySelector('option[value="journal"]')){wr.insertAdjacentHTML("afterbegin",`<option value="journal" ${S.format.refStyle==="journal"?"selected":""}>학술지형: 저자(연도). 제목, <학술지> 권호, 발행기관.</option>`);if(S.format.refStyle==="journal")wr.value="journal";}
+  const fs=$(".ws-form")||document.querySelector('[id="wm_paper"]');if(fs&&!$("#wm_layout")){const anchor=$("#wm_paper");if(anchor){anchor.closest(".mgrid").insertAdjacentHTML("afterbegin",`<div><label for="wm_layout">기본 틀</label><select id="wm_layout"><option value="journal" ${S.format.layout==="journal"?"selected":""}>학술지형 (첫 장 제목·저자·Abstract·Key words, 끝에 저자 정보)</option><option value="" ${S.format.layout!=="journal"?"selected":""}>글 형태 기본 (표지·목차 등)</option></select></div>`);
+      $("#wm_layout").onchange=async e=>{S.formPrev=JSON.parse(JSON.stringify(S.format));if(e.target.value==="journal")Object.assign(S.format,JOURNAL_FMT);else{S.format.layout="";}await flush();toast(e.target.value==="journal"?"학술지형 틀(신국판·바탕 10pt·줄 간격 170%)을 적용했습니다.":"글 형태 기본 틀로 바꿨습니다.");const y=window.scrollY;render();window.scrollTo(0,y);};}}}}
+const _htf50=handleTemplateFile;handleTemplateFile=async function(file){S.formPrev=JSON.parse(JSON.stringify(S.format));await _htf50(file);const t=S.format.template;if(t&&t.info&&t.info.page){const [w,h]=t.info.page;const key=`양식 파일 용지 (${w}×${h})`;PAPERS[key]=[w,h];S.format.paper=key;S.format.paperMM=[w,h];const mg=t.info.margin||{};["t","b","l","r"].forEach((k,i)=>{if(mg[k]!=null&&mg[k]>0)S.format[["mt","mb","ml","mr"][i]]=mg[k];});}};
+/* 다시 연 프로젝트에서도 양식 파일 용지 이름이 살아 있게 */
+if(!SNAP_KEYS.includes("formPrev"))SNAP_KEYS.push("formPrev");
 
 /* ---------- 시작 ---------- */
 (async()=>{
