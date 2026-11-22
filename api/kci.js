@@ -1,9 +1,8 @@
 // AI WIKI — KCI Open API 중계 (Vercel 서버리스 함수)
 // 인증키는 Vercel 환경변수 KCI_KEY에만 보관합니다. 웹페이지에는 노출되지 않습니다.
-// 구글 로그인한 사용자만 쓸 수 있습니다(GOOGLE_CLIENT_ID로 토큰 발급 앱 확인, ALLOWED_EMAILS로 사용자 제한 가능).
+// 구글 로그인한 사용자만 쓸 수 있습니다. 관리자가 차단한 계정·승인 전 계정은 막습니다(api/_store.js).
 const KCI_BASE = process.env.KCI_BASE || "https://open.kci.go.kr/po/openapi/openApiSearch.kci";
 const SEARCH_PARAMS = ["title","author","journal","institution","keyword","dateFrom","dateTo","displayCount","page","sortNm","sortDir"];
-const tokCache = new Map();
 
 const dec = s => String(s || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "")
   .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
@@ -58,20 +57,16 @@ async function kciCall(params) {
   if (!r.ok) throw new KCIError(`KCI 서버 오류 (HTTP ${r.status})`, "http");
   return parseKci(await r.text());
 }
+const store = require("./_store");
 async function checkUser(req) {
-  const h = req.headers.authorization || "", tok = h.startsWith("Bearer ") ? h.slice(7) : "";
-  if (!tok) throw new KCIError("구글 로그인 후 사용할 수 있습니다.", "auth");
-  const c = tokCache.get(tok); if (c && c.until > Date.now()) return c.info;
   let info;
-  try { const r = await fetch("https://oauth2.googleapis.com/tokeninfo?access_token=" + encodeURIComponent(tok)); info = await r.json(); if (!r.ok || info.error) throw 0; }
-  catch (e) { throw new KCIError("구글 로그인이 만료되었습니다. 다시 로그인하세요.", "auth"); }
-  const cid = process.env.GOOGLE_CLIENT_ID || "";
-  if (cid && info.aud !== cid && info.azp !== cid) throw new KCIError("이 앱에서 발급한 로그인이 아닙니다.", "auth");
-  const allow = (process.env.ALLOWED_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-  if (allow.length && !allow.includes(String(info.email || "").toLowerCase())) throw new KCIError("KCI 검색을 허용받은 계정이 아닙니다. 관리자에게 문의하세요.", "auth");
-  tokCache.set(tok, { info, until: Date.now() + 5 * 60 * 1000 });
+  try { info = await store.verify(req); } catch (e) { throw new KCIError(e.message, "auth"); }
+  let acc = { ok: true };
+  try { acc = await store.access(info.email); } catch (e) { /* 저장소 오류여도 검색은 막지 않음 */ }
+  if (!acc.ok) throw new KCIError(acc.reason === "blocked" ? "관리자가 이 계정의 사용을 제한했습니다. 관리자에게 문의하세요." : "관리자 승인 후 KCI 검색을 쓸 수 있습니다. 관리자에게 문의하세요.", "auth");
   return info;
 }
+async function countUse(info) { if (!store.hasStore() || !info || !info.email) return; try { await store.redis([["HINCRBY", "u:" + info.email, "kci", "1"]]); } catch (e) { } }
 function send(res, code, obj) { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(obj)); }
 
 module.exports = async function handler(req, res) {
@@ -84,12 +79,12 @@ module.exports = async function handler(req, res) {
     if (route === "key") return send(res, 400, { ok: false, kind: "deploy", error: "배포 앱에서는 Vercel → 프로젝트 Settings → Environment Variables에 KCI_KEY로 인증키를 등록합니다." });
     if (req.method !== "GET") return send(res, 405, { ok: false, error: "허용되지 않은 요청입니다." });
     if (req.headers["x-aiwiki"] !== "1") return send(res, 403, { ok: false, error: "허용되지 않은 요청입니다." });
-    await checkUser(req);
+    const who = await checkUser(req);
     if (route === "test") { const r = await kciCall({ apiCode: "articleSearch", title: q.title || "베트남", displayCount: "1" }); return send(res, 200, { ok: true, total: r.total }); }
     if (route === "search") {
       const p = {}; SEARCH_PARAMS.forEach(k => { if ((q[k] || "").trim()) p[k] = q[k].trim(); });
       if (!p.title) return send(res, 400, { ok: false, kind: "param", error: "KCI 논문 검색은 제목 검색어가 필수입니다." });
-      const r = await kciCall({ ...p, apiCode: "articleSearch" }); return send(res, 200, { ok: true, ...r });
+      const r = await kciCall({ ...p, apiCode: "articleSearch" }); await countUse(who); return send(res, 200, { ok: true, ...r });
     }
     if (route === "detail") {
       if (!/^ART\d+$/.test(q.id || "")) return send(res, 400, { ok: false, kind: "param", error: "논문 ID(ART…) 형식이 아닙니다." });
